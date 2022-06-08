@@ -1,0 +1,27 @@
+{
+	"name": "roland-v160hd",
+	"version": "1.0.0",
+	"api_version": "1.0.0",
+	"keywords": [
+		"Vision Mixer",
+		"Video Switcher"
+	],
+	"manufacturer": "Roland",
+	"product": "V-160HD",
+	"shortname": "v160hd",
+	"description": "",
+	"main": "src/index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/bitfocus/companion-module-roland-v160hd.git"
+	},
+	"author": "Joseph Adams <josephdadams@gmail.com>",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/bitfocus/companion-module-roland-v160hd/issues"
+	},
+	"homepage": "https://github.com/bitfocus/companion-module-roland-v160hd#readme"
+}

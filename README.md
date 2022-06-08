@@ -1,2 +1,2 @@
-# companion-module-[replace with module name]
-See [HELP.md](./HELP.md) and [LICENSE](./LICENSE)
+# companion-module-roland-v160hd
+See HELP.md and LICENSE
