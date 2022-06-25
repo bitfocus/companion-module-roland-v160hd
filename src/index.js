@@ -275,6 +275,13 @@ instance.prototype.config_fields = function () {
 			width: 6,
 			default: '192.168.0.1',
 			regex: self.REGEX_IP
+		},
+		{
+			type: 'textinput',
+			id: 'password',
+			label: 'Password',
+			width: 6,
+			default: '0000'
 		}
 	]
 };
@@ -322,6 +329,7 @@ instance.prototype.init_tcp = function() {
 		self.socket.on('connect', function () {
 			debug('Connected');
 			self.status(self.STATUS_OK);
+			self.socket.send(self.config.password + '\n');
 			self.requestData('VER');
 			self.startInterval();
 		});
@@ -485,7 +493,7 @@ instance.prototype.init_presets = function () {
 instance.prototype.sendCommand = function(address, value) {
 	let self = this;
 
-	let cmd = 'DTH:' + address + ',' + value + ';'
+	let cmd = 'DTH:' + address + ',' + value + ';\n'
 
 	debug('Sending:');
 	debug(cmd);
@@ -501,7 +509,7 @@ instance.prototype.sendCommand = function(address, value) {
 instance.prototype.requestData = function(command) {
 	let self = this;
 
-	let cmd = 'RQH:' + command + ';'
+	let cmd = 'RQH:' + command + ';\n'
 
 	if (self.socket !== undefined && self.socket.connected) {
 		self.socket.send(cmd);

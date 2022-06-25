@@ -1,6 +1,8 @@
 # Roland V-160HD
 This module will allow you to control a Roland V-160HD switcher.
 
+The switcher should be running firmware 1.04 or higher. A password must be set on the switcher in order to enable remote control.
+
 ## Configuration
 * Enter the IP address of the device in the configuration settings.
 * The device will use TCP port 8023.
