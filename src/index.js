@@ -282,6 +282,12 @@ instance.prototype.config_fields = function () {
 			label: 'Password',
 			width: 6,
 			default: '0000'
+		},
+		{
+			type: 'checkbox',
+			id: 'verbose',
+			label: 'Enable Verbose Logging',
+			default: false
 		}
 	]
 };
@@ -317,10 +323,18 @@ instance.prototype.init_tcp = function() {
 		self.socket = new tcp(self.config.host, self.config.port);
 
 		self.socket.on('status_change', function (status, message) {
+			if (self.config.verbose) {
+				self.log('info', 'Status change: ' + message);
+			}
+
 			self.status(status, message);
 		});
 
 		self.socket.on('error', function (err) {
+			if (self.config.verbose) {
+				self.log('warn', 'Error: ' + err);
+			}
+
 			debug('Network error', err);
 			clearInterval(self.INTERVAL);
 			self.handleError(err);
@@ -329,6 +343,10 @@ instance.prototype.init_tcp = function() {
 		self.socket.on('connect', function () {
 			debug('Connected');
 			self.status(self.STATUS_OK);
+			if (self.config.verbose) {
+				self.log('info', 'Sending passcode: ' + self.config.password);
+			}
+
 			self.socket.send(self.config.password + '\n');
 			self.requestData('VER');
 			self.startInterval();
@@ -401,6 +419,10 @@ instance.prototype.getTallyData = function() {
 
 instance.prototype.updateData = function(data) {
 	let self = this;
+
+	if (self.config.verbose) {
+		self.log('info', 'Data received: ' + data);
+	}
 
 	//do stuff with the data
 	try {
@@ -499,9 +521,17 @@ instance.prototype.sendCommand = function(address, value) {
 	debug(cmd);
 
 	if (self.socket !== undefined && self.socket.connected) {
+		if (self.config.verbose) {
+			self.log('info', 'Sending: ' + cmd);
+		}
+
 		self.socket.send(cmd);
 	}
 	else {
+		if (self.config.verbose) {
+			self.log('warn', 'Unable to send: Socket not connected.');
+		}
+
 		debug('Socket not connected :(');
 	}
 };
@@ -512,9 +542,17 @@ instance.prototype.requestData = function(command) {
 	let cmd = 'RQH:' + command + ';\n'
 
 	if (self.socket !== undefined && self.socket.connected) {
+		if (self.config.verbose) {
+			self.log('info', 'Sending: ' + cmd);
+		}
+
 		self.socket.send(cmd);
 	}
 	else {
+		if (self.config.verbose) {
+			self.log('warn', 'Unable to send: Socket not connected.');
+		}
+		
 		debug('Socket not connected :(');
 	}
 }
