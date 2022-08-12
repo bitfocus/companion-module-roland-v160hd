@@ -22,7 +22,6 @@ function instance(system, id, config) {
 }
 
 instance.prototype.INTERVAL = null; //used for polling device for feedbacks
-instance.prototype.RATE = 1000; //polling rate
 
 instance.prototype.MODEL = 'V-160HD';
 instance.prototype.VERSION = '';
@@ -224,6 +223,92 @@ instance.prototype.CHOICES_MEMORY = [
 	{ id: 29, label: 'Memory 30' }
 ];
 
+instance.prototype.CHOICES_SWITCHES = [
+	{ id: '0B0000', label: 'PGM/A 1 SW'},
+	{ id: '0B0001', label: 'PGM/A 2 SW'},
+	{ id: '0B0002', label: 'PGM/A 3 SW'},
+	{ id: '0B0003', label: 'PGM/A 4 SW'},
+	{ id: '0B0004', label: 'PGM/A 5 SW'},
+	{ id: '0B0005', label: 'PGM/A 6 SW'},
+	{ id: '0B0006', label: 'PGM/A 7 SW'},
+	{ id: '0B0007', label: 'PGM/A 8 SW'},
+	{ id: '0B0008', label: 'PGM/A 9 SW'},
+	{ id: '0B0009', label: 'PGM/A 10 SW'},
+	{ id: '0B000A', label: 'PST/B 1 SW'},
+	{ id: '0B000B', label: 'PST/B 2 SW'},
+	{ id: '0B000C', label: 'PST/B 3 SW'},
+	{ id: '0B000D', label: 'PST/B 4 SW'},
+	{ id: '0B000E', label: 'PST/B 5 SW'},
+	{ id: '0B000F', label: 'PST/B 6 SW'},
+	{ id: '0B0010', label: 'PST/B 7 SW'},
+	{ id: '0B0011', label: 'PST/B 8 SW'},
+	{ id: '0B0012', label: 'PST/B 9 SW'},
+	{ id: '0B0013', label: 'PST/B 10 SW'},
+	{ id: '0B0014', label: 'AUX 1 SW'},
+	{ id: '0B0015', label: 'AUX 2 SW'},
+	{ id: '0B0016', label: 'AUX 3 SW'},
+	{ id: '0B0017', label: 'AUX 4 SW'},
+	{ id: '0B0018', label: 'AUX 5 SW'},
+	{ id: '0B0019', label: 'AUX 6 SW'},
+	{ id: '0B001A', label: 'AUX 7 SW'},
+	{ id: '0B001B', label: 'AUX 8 SW'},
+	{ id: '0B001C', label: 'AUX 9 SW'},
+	{ id: '0B001D', label: 'AUX 10 SW'},
+	{ id: '0B001E', label: 'CUT SW'},
+	{ id: '0B001F', label: 'AUTO SW'},
+	{ id: '0B0020', label: 'TRANSITION SW'},
+	{ id: '0B0021', label: 'MODE SW'},
+	{ id: '0B0022', label: 'INPUT ASSIGN SW'},
+	{ id: '0B0023', label: 'PGM-CENTER ENCODER'},
+	{ id: '0B0024', label: 'PST-CENTER ENCODER'},
+	{ id: '0B0025', label: 'SPLIT A SW'},
+	{ id: '0B0026', label: 'SPLIT B SW'},
+	{ id: '0B0027', label: 'AUTO MIXING'},
+	{ id: '0B0028', label: 'CAPTURE SW'},
+	{ id: '0B0029', label: 'USER 1 SW'},
+	{ id: '0B002A', label: 'USER 2 SW'},
+	{ id: '0B002B', label: 'USER 3 SW'},
+	{ id: '0B002C', label: 'USER 4 SW'},
+	{ id: '0B002D', label: 'PinP 1 POSITION H'},
+	{ id: '0B002E', label: 'PinP 1 POSITION V'},
+	{ id: '0B002F', label: 'PinP 1 SOURCE SW'},
+	{ id: '0B0030', label: 'PinP 1 PVW SW'},
+	{ id: '0B0031', label: 'PinP 1 PGM SW'},
+	{ id: '0B0032', label: 'PinP 2 POSITION H'},
+	{ id: '0B0033', label: 'PinP 2 POSITION V'},
+	{ id: '0B0034', label: 'PinP 2 SOURCE SW'},
+	{ id: '0B0035', label: 'PinP 2 PVW SW'},
+	{ id: '0B0036', label: 'PinP 2 PGM SW'},
+	{ id: '0B0037', label: 'PinP 3 POSITION H'},
+	{ id: '0B0038', label: 'PinP 3 POSITION V'},
+	{ id: '0B0039', label: 'PinP 3 SOURCE SW'},
+	{ id: '0B003A', label: 'PinP 3 PVW SW'},
+	{ id: '0B003B', label: 'PinP 3 PGM SW'},
+	{ id: '0B003C', label: 'PinP 4 POSITION H'},
+	{ id: '0B003D', label: 'PinP 4 POSITION V'},
+	{ id: '0B003E', label: 'PinP 4 SOURCE SW'},
+	{ id: '0B003F', label: 'PinP 4 PVW SW'},
+	{ id: '0B0040', label: 'PinP 4 PGM SW'},
+	{ id: '0B0041', label: 'DSK 1 SOURCE SW'},
+	{ id: '0B0042', label: 'DSK 1 PVW SW'},
+	{ id: '0B0043', label: 'DSK 1 PGM SW'},
+	{ id: '0B0044', label: 'DSK 2 SOURCE SW'},
+	{ id: '0B0045', label: 'DSK 2 PVW SW'},
+	{ id: '0B0046', label: 'DSK 2 PGM SW'},
+	{ id: '0B0047', label: 'MONITOR 1 SW'},
+	{ id: '0B0048', label: 'MONITOR 2 SW'},
+	{ id: '0B0049', label: 'MONITOR 3 SW'},
+	{ id: '0B004A', label: 'MONITOR 4 SW'},
+	{ id: '0B004B', label: 'MENU SW'},
+	{ id: '0B004C', label: 'EXIT SW'},
+	{ id: '0B004D', label: 'ENTER SW'},
+	{ id: '0B004E', label: 'OUTPUT FADE SW'},
+	{ id: '0B004F', label: 'SEQUENCER ON SW'},
+	{ id: '0B0050', label: 'SEQUENCER AUTO SW'},
+	{ id: '0B0051', label: 'SEQUENCER PREV SW'},
+	{ id: '0B0052', label: 'SEQUENCER NEXT SW'},
+];
+
 instance.prototype.init = function() {
 	let self = this;
 
@@ -269,6 +354,27 @@ instance.prototype.config_fields = function () {
 			value: 'This module will connect to a Roland V-160HD.'
 		},
 		{
+			type: 'text',
+			id: 'info',
+			width: 12,
+			label: ' ',
+			value: `
+			<div class="alert alert-info">
+				<div>
+					<strong>PLEASE READ:</strong>
+					<br />
+					To configure this module, you need to:
+					<ul>
+						<li>Enter the Target IP of the Roland Device</li>
+						<li>Configure a Password/Passcode on the Roland Device, otherwise certain actions may not work.</li>
+						<li>Decide whether or not to Enable Polling</li>
+						<li>Click "Save" to save the module config.</li>
+					</ul>
+				</div>
+			</div>
+			`,
+		},
+		{
 			type: 'textinput',
 			id: 'host',
 			label: 'IP Address',
@@ -284,11 +390,61 @@ instance.prototype.config_fields = function () {
 			default: '0000'
 		},
 		{
+			type: 'text',
+			id: 'info2',
+			label: 'Polling',
+			width: 12,
+			value: `
+				<div class="alert alert-warning">
+					<strong>Please read:</strong>
+					<br>
+					Enabling polling unlocks these features:
+					<br><br>
+					<ul>
+						<li>Current Tally State(s)</li>
+					</ul>
+					Enabling polling will send a request to the Device at a continuous interval.
+					<br>
+					<strong>This could have an undesired performance effect on your Device, depending on the polling rate.</strong>
+					<br>
+				</div>
+			`
+		},
+		{
+			type: 'checkbox',
+			id: 'polling',
+			label: 'Enable Polling (necessary for feedbacks and variables)',
+			default: false,
+			width: 3
+		},
+		{
+			type: 'textinput',
+			id: 'pollingrate',
+			label: 'Polling Rate (in ms)',
+			default: 1000,
+			width: 3,
+			isVisible: (configValues) => configValues.polling === true,
+		},
+		{
 			type: 'checkbox',
 			id: 'verbose',
 			label: 'Enable Verbose Logging',
 			default: false
-		}
+		},
+		{
+			type: 'text',
+			id: 'info3',
+			width: 12,
+			label: ' ',
+			value: `
+			<div class="alert alert-info">
+				<div>
+					Enabling Verbose Logging will push all incoming and outgoing data to the log, which is helpful for debugging.
+				</div>
+			</div>
+			`,
+			isVisible: (configValues) => configValues.verbose === true,
+		},
 	]
 };
 
@@ -324,7 +480,7 @@ instance.prototype.init_tcp = function() {
 
 		self.socket.on('status_change', function (status, message) {
 			if (self.config.verbose) {
-				self.log('info', 'Status change: ' + message);
+				self.log('debug', 'Status change: ' + message);
 			}
 
 			self.status(status, message);
@@ -342,18 +498,11 @@ instance.prototype.init_tcp = function() {
 
 		self.socket.on('connect', function () {
 			debug('Connected');
-			self.status(self.STATUS_OK);
-			if (self.config.verbose) {
-				self.log('info', 'Sending passcode: ' + self.config.password);
-			}
-
-			self.socket.send(self.config.password + '\n');
-			self.requestData('VER');
-			self.startInterval();
 		});
 
 		self.socket.on('data', function(buffer) {
 			let indata = buffer.toString('utf8');
+
 			//update feedbacks and variables
 			self.updateData(indata);
 		});
@@ -387,6 +536,15 @@ instance.prototype.handleError = function(err) {
 					self.socket.destroy();
 				}
 			}
+			else if (err[key] === 'ECONNRESET') {
+				error = 'The connection was reset. Check the log for more error information.';
+				self.log('error', error);
+				self.status(self.STATUS_ERROR);
+				printedError = true;
+				if (self.socket !== undefined) {
+					self.socket.destroy();
+				}
+			}
 		}
 	});
 
@@ -398,8 +556,13 @@ instance.prototype.handleError = function(err) {
 instance.prototype.startInterval = function() {
 	let self = this;
 
-	self.log('info', `Starting Update Interval: Fetching new data from Device every ${self.RATE}ms.`);
-	self.INTERVAL = setInterval(self.getData.bind(this), self.RATE);
+	if (self.config.polling) {
+		self.log('info', `Starting Update Interval: Fetching new data from Device every ${self.config.pollingrate}ms.`);
+		self.INTERVAL = setInterval(self.getData.bind(this), parseInt(self.config.pollingrate));
+	}
+	else {
+		self.log('info', 'Polling is disabled. Module will not request new data at a regular rate.');
+	}
 }
 
 instance.prototype.getData = function() {
@@ -412,58 +575,97 @@ instance.prototype.getTallyData = function() {
 	let self = this;
 
 	for (let i = 0; i < 16; i++) {
-		let command = '0C' + '00' + i.toString(16);
-		self.requestData(command);
+		let hex = i.toString(16).padStart(2, '0').toUpperCase();
+		let command = '0C' + '00' + hex + ',000001;';
+
+		self.sendRawCommand('RQH:' + command);
 	}
 }
 
 instance.prototype.updateData = function(data) {
 	let self = this;
 
+	debug('Got this data:');
+	debug(data);
+
 	if (self.config.verbose) {
-		self.log('info', 'Data received: ' + data);
+		self.log('debug', data);
 	}
 
-	//do stuff with the data
-	try {
-		if (data.indexOf(';')) {
-			let dataGroups = data.trim().split(';');
-			for (let j = 0; j < dataGroups.length; j++) {
-				dataGroups[j] = dataGroups[j].trim();
-				if (dataGroups[j] !== 'ACK' && dataGroups[j] !== '') {
-					let dataSet = dataGroups[j].trim().split(':');
-					let dataPrefix = dataSet[0].toString().trim();
-					let dataSuffix = dataSet[1].toString().split(',');
+	if(data.trim() =='Enter password:') {
+		self.status(self.STATUS_WARNING, 'Authenticating');
+		self.log('info', 'Sending passcode: ' + self.config.password);
+		self.socket.send(self.config.password + '\n');
+	}
+	else if (data.trim() == 'Welcome to V-160HD.') {
+		self.status(self.STATUS_OK);
+		self.log('info', 'Authenticated.');
+		self.sendRawCommand('VER'); //request version info
+		self.startInterval(); //request tally states
+	}
+	else if (data.trim() == 'ERR:0;') {
+		//an error with something that it received
+	}
+	else {
+		//do stuff with the data
+		try {
+			if (data.indexOf(';')) {
+				let dataGroups = data.trim().split(';');
 
-					if (dataPrefix.indexOf('VER') > -1) {
-						self.MODEL = dataSuffix[0].toString();
-						self.VERSION = dataSuffix[1].toString();
-					}
-	
-					if (dataPrefix.indexOf('DTH') > -1) {
-						if (dataSuffix[0].length === 6) {
-							let params = dataSuffix[0];
-							let param1 = params[0] + params[1];
-							let param2 = params[2] + params[3];
-							let param3 = params[4] + params[5];
-	
-							let value = dataSuffix[1];
-	
-							if (param1 == 'OC' && param2 == '00') { //tally message
-								self.updateTally(param3, value);
+				for (let j = 0; j < dataGroups.length; j++) {
+					dataGroups[j] = dataGroups[j].trim();
+					if (dataGroups[j] !== 'ACK' && dataGroups[j] !== '') {
+						let dataSet = dataGroups[j].trim().split(':');
+						if (Array.isArray(dataSet)) {
+							let dataPrefix = '';
+							
+							if (dataSet[0] !== undefined) {
+								dataPrefix = dataSet[0].toString().trim();
 							}
+
+							let dataSuffix = '';
+							
+							if (dataSet.length > 1) {
+								if (dataSet[1].toString().indexOf(',')) {
+									dataSuffix = dataSet[1].toString().split(',');
+
+									if (dataPrefix.indexOf('VER') > -1) {
+										self.MODEL = dataSuffix[0].toString();
+										self.VERSION = dataSuffix[1].toString();
+									}
+					
+									if (dataPrefix.indexOf('DTH') > -1) {
+										if (dataSuffix[0].length === 6) {
+											let params = dataSuffix[0];
+											let param1 = params[0] + params[1];
+											let param2 = params[2] + params[3];
+											let param3 = params[4] + params[5];
+			
+											let value = dataSuffix[1];
+					
+											if (param1 == '0C' && param2 == '00') { //tally message
+												self.updateTally(param3, value);
+											}
+										}
+									}
+								}
+							}
+							else {
+								//likely just ERR:0;
+							}						
 						}
 					}
-				}			
+				}
+			
+				//now update feedbacks and variables
+				self.checkFeedbacks();
+				self.checkVariables();
 			}
-		
-			//now update feedbacks and variables
-			self.checkFeedbacks();
-			self.checkVariables();
 		}
-	}
-	catch(error) {
-		self.log('error', 'Error parsing incoming data: ' + error);
+		catch(error) {
+			self.log('error', 'Error parsing incoming data: ' + error);
+			self.log('error', 'Data: ' + data);
+		}
 	}
 };
 
@@ -512,17 +714,39 @@ instance.prototype.init_presets = function () {
 	this.setPresetDefinitions(presets.setPresets.bind(this)());
 };
 
+
+// ##########################
+// ####### Functions ########
+// ##########################
 instance.prototype.sendCommand = function(address, value) {
 	let self = this;
 
-	let cmd = 'DTH:' + address + ',' + value + ';\n'
+	let cmd = 'DTH:' + address + ',' + value + ';\n';
+	self.sendRawCommand(cmd);
+};
+
+instance.prototype.requestData = function(command) {
+	let self = this;
+
+	let cmd = 'RQH:' + command + ';\n';
+	self.sendRawCommand(cmd);
+}
+
+instance.prototype.sendRawCommand = function(command) {
+	let self = this;
+
+	if (!command.indexOf(';')) {
+		command = command + ';';
+	}
+
+	let cmd = command + '\n';
 
 	debug('Sending:');
 	debug(cmd);
 
 	if (self.socket !== undefined && self.socket.connected) {
 		if (self.config.verbose) {
-			self.log('info', 'Sending: ' + cmd);
+			self.log('debug', 'Sending: ' + cmd);
 		}
 
 		self.socket.send(cmd);
@@ -535,27 +759,6 @@ instance.prototype.sendCommand = function(address, value) {
 		debug('Socket not connected :(');
 	}
 };
-
-instance.prototype.requestData = function(command) {
-	let self = this;
-
-	let cmd = 'RQH:' + command + ';\n'
-
-	if (self.socket !== undefined && self.socket.connected) {
-		if (self.config.verbose) {
-			self.log('info', 'Sending: ' + cmd);
-		}
-
-		self.socket.send(cmd);
-	}
-	else {
-		if (self.config.verbose) {
-			self.log('warn', 'Unable to send: Socket not connected.');
-		}
-		
-		debug('Socket not connected :(');
-	}
-}
 
 instance_skel.extendedBy(instance);
 exports = module.exports = instance;

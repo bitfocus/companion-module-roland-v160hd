@@ -29,7 +29,7 @@ module.exports = {
 			for (let i = 0; i < self.TALLYDATA.length; i++) {
 				let state = 'Off';
 
-				if (self.TALLYDATA[i].status == 1) {
+				if (self.TALLYDATA[i].status == 1 || self.TALLYDATA[i].status == 3) {
 					state = 'Program';
 				}
 				else if (self.TALLYDATA[i].status == 2) {

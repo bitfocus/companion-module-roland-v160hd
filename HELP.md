@@ -43,4 +43,4 @@ The switcher should be running firmware 1.04 or higher. A password must be set o
 * 
 
 ## Sponsored By
-This module's availability to Companion was sponsored in part by Lars Erik Pedersen <lars-erik@hotellteknikeren.no>.
+This module's availability to Companion was sponsored in part by Lars Erik Pedersen <lars-erik@hotellteknikeren.no> and Jeremy Alysandratos <jjereonimo@gmail.com>.

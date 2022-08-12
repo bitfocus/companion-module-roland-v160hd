@@ -44,7 +44,7 @@ module.exports = {
 				let tallyObj = self.TALLYDATA.find((obj) => obj.id == opt.input);
 
 				if (tallyObj) {
-					if (tallyObj.status == 1 && opt.state == 'program') {
+					if ((tallyObj.status == 1 || tallyObj.status == 3) && opt.state == 'program') {
 						return true;
 					}
 

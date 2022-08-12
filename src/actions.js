@@ -27,8 +27,8 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = '00' + '00' + options.input.toString(16);
-				let value = options.assign.toString(16);
+				let address = '00' + '00' + options.input.toString(16).padStart(2, '0').toUpperCase();
+				let value = options.assign.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
 		};
@@ -57,13 +57,13 @@ module.exports = {
 				let address = '00';
 				
 				if (options.output === 16) { //USB OUTPUT
-					address += '01' + options.output.toString(16);
+					address += '01' + options.output.toString(16).padStart(2, '0').toUpperCase();
 				}
 				else {
-					address += '00' + options.output.toString(16);
+					address += '00' + options.output.toString(16).padStart(2, '0').toUpperCase();
 				}
 
-				let value = options.assign.toString(16);
+				let value = options.assign.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
 		};
@@ -84,7 +84,7 @@ module.exports = {
 				let options = action.options;
 				let address = '00' + '00' + '11';
 
-				let value = options.assign.toString(16);
+				let value = options.assign.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
 		};
@@ -113,9 +113,9 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = '00' + '00' + options.pinp.toString(16);
+				let address = '00' + '00' + options.pinp.toString(16).padStart(2, '0').toUpperCase();
 
-				let value = options.enable.toString(16);
+				let value = options.enable.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
 		};
@@ -144,9 +144,9 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = '00' + '00' + options.dsk.toString(16);
+				let address = '00' + '00' + options.dsk.toString(16).padStart(2, '0').toUpperCase();
 
-				let value = options.enable.toString(16);
+				let value = options.enable.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
 		};
@@ -175,9 +175,9 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = '00' + '00' + options.pinp.toString(16);
+				let address = '00' + '00' + options.pinp.toString(16).padStart(2, '0').toUpperCase();
 
-				let value = options.enable.toString(16);
+				let value = options.enable.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
 		};
@@ -206,9 +206,9 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = '00' + '00' + options.dsk.toString(16);
+				let address = '00' + '00' + options.dsk.toString(16).padStart(2, '0').toUpperCase();
 
-				let value = options.enable.toString(16);
+				let value = options.enable.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
 		};
@@ -229,7 +229,7 @@ module.exports = {
 				let options = action.options;
 				let address = '00' + '18' + '00';
 
-				let value = options.type.toString(16);
+				let value = options.type.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
 		};
@@ -250,7 +250,7 @@ module.exports = {
 				let options = action.options;
 				let address = '00' + '18' + '01';
 
-				let value = options.type.toString(16);
+				let value = options.type.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
 		};
@@ -271,7 +271,7 @@ module.exports = {
 				let options = action.options;
 				let address = '00' + '18' + '02';
 
-				let value = options.type.toString(16);
+				let value = options.type.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
 		};
@@ -292,8 +292,65 @@ module.exports = {
 				let options = action.options;
 				let address = '00' + '18' + '03';
 
-				let value = options.type.toString(16);
+				let value = options.type.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
+			}
+		};
+
+		actions.press_and_release_switch = {
+			label: 'Press and Release Panel Switch',
+			options:
+			[
+				{
+					type: 'dropdown',
+					label: 'Switch',
+					id: 'switch',
+					default: self.CHOICES_SWITCHES[0].id,
+					choices: self.CHOICES_SWITCHES
+				}
+			],
+			callback: function(action, bank) {
+				let options = action.options;
+				self.sendCommand(options.switch, '01');
+				setTimeout(function() {
+					self.sendCommand(options.switch, '00');
+				}, 200);
+			}
+		};
+
+		actions.press_switch = {
+			label: 'Press Panel Switch (Don\'t Release)',
+			options:
+			[
+				{
+					type: 'dropdown',
+					label: 'Switch',
+					id: 'switch',
+					default: self.CHOICES_SWITCHES[0].id,
+					choices: self.CHOICES_SWITCHES
+				}
+			],
+			callback: function(action, bank) {
+				let options = action.options;
+				self.sendCommand(options.switch, '01');
+			}
+		};
+
+		actions.release_switch = {
+			label: 'Release Panel Switch',
+			options:
+			[
+				{
+					type: 'dropdown',
+					label: 'Switch',
+					id: 'switch',
+					default: self.CHOICES_SWITCHES[0].id,
+					choices: self.CHOICES_SWITCHES
+				}
+			],
+			callback: function(action, bank) {
+				let options = action.options;
+				self.sendCommand(options.switch, '00');
 			}
 		};
 
@@ -318,8 +375,8 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = '00' + options.pinp.toString(16) + '02';
-				let value = options.assign.toString(16);
+				let address = '00' + options.pinp.toString(16).padStart(2, '0').toUpperCase() + '02';
+				let value = options.assign.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
 		};
@@ -345,8 +402,8 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = '00' + options.pinp.toString(16) + '03';
-				let value = options.key.toString(16);
+				let address = '00' + options.pinp.toString(16).padStart(2, '0').toUpperCase() + '03';
+				let value = options.key.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
 		};
@@ -372,8 +429,8 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = '00' + options.dsk.toString(16) + '03';
-				let value = options.assign.toString(16);
+				let address = '00' + options.dsk.toString(16).padStart(2, '0').toUpperCase() + '03';
+				let value = options.assign.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
 		};
@@ -399,8 +456,8 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = '00' + options.dsk.toString(16) + '04';
-				let value = options.assign.toString(16);
+				let address = '00' + options.dsk.toString(16).padStart(2, '0').toUpperCase() + '04';
+				let value = options.assign.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
 		};
@@ -426,8 +483,8 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = '00' + options.dsk.toString(16) + '05';
-				let value = options.key.toString(16);
+				let address = '00' + options.dsk.toString(16).padStart(2, '0').toUpperCase() + '05';
+				let value = options.key.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
 		};
@@ -447,7 +504,7 @@ module.exports = {
 			callback: function(action, bank) {
 				let options = action.options;
 				let address = '00' + '21' + '00';
-				let value = options.input.toString(16);
+				let value = options.input.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
 		};
@@ -467,7 +524,7 @@ module.exports = {
 			callback: function(action, bank) {
 				let options = action.options;
 				let address = '00' + '21' + '01';
-				let value = options.input.toString(16);
+				let value = options.input.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
 		};
@@ -487,7 +544,7 @@ module.exports = {
 			callback: function(action, bank) {
 				let options = action.options;
 				let address = '0A' + '00' + '00';
-				let value = options.memory.toString(16);
+				let value = options.memory.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
 		};
@@ -507,7 +564,7 @@ module.exports = {
 			callback: function(action, bank) {
 				let options = action.options;
 				let address = '0A' + '00' + '01';
-				let value = options.memory.toString(16);
+				let value = options.memory.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
 		};
@@ -527,7 +584,7 @@ module.exports = {
 			callback: function(action, bank) {
 				let options = action.options;
 				let address = '0A' + '00' + '02';
-				let value = options.memory.toString(16);
+				let value = options.memory.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
 		};
