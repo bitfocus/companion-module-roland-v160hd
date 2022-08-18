@@ -137,6 +137,17 @@ instance.prototype.CHOICES_SUBDSK = [
 	{ id: 29, label: 'Sub Program Layer DSK 2' },
 ];
 
+instance.prototype.CHOICES_TRANSITION_TIME_TYPES = [
+	{ id: '001700', label: 'Mix/Wipe Time' },
+	{ id: '001701', label: 'PinP 1 Time' },
+	{ id: '001702', label: 'PinP 2 Time' },
+	{ id: '001703', label: 'PinP 3 Time' },
+	{ id: '001704', label: 'PinP 4 Time' },
+	{ id: '001705', label: 'DSK 1 Time' },
+	{ id: '001706', label: 'DSK 2 Time' },
+	{ id: '001707', label: 'Output Fade Time' }
+];
+
 instance.prototype.CHOICES_TRANSITION_TYPES = [
 	{ id: 0, label: 'Mix' },
 	{ id: 1, label: 'Wipe' }

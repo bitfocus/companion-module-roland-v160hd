@@ -21,7 +21,7 @@ module.exports = {
 					step: 1,
 					required: true,
 					range: false
-				  }
+				}
 			],
 			callback: function(action, bank) {
 				let options = action.options;
@@ -237,6 +237,41 @@ module.exports = {
 				let address = '00' + '00' + options.dsk.toString(16).padStart(2, '0').toUpperCase();
 
 				let value = options.enable.toString(16).padStart(2, '0').toUpperCase();
+				self.sendCommand(address, value);
+			}
+		};
+
+		actions.set_transition_time = {
+			label: 'Set Transition Time',
+			options:
+			[
+				{
+					type: 'dropdown',
+					label: 'Transition Type',
+					id: 'type',
+					default: self.CHOICES_TRANSITION_TIME_TYPES[0].id,
+					choices: self.CHOICES_TRANSITION_TIME_TYPES
+				},
+				{
+					type: 'number',
+					label: 'Transition Time',
+					id: 'time',
+					tooltip: '(0.0-4.0)',
+					min: 0.0,
+					max: 4.0,
+					default: 1.0,
+					step: 0.1,
+					required: true,
+					range: true
+				}
+			],
+			callback: function(action, bank) {
+				let options = action.options;
+				let address = options.type;
+
+				let time = options.time * 10;
+
+				let value = time.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
 		};
