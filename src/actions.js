@@ -6,6 +6,34 @@ module.exports = {
 		let self = this;
 		let actions = {};
 
+		actions.run_macro = {
+			label: 'Run Macro',
+			options:
+			[
+				{
+					type: 'number',
+					label: 'Macro',
+					id: 'macro',
+					tooltip: '(1-100)',
+					min: 1,
+					max: 100,
+					default: 1,
+					step: 1,
+					required: true,
+					range: false
+				  }
+			],
+			callback: function(action, bank) {
+				let options = action.options;
+				let macro = options.macro;
+				let macroZero = macro - 1;
+				let value = macroZero.toString(16).padStart(2, '0').toUpperCase();
+
+				let address = '500504';
+				self.sendCommand(address, value);
+			}
+		}
+
 		actions.input_assign = {
 			label: 'Assign Input',
 			options:
