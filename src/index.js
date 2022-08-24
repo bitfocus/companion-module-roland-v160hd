@@ -113,28 +113,19 @@ instance.prototype.CHOICES_OUTPUTSASSIGN = [
 	{ id: 6, label: '16 Still-View' },
 ];
 
-instance.prototype.CHOICES_PINP = [
+instance.prototype.CHOICES_PINPDSK = [
 	{ id: 18, label: 'Program Layer PinP & Key 1' },
 	{ id: 19, label: 'Program Layer PinP & Key 2' },
 	{ id: 20, label: 'Program Layer PinP & Key 3' },
-	{ id: 21, label: 'Program Layer PinP & Key 4' }
-];
-
-instance.prototype.CHOICES_DSK = [
+	{ id: 21, label: 'Program Layer PinP & Key 4' },
 	{ id: 22, label: 'Program Layer DSK 1' },
 	{ id: 23, label: 'Program Layer DSK 2' },
-]
-
-instance.prototype.CHOICES_SUBPINP = [
 	{ id: 24, label: 'Sub Program Layer PinP & Key 1' },
 	{ id: 25, label: 'Sub Program Layer PinP & Key 2' },
 	{ id: 26, label: 'Sub Program Layer PinP & Key 3' },
-	{ id: 27, label: 'Sub Program Layer PinP & Key 4' }
-];
-
-instance.prototype.CHOICES_SUBDSK = [
+	{ id: 27, label: 'Sub Program Layer PinP & Key 4' },
 	{ id: 28, label: 'Sub Program Layer DSK 1' },
-	{ id: 29, label: 'Sub Program Layer DSK 2' },
+	{ id: 29, label: 'Sub Program Layer DSK 2' }
 ];
 
 instance.prototype.CHOICES_TRANSITION_TIME_TYPES = [

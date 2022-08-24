@@ -118,14 +118,14 @@ module.exports = {
 		};
 
 		actions.pnpkey_enable = {
-			label: 'PGM Layer PnP & Key Enable/Disable',
+			label: 'PnP & Key Enable/Disable',
 			options:
 			[
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
 					id: 'pinp',
-					default: self.CHOICES_PINP[0].id,
+					default: self.CHOICES_PINPDSK[0].id,
 					choices: self.CHOICES_PINP
 				},
 				{
@@ -142,99 +142,6 @@ module.exports = {
 			callback: function(action, bank) {
 				let options = action.options;
 				let address = '00' + '00' + options.pinp.toString(16).padStart(2, '0').toUpperCase();
-
-				let value = options.enable.toString(16).padStart(2, '0').toUpperCase();
-				self.sendCommand(address, value);
-			}
-		};
-
-		actions.dskkey_enable = {
-			label: 'PGM Layer DSK Enable/Disable',
-			options:
-			[
-				{
-					type: 'dropdown',
-					label: 'DSK',
-					id: 'dsk',
-					default: self.CHOICES_DSK[0].id,
-					choices: self.CHOICES_DSK
-				},
-				{
-					type: 'dropdown',
-					label: 'Enable/Disable',
-					id: 'enable',
-					default: 1,
-					choices: [
-						{ id: 0, label: 'Disable'},
-						{ id: 1, label: 'Enable'}
-					]
-				}
-			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '00' + '00' + options.dsk.toString(16).padStart(2, '0').toUpperCase();
-
-				let value = options.enable.toString(16).padStart(2, '0').toUpperCase();
-				self.sendCommand(address, value);
-			}
-		};
-
-		actions.subpnpkey_enable = {
-			label: 'SUB PGM Layer PnP & Key Enable/Disable',
-			options:
-			[
-				{
-					type: 'dropdown',
-					label: 'PnP/Key',
-					id: 'pinp',
-					default: self.CHOICES_SUBPINP[0].id,
-					choices: self.CHOICES_SUBPINP
-				},
-				{
-					type: 'dropdown',
-					label: 'Enable/Disable',
-					id: 'enable',
-					default: 1,
-					choices: [
-						{ id: 0, label: 'Disable'},
-						{ id: 1, label: 'Enable'}
-					]
-				}
-			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '00' + '00' + options.pinp.toString(16).padStart(2, '0').toUpperCase();
-
-				let value = options.enable.toString(16).padStart(2, '0').toUpperCase();
-				self.sendCommand(address, value);
-			}
-		};
-
-		actions.subdskkey_enable = {
-			label: 'SUB PGM Layer DSK Enable/Disable',
-			options:
-			[
-				{
-					type: 'dropdown',
-					label: 'DSK',
-					id: 'dsk',
-					default: self.CHOICES_SUBDSK[0].id,
-					choices: self.CHOICES_SUBDSK
-				},
-				{
-					type: 'dropdown',
-					label: 'Enable/Disable',
-					id: 'enable',
-					default: 1,
-					choices: [
-						{ id: 0, label: 'Disable'},
-						{ id: 1, label: 'Enable'}
-					]
-				}
-			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '00' + '00' + options.dsk.toString(16).padStart(2, '0').toUpperCase();
 
 				let value = options.enable.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
