@@ -391,7 +391,7 @@ instance.prototype.config_fields = function () {
 			width: 6,
 			default: '0000'
 		},
-		{
+		/*{
 			type: 'text',
 			id: 'info2',
 			label: 'Polling',
@@ -426,7 +426,7 @@ instance.prototype.config_fields = function () {
 			default: 1000,
 			width: 3,
 			isVisible: (configValues) => configValues.polling === true,
-		},
+		},*/
 		{
 			type: 'checkbox',
 			id: 'verbose',
@@ -555,6 +555,7 @@ instance.prototype.handleError = function(err) {
 	}
 };
 
+/*
 instance.prototype.startInterval = function() {
 	let self = this;
 
@@ -582,7 +583,7 @@ instance.prototype.getTallyData = function() {
 
 		self.sendRawCommand('RQH:' + command);
 	}
-}
+}*/
 
 instance.prototype.updateData = function(data) {
 	let self = this;
@@ -603,7 +604,8 @@ instance.prototype.updateData = function(data) {
 		self.status(self.STATUS_OK);
 		self.log('info', 'Authenticated.');
 		self.sendRawCommand('VER'); //request version info
-		self.startInterval(); //request tally states
+		//self.startInterval(); //request tally states
+		self.sendRawCommand('DTH:0C0100:01'); //TALLY SEND ACTIVE
 	}
 	else if (data.trim() == 'ERR:0;') {
 		//an error with something that it received
