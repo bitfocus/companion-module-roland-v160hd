@@ -126,7 +126,7 @@ module.exports = {
 					label: 'PnP/Key',
 					id: 'pinp',
 					default: self.CHOICES_PINPDSK[0].id,
-					choices: self.CHOICES_PINP
+					choices: self.CHOICES_PINPDSK
 				},
 				{
 					type: 'dropdown',
