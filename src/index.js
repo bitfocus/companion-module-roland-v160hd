@@ -42,7 +42,33 @@ instance.prototype.TALLYDATA = [
 	{ id: 12, label: 'SDI 5', shortlabel: 'sdi5',  status: 0},
 	{ id: 13, label: 'SDI 6', shortlabel: 'sdi6',  status: 0},
 	{ id: 14, label: 'SDI 7', shortlabel: 'sdi7',  status: 0},
-	{ id: 15, label: 'SDI 8', shortlabel: 'sdi8',  status: 0}
+	{ id: 15, label: 'SDI 8', shortlabel: 'sdi8',  status: 0},
+	{ id: 16, label: 'STILL 1', shortlabel: 'still1',  status: 0},
+	{ id: 17, label: 'STILL 2', shortlabel: 'still2',  status: 0},
+	{ id: 18, label: 'STILL 3', shortlabel: 'still3',  status: 0},
+	{ id: 19, label: 'STILL 4', shortlabel: 'still4',  status: 0},
+	{ id: 20, label: 'STILL 5', shortlabel: 'still5',  status: 0},
+	{ id: 21, label: 'STILL 6', shortlabel: 'still6',  status: 0},
+	{ id: 22, label: 'STILL 7', shortlabel: 'still7',  status: 0},
+	{ id: 23, label: 'STILL 8', shortlabel: 'still8',  status: 0},
+	{ id: 24, label: 'STILL 9', shortlabel: 'still9',  status: 0},
+	{ id: 25, label: 'STILL 10', shortlabel: 'still10',  status: 0},
+	{ id: 26, label: 'STILL 11', shortlabel: 'still11',  status: 0},
+	{ id: 27, label: 'STILL 12', shortlabel: 'still12',  status: 0},
+	{ id: 28, label: 'STILL 13', shortlabel: 'still13',  status: 0},
+	{ id: 29, label: 'STILL 14', shortlabel: 'still14',  status: 0},
+	{ id: 30, label: 'STILL 15', shortlabel: 'still15',  status: 0},
+	{ id: 31, label: 'STILL 16', shortlabel: 'still16',  status: 0},
+	{ id: 32, label: 'XPT 1', shortlabel: 'xpt1',  status: 0},
+	{ id: 33, label: 'XPT 2', shortlabel: 'xpt2',  status: 0},
+	{ id: 34, label: 'XPT 3', shortlabel: 'xpt3',  status: 0},
+	{ id: 35, label: 'XPT 4', shortlabel: 'xpt4',  status: 0},
+	{ id: 36, label: 'XPT 5', shortlabel: 'xpt5',  status: 0},
+	{ id: 37, label: 'XPT 6', shortlabel: 'xpt6',  status: 0},
+	{ id: 38, label: 'XPT 7', shortlabel: 'xpt7',  status: 0},
+	{ id: 39, label: 'XPT 8', shortlabel: 'xpt8',  status: 0},
+	{ id: 40, label: 'XPT 9', shortlabel: 'xpt9',  status: 0},
+	{ id: 41, label: 'XPT 10', shortlabel: 'xpt10',  status: 0}
 ];
 
 instance.prototype.CHOICES_INPUTS = [
@@ -369,7 +395,6 @@ instance.prototype.config_fields = function () {
 					<ul>
 						<li>Enter the Target IP of the Roland Device</li>
 						<li>Configure a Password/Passcode on the Roland Device, otherwise certain actions may not work.</li>
-						<li>Decide whether or not to Enable Polling</li>
 						<li>Click "Save" to save the module config.</li>
 					</ul>
 				</div>
@@ -391,7 +416,7 @@ instance.prototype.config_fields = function () {
 			width: 6,
 			default: '0000'
 		},
-		{
+		/*{
 			type: 'text',
 			id: 'info2',
 			label: 'Polling',
@@ -426,7 +451,7 @@ instance.prototype.config_fields = function () {
 			default: 1000,
 			width: 3,
 			isVisible: (configValues) => configValues.polling === true,
-		},
+		},*/
 		{
 			type: 'checkbox',
 			id: 'verbose',
@@ -555,7 +580,7 @@ instance.prototype.handleError = function(err) {
 	}
 };
 
-instance.prototype.startInterval = function() {
+/*instance.prototype.startInterval = function() {
 	let self = this;
 
 	if (self.config.polling) {
@@ -582,7 +607,13 @@ instance.prototype.getTallyData = function() {
 
 		self.sendRawCommand('RQH:' + command);
 	}
-}
+}*/
+
+instance.prototype.subscribeToTally = function() {
+	let self = this;
+
+	self.sendRawCommand('DTH:0C0100,01;'); //TALLY SEND ACTIVE
+};
 
 instance.prototype.updateData = function(data) {
 	let self = this;
@@ -603,7 +634,8 @@ instance.prototype.updateData = function(data) {
 		self.status(self.STATUS_OK);
 		self.log('info', 'Authenticated.');
 		self.sendRawCommand('VER'); //request version info
-		self.startInterval(); //request tally states
+		//self.startInterval(); //request tally states
+		self.subscribeToTally(); //request tally changes
 	}
 	else if (data.trim() == 'ERR:0;') {
 		//an error with something that it received
@@ -645,8 +677,24 @@ instance.prototype.updateData = function(data) {
 			
 											let value = dataSuffix[1];
 					
-											if (param1 == '0C' && param2 == '00') { //tally message
+											/*if (param1 == '0C' && param2 == '00') { //tally message
 												self.updateTally(param3, value);
+											}*/
+
+											if (param1 == '0C' && param2 == '00' && param3 == '00') { //subscribe tally message
+												let index = 0;
+												let halfLength = value.length / 2;
+												for (let t = 0; t < halfLength; t++) {
+													let input = halfLength - (halfLength - t)
+      												input = input.toString(16).padStart(2, '0').toUpperCase();
+
+													let tallyState = value[index] + value[index + 1];
+													tallyState = tallyState.toString(16).padStart(2, '0').toUpperCase();
+
+													self.updateTally(input, tallyState);
+
+													index = index + 2;
+												}
 											}
 										}
 									}
