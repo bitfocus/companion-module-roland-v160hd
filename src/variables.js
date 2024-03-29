@@ -1,30 +1,42 @@
 module.exports = {
-	// ##########################
-	// #### Define Variables ####
-	// ##########################
-	setVariables: function () {
+	initVariables: function () {
 		let self = this;
 		let variables = [];
 
-		variables.push({ name: 'model', label: 'Model' });
-		variables.push({ name: 'version', label: 'Version' });
+		variables.push({ variableId: 'model', name: 'Model' });
+		variables.push({ variableId: 'version', name: 'Version' });
 
 		for (let i = 0; i < self.TALLYDATA.length; i++) {
-			variables.push({ name: 'tally_' + self.TALLYDATA[i].shortlabel, label: self.TALLYDATA[i].label + ' Tally' });
+			variables.push({ variableId: 'tally_' + self.TALLYDATA[i].shortlabel, name: self.TALLYDATA[i].label + ' Tally' });
 		}
 
-		return variables
+		/*
+		{ id: '1B', label: 'PnP/Key 1' },
+						{ id: '1C', label: 'PnP/Key 2' },
+						{ id: '1D', label: 'PnP/Key 3' },
+						{ id: '1E', label: 'PnP/Key 4' },
+						*/
+
+		variables.push({ variableId: 'data_1B00', name: 'PnP/Key 1 on PGM' });
+		variables.push({ variableId: 'data_1B01', name: 'PnP/Key 1 on PVW' });
+		variables.push({ variableId: 'data_1C00', name: 'PnP/Key 2 on PGM' });
+		variables.push({ variableId: 'data_1C01', name: 'PnP/Key 2 on PVW' });
+		variables.push({ variableId: 'data_1D00', name: 'PnP/Key 3 on PGM' });
+		variables.push({ variableId: 'data_1D01', name: 'PnP/Key 3 on PVW' });
+		variables.push({ variableId: 'data_1E00', name: 'PnP/Key 4 on PGM' });
+		variables.push({ variableId: 'data_1E01', name: 'PnP/Key 4 on PVW' });
+
+		self.setVariableDefinitions(variables);
 	},
 
-	// #########################
-	// #### Check Variables ####
-	// #########################
 	checkVariables: function () {
 		let self = this;
 
 		try {
-			self.setVariable('model', self.MODEL);
-			self.setVariable('version', self.VERSION);
+			let variableObj = {};
+
+			variableObj.model = self.MODEL;
+			variableObj.version = self.VERSION;
 
 			for (let i = 0; i < self.TALLYDATA.length; i++) {
 				let state = 'Off';
@@ -36,8 +48,20 @@ module.exports = {
 					state = 'Preview';
 				}
 
-				self.setVariable('tally_' + self.TALLYDATA[i].shortlabel, state);
+				variableObj['tally_' + self.TALLYDATA[i].shortlabel] = state;
 			}
+
+			//PnP/Keys
+			variableObj.data_1B00 = self.DATA['data_1B00'] == '01' ? 'On' : 'Off';
+			variableObj.data_1B01 = self.DATA['data_1B01'] == '01' ? 'On' : 'Off';
+			variableObj.data_1C00 = self.DATA['data_1C00'] == '01' ? 'On' : 'Off';
+			variableObj.data_1C01 = self.DATA['data_1C01'] == '01' ? 'On' : 'Off';
+			variableObj.data_1D00 = self.DATA['data_1D00'] == '01' ? 'On' : 'Off';
+			variableObj.data_1D01 = self.DATA['data_1D01'] == '01' ? 'On' : 'Off';
+			variableObj.data_1E00 = self.DATA['data_1E00'] == '01' ? 'On' : 'Off';
+			variableObj.data_1E01 = self.DATA['data_1E01'] == '01' ? 'On' : 'Off';
+
+			self.setVariableValues(variableObj);
 		}
 		catch(error) {
 			self.log('error', 'Error setting Variables from Device: ' + String(error));

@@ -1,19 +1,16 @@
+const { combineRgb } = require('@companion-module/base')
+
 module.exports = {
-	// ##########################
-	// #### Define Feedbacks ####
-	// ##########################
-	setFeedbacks: function () {
+	initFeedbacks: function () {
 		let self = this;
 		let feedbacks = {};
 
-		const foregroundColor = self.rgb(255, 255, 255) // White
-		const backgroundColorRed = self.rgb(255, 0, 0) // Red
-		const backgroundColorGreen = self.rgb(0, 255, 0) // Green
-		const backgroundColorOrange = self.rgb(255, 102, 0) // Orange
+		const foregroundColor = combineRgb(255, 255, 255) // White
+		const backgroundColorRed = combineRgb(255, 0, 0) // Red
 
 		feedbacks.tally = {
 			type: 'boolean',
-			label: 'Tally State',
+			name: 'Tally State',
 			description: 'Indicate if Input Channel is in Preview or Program',
 			style: {
 				color: foregroundColor,
@@ -57,7 +54,64 @@ module.exports = {
 			}
 		}
 
+		feedbacks.keyOnAir = {
+			type: 'boolean',
+			name: 'Key is Selected on Bus',
+			description: 'Indicate if Key is Selected on Bus',
+			style: {
+				color: foregroundColor,
+				bgcolor: backgroundColorRed,
+			},
+			options: [
+				{
+					type: 'dropdown',
+					label: 'PnP/Key',
+					id: 'pinp',
+					default: '1B',
+					choices: [
+						{ id: '1B', label: 'PnP/Key 1' },
+						{ id: '1C', label: 'PnP/Key 2' },
+						{ id: '1D', label: 'PnP/Key 3' },
+						{ id: '1E', label: 'PnP/Key 4' },
+					]
+				},
+				{
+					type: 'dropdown',
+					label: 'Bus',
+					id: 'bus',
+					default: '00',
+					choices: [
+						{ id: '00', label: 'Program (PGM)' },
+						{ id: '01', label: 'Preview (PVW)' },
+					]
+				},
+				{
+					type: 'dropdown',
+					label: 'On/Off',
+					id: 'onoff',
+					default: '01',
+					choices: [
+						{ id: '00', label: 'Off' },
+						{ id: '01', label: 'On' },
+					]
+				}
+			],
+			callback: function (feedback, bank) {
+				let opt = feedback.options;
 
-		return feedbacks
+				let obj = self.DATA.find((obj) => obj.id == `data${opt.key}${opt.bus}`);
+
+				if (obj) {
+					if (obj.value == opt.onoff) {
+						return true;
+					}
+				}
+
+				return false
+			}
+		}
+
+
+		self.setFeedbackDefinitions(feedbacks)
 	}
 }

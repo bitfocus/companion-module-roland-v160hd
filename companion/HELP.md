@@ -31,6 +31,7 @@ The switcher should be running firmware 1.04 or higher. A password must be set o
 ## Feedbacks
 
 * Tally State
+* PnP/Key On Air State
 
 ## Variables
 
