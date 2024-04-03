@@ -303,7 +303,7 @@ module.exports = {
 	
 		let cmd = command + '\n';
 	
-		if (self.socket !== undefined && self.socket.connected) {
+		if (self.socket !== undefined && self.socket.isConnected) {
 			if (self.config.verbose) {
 				self.log('debug', 'Sending: ' + cmd);
 			}

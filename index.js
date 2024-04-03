@@ -36,6 +36,17 @@ class v160Instance extends InstanceBase {
 
 		this.MODEL = 'V-160HD';
 		this.VERSION = '';
+
+		this.DATA = {
+			data_1B00: '00',
+			data_1B01: '00',
+			data_1C00: '00',
+			data_1C01: '00',
+			data_1D00: '00',
+			data_1D01: '00',
+			data_1E00: '00',
+			data_1E01: '00',
+		}
 	}
 
 	async init(config) {

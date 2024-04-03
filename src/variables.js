@@ -52,14 +52,14 @@ module.exports = {
 			}
 
 			//PnP/Keys
-			variableObj.data_1B00 = self.DATA['data_1B00'] == '01' ? 'On' : 'Off';
-			variableObj.data_1B01 = self.DATA['data_1B01'] == '01' ? 'On' : 'Off';
-			variableObj.data_1C00 = self.DATA['data_1C00'] == '01' ? 'On' : 'Off';
-			variableObj.data_1C01 = self.DATA['data_1C01'] == '01' ? 'On' : 'Off';
-			variableObj.data_1D00 = self.DATA['data_1D00'] == '01' ? 'On' : 'Off';
-			variableObj.data_1D01 = self.DATA['data_1D01'] == '01' ? 'On' : 'Off';
-			variableObj.data_1E00 = self.DATA['data_1E00'] == '01' ? 'On' : 'Off';
-			variableObj.data_1E01 = self.DATA['data_1E01'] == '01' ? 'On' : 'Off';
+			variableObj.data_1B00 = self.DATA.data_1B00 == '01' ? 'On' : 'Off';
+			variableObj.data_1B01 = self.DATA.data_1B01 == '01' ? 'On' : 'Off';
+			variableObj.data_1C00 = self.DATA.data_1C00 == '01' ? 'On' : 'Off';
+			variableObj.data_1C01 = self.DATA.data_1C01 == '01' ? 'On' : 'Off';
+			variableObj.data_1D00 = self.DATA.data_1D00 == '01' ? 'On' : 'Off';
+			variableObj.data_1D01 = self.DATA.data_1D01 == '01' ? 'On' : 'Off';
+			variableObj.data_1E00 = self.DATA.data_1E00 == '01' ? 'On' : 'Off';
+			variableObj.data_1E01 = self.DATA.data_1E01 == '01' ? 'On' : 'Off';
 
 			self.setVariableValues(variableObj);
 		}
