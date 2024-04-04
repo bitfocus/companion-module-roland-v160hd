@@ -129,6 +129,7 @@ module.exports = {
 
 		//self.getTallyData();
 		self.getPinpKeyData();
+		self.getAuxData();
 	},
 
 	getPinpKeyData: function() {
@@ -142,8 +143,14 @@ module.exports = {
 		self.sendRawCommand('RQH:001D01,000001;') //PnP/Key 3 on PVW
 		self.sendRawCommand('RQH:001E00,000001;') //PnP/Key 4 on PGM
 		self.sendRawCommand('RQH:001E01,000001;') //PnP/Key 4 on PVW
+	},
 
+	getAuxData: function() {
+		let self = this;
 
+		self.sendRawCommand('RQH:000011,000001;') //Aux 1 current source
+		self.sendRawCommand('RQH:00002E,000001;') //Aux 2 current source
+		self.sendRawCommand('RQH:00002F,000001;') //Aux 3 current source
 	},
 
 	/*getTallyData: function() {
@@ -243,7 +250,18 @@ module.exports = {
 												}
 
 												if (param1 == '00') {
-													self.DATA[`data_${param2}${param3}`] = value; //this should take care of all requested data
+													if (param2 == '00' && param3 == '11') { //aux 1 source
+														self.DATA.aux1source = value;
+													}
+													else if (param2 == '00' && param3 == '2E') { //aux 2 source
+														self.DATA.aux2source = value;
+													}
+													else if (param2 == '00' && param3 == '2F') { //aux 3 source
+														self.DATA.aux3source = value;
+													}
+													else {
+														self.DATA[`data_${param2}${param3}`] = value; //this should take care of all requested data
+													}
 												}
 											}
 										}

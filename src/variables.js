@@ -26,6 +26,10 @@ module.exports = {
 		variables.push({ variableId: 'data_1E00', name: 'PnP/Key 4 on PGM' });
 		variables.push({ variableId: 'data_1E01', name: 'PnP/Key 4 on PVW' });
 
+		variables.push({ variableId: 'aux1', name: 'Aux 1 Source' });
+		variables.push({ variableId: 'aux2', name: 'Aux 2 Source' });
+		variables.push({ variableId: 'aux3', name: 'Aux 3 Source' });
+
 		self.setVariableDefinitions(variables);
 	},
 
@@ -60,6 +64,32 @@ module.exports = {
 			variableObj.data_1D01 = self.DATA.data_1D01 == '01' ? 'On' : 'Off';
 			variableObj.data_1E00 = self.DATA.data_1E00 == '01' ? 'On' : 'Off';
 			variableObj.data_1E01 = self.DATA.data_1E01 == '01' ? 'On' : 'Off';
+
+			//Aux Sources
+			let aux1source = self.CHOICES_PGMPVW_SELECT.find((item) => { return item.id == self.DATA.aux1source });
+			let aux2source = self.CHOICES_PGMPVW_SELECT.find((item) => { return item.id == self.DATA.aux2source });
+			let aux3source = self.CHOICES_PGMPVW_SELECT.find((item) => { return item.id == self.DATA.aux3source });
+
+			if (aux1source !== undefined) {
+				variableObj.aux1 = aux1source.label;
+			}
+			else {
+				variableObj.aux1 = self.DATA.aux1source;
+			}
+
+			if (aux2source !== undefined) {
+				variableObj.aux2 = aux2source.label;
+			}
+			else {
+				variableObj.aux2 = self.DATA.aux2source;
+			}
+
+			if (aux3source !== undefined) {
+				variableObj.aux3 = aux3source.label;
+			}
+			else {
+				variableObj.aux3 = self.DATA.aux3source;
+			}
 
 			self.setVariableValues(variableObj);
 		}

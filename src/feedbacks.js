@@ -30,8 +30,9 @@ module.exports = {
 					id: 'state',
 					default: 'program',
 					choices: [
-						{ id: 'preview', label: 'Preview' },
-						{ id: 'program', label: 'Program' }
+						{ id: 'program', label: 'Program (A)' },
+						{ id: 'preview', label: 'Preview (B)' },
+						{ id: 'both', label: 'Both' }
 					]
 				}
 			],
@@ -41,11 +42,69 @@ module.exports = {
 				let tallyObj = self.TALLYDATA.find((obj) => obj.id == opt.input);
 
 				if (tallyObj) {
-					if ((tallyObj.status == 1 || tallyObj.status == 3) && opt.state == 'program') {
+					if ((tallyObj.status == 1) && opt.state == 'program') {
 						return true;
 					}
 
 					if (tallyObj.status == 2 && opt.state == 'preview') {
+						return true;
+					}
+
+					if (tallyObj.status == 3 && opt.state == 'both') {
+						return true;
+					}
+				}
+
+				return false
+			}
+		}
+
+		feedbacks.auxTally = {
+			type: 'boolean',
+			name: 'Aux Tally State',
+			description: 'Indicate if Input Channel is in an Auxiliary Channel',
+			style: {
+				color: foregroundColor,
+				bgcolor: backgroundColorRed,
+			},
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Aux',
+					id: 'aux',
+					default: '11',
+					choices: [
+						{ id: 'aux1', label: 'Aux 1' },
+						{ id: 'aux2', label: 'Aux 2' },
+						{ id: 'aux3', label: 'Aux 3' },
+					]
+				},
+				{
+					type: 'dropdown',
+					label: 'Input Type',
+					id: 'assign',
+					default: self.CHOICES_PGMPVW_SELECT[0].id,
+					choices: self.CHOICES_PGMPVW_SELECT
+				}
+			],
+			callback: function (feedback, bank) {
+				let opt = feedback.options;
+
+				//implement
+				if (opt.aux == 'aux1') {
+					if (self.DATA.aux1source == opt.assign) {
+						return true;
+					}
+				}
+
+				if (opt.aux == 'aux2') {
+					if (self.DATA.aux2source == opt.assign) {
+						return true;
+					}
+				}
+
+				if (opt.aux == 'aux3') {
+					if (self.DATA.aux3source == opt.assign) {
 						return true;
 					}
 				}
