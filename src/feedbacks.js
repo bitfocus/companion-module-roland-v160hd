@@ -158,7 +158,7 @@ module.exports = {
 			callback: function (feedback, bank) {
 				let opt = feedback.options;
 
-				let obj = self.DATA.find((obj) => obj.id == `data${opt.key}${opt.bus}`);
+				let obj = self.DATA.find((obj) => obj.id == `data_${opt.key}${opt.bus}`);
 
 				if (obj) {
 					if (obj.value == opt.onoff) {
