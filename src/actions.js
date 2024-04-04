@@ -1682,6 +1682,7 @@ module.exports = {
 		};
 
 		//Camera Control
+
 		actions.cameraCurrentPreset = {
 			name: 'Camera Current Preset',
 			options:
@@ -1715,7 +1716,7 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = `00${options.camera}21`;
+				let address = `02${options.camera}21`;
 				let value = options.preset;
 				self.sendCommand(address, value);
 			}
@@ -1735,7 +1736,7 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = `00${options.camera}22`;
+				let address = `02${options.camera}22`;
 				self.sendCommand(address, '7F');
 			}
 		};
@@ -1754,7 +1755,7 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = `00${options.camera}22`;
+				let address = `02${options.camera}22`;
 				self.sendCommand(address, '01');
 			}
 		};
@@ -1773,7 +1774,7 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = `00${options.camera}22`;
+				let address = `02${options.camera}22`;
 				self.sendCommand(address, '00');
 			}
 		};
@@ -1792,7 +1793,7 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = `00${options.camera}23`;
+				let address = `02${options.camera}23`;
 				self.sendCommand(address, '01');
 			}
 		};
@@ -1811,7 +1812,7 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = `00${options.camera}23`;
+				let address = `02${options.camera}23`;
 				self.sendCommand(address, '7F');
 			}
 		};
@@ -1830,7 +1831,7 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = `00${options.camera}23`;
+				let address = `02${options.camera}23`;
 				self.sendCommand(address, '00');
 			}
 		};
@@ -1861,7 +1862,7 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = `00${options.camera}24`;
+				let address = `02${options.camera}24`;
 				let value = options.speed.toString(16).padStart(2, '0').toUpperCase();
 				self.sendCommand(address, value);
 			}
@@ -1881,7 +1882,7 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = `00${options.camera}25`;
+				let address = `02${options.camera}25`;
 				self.sendCommand(address, '02');
 			}
 		};
@@ -1900,7 +1901,7 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = `00${options.camera}25`;
+				let address = `02${options.camera}25`;
 				self.sendCommand(address, '01');
 			}
 		};
@@ -1919,7 +1920,7 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = `00${options.camera}25`;
+				let address = `02${options.camera}25`;
 				self.sendCommand(address, '7E');
 			}
 		};
@@ -1938,7 +1939,7 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = `00${options.camera}25`;
+				let address = `02${options.camera}25`;
 				self.sendCommand(address, '7F');
 			}
 		};
@@ -1957,7 +1958,7 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = `00${options.camera}25`;
+				let address = `02${options.camera}25`;
 				self.sendCommand(address, '00');
 			}
 		};
@@ -1987,7 +1988,7 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = `00${options.camera}26`;
+				let address = `02${options.camera}26`;
 				let value = options.focus;
 				self.sendCommand(address, value);
 			}
@@ -2007,7 +2008,7 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = `00${options.camera}27`;
+				let address = `02${options.camera}27`;
 				self.sendCommand(address, '01');
 			}
 		};
@@ -2026,7 +2027,7 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = `00${options.camera}27`;
+				let address = `02${options.camera}27`;
 				self.sendCommand(address, '00');
 			}
 		};
@@ -2055,7 +2056,7 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = `00${options.camera}28`;
+				let address = `02${options.camera}28`;
 				let value = options.exposure;
 				self.sendCommand(address, value);
 			}
@@ -2099,7 +2100,7 @@ module.exports = {
 			],
 			callback: function(action, bank) {
 				let options = action.options;
-				let address = `00${options.camera}29`;
+				let address = `02${options.camera}29`;
 				let value = options.channel;
 				self.sendCommand(address, value);
 			}
