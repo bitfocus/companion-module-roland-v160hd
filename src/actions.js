@@ -339,29 +339,11 @@ module.exports = {
 			callback: function(action, bank) {
 				let options = action.options;
 				let address = `00${options.pinp}`;
-				//split the number into two bytes and send two commands
 				
-				// Decimal value
-				let decimalValue = options.position * 10; // shift the decimal point one place to the right
-				// Convert decimal to hexadecimal
-				let hexadecimalValue = decimalValue.toString(16).toUpperCase();
-
-				// Convert hexadecimal string to a 32-bit signed integer
-				let signedInt32 = parseInt(hexadecimalValue, 16) | 0;
-
-				// Extract lower 16 bits
-				let lower16Bits = signedInt32 & 0xFFFF;
-
-				// Convert back to hexadecimal
-				let truncatedHex = lower16Bits.toString(16).toUpperCase();
-
-				console.log(truncatedHex);
-
-
-
+				let bytes = self.calculateBytes(options.position);
 				
-				self.sendCommand(address + '04', value1);
-				self.sendCommand(address + '05', value2);
+				self.sendCommand(address + '04', bytes[0]);
+				self.sendCommand(address + '05', bytes[1]);
 			}
 		};
 
@@ -398,13 +380,10 @@ module.exports = {
 				let options = action.options;
 				let address = `00${options.pinp}`;
 
-				//split the number into two bytes and send two commands
-				//the range is: -100.0 to 0.0
-				//-100.0 is 0x78 0x18
-				//0.0 is 0x00 0x00
+				let bytes = self.calculateBytes(options.position);
 
-				self.sendCommand(address + '06', value1);
-				self.sendCommand(address + '07', value2);
+				self.sendCommand(address + '06', bytes[0]);
+				self.sendCommand(address + '07', bytes[1]);
 			}
 		};
 
@@ -440,10 +419,11 @@ module.exports = {
 			callback: function(action, bank) {
 				let options = action.options;
 				let address = `00${options.pinp}`;
+
+				let bytes = self.calculateBytes(options.size);				
 				
-				
-				self.sendCommand(address + '08', value1);
-				self.sendCommand(address + '09', value2);
+				self.sendCommand(address + '08', bytes[0]);
+				self.sendCommand(address + '09', bytes[1]);
 			}
 		};
 
@@ -480,9 +460,10 @@ module.exports = {
 				let options = action.options;
 				let address = `00${options.pinp}`;
 
-				//split the number into two bytes and send two commands
-				self.sendCommand(address + '0A', value1);
-				self.sendCommand(address + '0B', value2);
+				let bytes = self.calculateBytes(options.cropping);
+
+				self.sendCommand(address + '0A', bytes[0]);
+				self.sendCommand(address + '0B', bytes[1]);
 			}
 		};
 
@@ -519,9 +500,10 @@ module.exports = {
 				let options = action.options;
 				let address = `00${options.pinp}`;
 
-				//split the number into two bytes and send two commands
-				self.sendCommand(address + '0C', value1);
-				self.sendCommand(address + '0D', value2);
+				let bytes = self.calculateBytes(options.cropping);		
+
+				self.sendCommand(address + '0C', bytes[0]);
+				self.sendCommand(address + '0D', bytes[1]);
 			}
 		};
 
@@ -675,9 +657,10 @@ module.exports = {
 				let options = action.options;
 				let address = `00${options.pinp}`;
 
-				//split the number into two bytes and send two commands
-				self.sendCommand(address + '11', value1);
-				self.sendCommand(address + '12', value2);
+				let bytes = self.calculateBytes(options.position);
+
+				self.sendCommand(address + '11', bytes[0]);
+				self.sendCommand(address + '12', bytes[1]);
 			}
 		};
 
@@ -714,9 +697,10 @@ module.exports = {
 				let options = action.options;
 				let address = `00${options.pinp}`;
 
-				//split the number into two bytes and send two commands
-				self.sendCommand(address + '13', value1);
-				self.sendCommand(address + '14', value2);
+				let bytes = self.calculateBytes(options.position);
+
+				self.sendCommand(address + '13', bytes[0]);
+				self.sendCommand(address + '14', bytes[1]);
 			}
 		};
 
@@ -753,8 +737,10 @@ module.exports = {
 				let options = action.options;
 				let address = `00${options.pinp}`;
 
-				self.sendCommand(address + '15', value1);
-				self.sendCommand(address + '16', value2);
+				let bytes = self.calculateBytes(options.zoom);		
+
+				self.sendCommand(address + '15', bytes[0]);
+				self.sendCommand(address + '16', bytes[1]);
 			}
 		};
 
@@ -791,8 +777,10 @@ module.exports = {
 				let options = action.options;
 				let address = `00${options.pinp}`;
 
-				self.sendCommand(address + '17', value1);
-				self.sendCommand(address + '18', value2);
+				let bytes = self.calculateBytes(options.level);		
+
+				self.sendCommand(address + '17', bytes[0]);
+				self.sendCommand(address + '18', bytes[1]);
 			}
 		};
 
@@ -829,8 +817,10 @@ module.exports = {
 				let options = action.options;
 				let address = `00${options.pinp}`;
 
-				self.sendCommand(address + '19', value1);
-				self.sendCommand(address + '1A', value2);
+				let bytes = self.calculateBytes(options.gain);		
+
+				self.sendCommand(address + '19', bytes[0]);
+				self.sendCommand(address + '1A', bytes[1]);
 			}
 		};
 
@@ -867,8 +857,10 @@ module.exports = {
 				let options = action.options;
 				let address = `00${options.pinp}`;
 
-				self.sendCommand(address + '1B', value1);
-				self.sendCommand(address + '1C', value2);
+				let bytes = self.calculateBytes(options.level);		
+
+				self.sendCommand(address + '1B', bytes[0]);
+				self.sendCommand(address + '1C', bytes[1]);
 			}
 		};
 
@@ -976,9 +968,11 @@ module.exports = {
 			callback: function(action, bank) {
 				let options = action.options;
 				let address = `00${options.pinp}`;
-				let value = options.fine
-				self.sendCommand(address + '1F', value1);
-				self.sendCommand(address + '20', value2);
+	
+				let bytes = self.calculateBytes(options.fine);		
+
+				self.sendCommand(address + '1F', bytes[0]);
+				self.sendCommand(address + '20', bytes[1]);
 			}
 		};
 
@@ -1014,9 +1008,11 @@ module.exports = {
 			callback: function(action, bank) {
 				let options = action.options;
 				let address = `00${options.pinp}`;
-				let value = options.width
-				self.sendCommand(address + '21', value1);
-				self.sendCommand(address + '22', value2);
+
+				let bytes = self.calculateBytes(options.width);
+
+				self.sendCommand(address + '21', bytes[0]);
+				self.sendCommand(address + '22', bytes[1]);
 			}
 		};
 
@@ -1052,9 +1048,11 @@ module.exports = {
 			callback: function(action, bank) {
 				let options = action.options;
 				let address = `00${options.pinp}`;
-				let value = options.fine
-				self.sendCommand(address + '23', value1);
-				self.sendCommand(address + '24', value2);
+
+				let bytes = self.calculateBytes(options.fine);
+
+				self.sendCommand(address + '23', bytes[0]);
+				self.sendCommand(address + '24', bytes[1]);
 			}
 		};
 
@@ -1090,9 +1088,11 @@ module.exports = {
 			callback: function(action, bank) {
 				let options = action.options;
 				let address = `00${options.pinp}`;
-				let value = options.red
-				self.sendCommand(address + '25', value1);
-				self.sendCommand(address + '26', value2);
+
+				let bytes = self.calculateBytes(options.red);
+
+				self.sendCommand(address + '25', bytes[0]);
+				self.sendCommand(address + '26', bytes[1]);
 			}
 		};
 
@@ -1128,9 +1128,11 @@ module.exports = {
 			callback: function(action, bank) {
 				let options = action.options;
 				let address = `00${options.pinp}`;
-				let value = options.green
-				self.sendCommand(address + '27', value1);
-				self.sendCommand(address + '28', value2);
+
+				let bytes = self.calculateBytes(options.green);
+
+				self.sendCommand(address + '27', bytes[0]);
+				self.sendCommand(address + '28', bytes[1]);
 			}
 		};
 
@@ -1166,9 +1168,11 @@ module.exports = {
 			callback: function(action, bank) {
 				let options = action.options;
 				let address = `00${options.pinp}`;
-				let value = options.blue
-				self.sendCommand(address + '29', value1);
-				self.sendCommand(address + '2A', value2);
+
+				let bytes = self.calculateBytes(options.blue);
+
+				self.sendCommand(address + '29', bytes[0]);
+				self.sendCommand(address + '2A', bytes[1]);
 			}
 		};
 
