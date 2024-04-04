@@ -156,6 +156,42 @@ module.exports = {
 			}
 		};
 
+		actions.pnpkey_fade = {
+			name: 'PnP & Key Fade Enable/Disable',
+			options:
+			[
+				{
+					type: 'dropdown',
+					label: 'PnP/Key',
+					id: 'pinp',
+					default: '05',
+					choices: [
+						{ id: '05', label: 'PnP/Key 1' },
+						{ id: '06', label: 'PnP/Key 2' },
+						{ id: '07', label: 'PnP/Key 3' },
+						{ id: '08', label: 'PnP/Key 4' },
+					]
+				},
+				{
+					type: 'dropdown',
+					label: 'Enable/Disable',
+					id: 'enable',
+					default: '01',
+					choices: [
+						{ id: '00', label: 'Disable'},
+						{ id: '01', label: 'Enable'}
+					]
+				}
+			],
+			callback: function(action, bank) {
+				let options = action.options;
+				let address = '02' + '03' + options.pinp;
+
+				let value = options.enable;
+				self.sendCommand(address, value);
+			}
+		};
+
 		actions.pnpkey_busselect = {
 			name: 'PnP & Key Bus Select',
 			options:
