@@ -21,11 +21,6 @@
 		"entrypoint": "../index.js"
 	},
 	"manufacturer": "Roland",
-	"products": [
-		"V-160HD"
-	],
-	"keywords": [
-		"Vision Mixer",
-		"Video Switcher"
-	]
+	"products": ["V-160HD"],
+	"keywords": ["Vision Mixer", "Video Switcher"]
 }

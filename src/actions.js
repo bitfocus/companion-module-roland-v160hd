@@ -1,12 +1,11 @@
 module.exports = {
 	initActions: function () {
-		let self = this;
-		let actions = {};
+		let self = this
+		let actions = {}
 
 		actions.run_macro = {
 			name: 'Run Macro',
-			options:
-			[
+			options: [
 				{
 					type: 'number',
 					label: 'Macro',
@@ -17,86 +16,83 @@ module.exports = {
 					default: 1,
 					step: 1,
 					required: true,
-					range: false
-				}
+					range: false,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let macro = options.macro;
-				let macroZero = macro - 1;
-				let value = macroZero.toString(16).padStart(2, '0').toUpperCase();
+			callback: function (action, bank) {
+				let options = action.options
+				let macro = options.macro
+				let macroZero = macro - 1
+				let value = macroZero.toString(16).padStart(2, '0').toUpperCase()
 
-				let address = '500504';
-				self.sendCommand(address, value);
-			}
+				let address = '500504'
+				self.sendCommand(address, value)
+			},
 		}
 
 		actions.input_assign = {
 			name: 'Assign Input',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Input Channel',
 					id: 'input',
 					default: self.CHOICES_INPUTS[0].id,
-					choices: self.CHOICES_INPUTS
+					choices: self.CHOICES_INPUTS,
 				},
 				{
 					type: 'dropdown',
 					label: 'Input Type',
 					id: 'assign',
 					default: self.CHOICES_INPUTSASSIGN[0].id,
-					choices: self.CHOICES_INPUTSASSIGN
-				}
+					choices: self.CHOICES_INPUTSASSIGN,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '00' + '00' + options.input.toString(16).padStart(2, '0').toUpperCase();
-				let value = options.assign.toString(16).padStart(2, '0').toUpperCase();
-				self.sendCommand(address, value);
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = '00' + '00' + options.input.toString(16).padStart(2, '0').toUpperCase()
+				let value = options.assign.toString(16).padStart(2, '0').toUpperCase()
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.output_assign = {
 			name: 'Assign Output',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Output',
 					id: 'output',
 					default: self.CHOICES_OUTPUTS[0].id,
-					choices: self.CHOICES_OUTPUTS
+					choices: self.CHOICES_OUTPUTS,
 				},
 				{
 					type: 'dropdown',
 					label: 'Type',
 					id: 'assign',
 					default: self.CHOICES_OUTPUTSASSIGN[0].id,
-					choices: self.CHOICES_OUTPUTSASSIGN
-				}
+					choices: self.CHOICES_OUTPUTSASSIGN,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '00';
-				
-				if (options.output === 16) { //USB OUTPUT
-					address += '01' + options.output.toString(16).padStart(2, '0').toUpperCase();
-				}
-				else {
-					address += '00' + options.output.toString(16).padStart(2, '0').toUpperCase();
+			callback: function (action, bank) {
+				let options = action.options
+				let address = '00'
+
+				if (options.output === 16) {
+					//USB OUTPUT
+					address += '01' + options.output.toString(16).padStart(2, '0').toUpperCase()
+				} else {
+					address += '00' + options.output.toString(16).padStart(2, '0').toUpperCase()
 				}
 
-				let value = options.assign.toString(16).padStart(2, '0').toUpperCase();
-				self.sendCommand(address, value);
-			}
-		};
+				let value = options.assign.toString(16).padStart(2, '0').toUpperCase()
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.aux_assign = {
 			name: 'Assign Aux',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Aux',
@@ -106,35 +102,68 @@ module.exports = {
 						{ id: '000011', label: 'Aux 1' },
 						{ id: '00002E', label: 'Aux 2' },
 						{ id: '00002F', label: 'Aux 3' },
-					]
+					],
 				},
 				{
 					type: 'dropdown',
 					label: 'Input Type',
 					id: 'assign',
 					default: self.CHOICES_PGMPVW_SELECT[0].id,
-					choices: self.CHOICES_PGMPVW_SELECT
-				}
+					choices: self.CHOICES_PGMPVW_SELECT,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
+			callback: function (action, bank) {
+				let options = action.options
 				let address = options.aux
 
-				let value = options.assign;
-				self.sendCommand(address, value);
-			}
-		};
+				let value = options.assign
+				self.sendCommand(address, value)
+			},
+		}
+
+		actions.aux_mute = {
+			name: 'Mute Aux',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Aux',
+					id: 'aux',
+					default: '000011',
+					choices: [
+						{ id: '012203', label: 'Aux 1' },
+						{ id: '012503', label: 'Aux 2' },
+						{ id: '012603', label: 'Aux 3' },
+					],
+				},
+				{
+					type: 'dropdown',
+					label: 'Mute/Unmute',
+					id: 'mute',
+					default: 1,
+					choices: [
+						{ id: '00', label: 'Unmute' },
+						{ id: '01', label: 'Mute' },
+					],
+				},
+			],
+			callback: function (action, bank) {
+				let options = action.options
+				let address = options.aux
+
+				let value = options.mute
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.pnpkey_enable = {
 			name: 'PnP & Key Enable/Disable',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
 					id: 'pinp',
 					default: self.CHOICES_PINPDSK[0].id,
-					choices: self.CHOICES_PINPDSK
+					choices: self.CHOICES_PINPDSK,
 				},
 				{
 					type: 'dropdown',
@@ -142,24 +171,23 @@ module.exports = {
 					id: 'enable',
 					default: 1,
 					choices: [
-						{ id: 0, label: 'Disable'},
-						{ id: 1, label: 'Enable'}
-					]
-				}
+						{ id: 0, label: 'Disable' },
+						{ id: 1, label: 'Enable' },
+					],
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '00' + '00' + options.pinp.toString(16).padStart(2, '0').toUpperCase();
+			callback: function (action, bank) {
+				let options = action.options
+				let address = '00' + '00' + options.pinp.toString(16).padStart(2, '0').toUpperCase()
 
-				let value = options.enable.toString(16).padStart(2, '0').toUpperCase();
-				self.sendCommand(address, value);
-			}
-		};
+				let value = options.enable.toString(16).padStart(2, '0').toUpperCase()
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.pnpkey_fade = {
 			name: 'PnP & Key Fade Enable/Disable',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -170,7 +198,7 @@ module.exports = {
 						{ id: '06', label: 'PnP/Key 2' },
 						{ id: '07', label: 'PnP/Key 3' },
 						{ id: '08', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'dropdown',
@@ -178,24 +206,23 @@ module.exports = {
 					id: 'enable',
 					default: '01',
 					choices: [
-						{ id: '00', label: 'Disable'},
-						{ id: '01', label: 'Enable'}
-					]
-				}
+						{ id: '00', label: 'Disable' },
+						{ id: '01', label: 'Enable' },
+					],
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '02' + '03' + options.pinp;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = '02' + '03' + options.pinp
 
-				let value = options.enable;
-				self.sendCommand(address, value);
-			}
-		};
+				let value = options.enable
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.pnpkey_busselect = {
 			name: 'PnP & Key Bus Select',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -206,7 +233,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'dropdown',
@@ -216,7 +243,7 @@ module.exports = {
 					choices: [
 						{ id: '00', label: 'Program (PGM)' },
 						{ id: '01', label: 'Preview (PVW)' },
-					]
+					],
 				},
 				{
 					type: 'dropdown',
@@ -226,21 +253,20 @@ module.exports = {
 					choices: [
 						{ id: '00', label: 'Off' },
 						{ id: '01', label: 'On' },
-					]
-				}
+					],
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}${options.bus}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}${options.bus}`
 				let value = options.onoff
-				self.sendCommand(address, value);
-			}
-		};
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.pnpkey_setsource = {
 			name: 'PnP & Key Set Source',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -251,28 +277,27 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'dropdown',
 					label: 'Source',
 					id: 'source',
 					default: self.CHOICES_PGMPVW_SELECT[0].id,
-					choices: self.CHOICES_PGMPVW_SELECT
-				}
+					choices: self.CHOICES_PGMPVW_SELECT,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}02`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}02`
 				let value = options.source
-				self.sendCommand(address, value);
-			}
-		};
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.pnpkey_settype = {
 			name: 'PnP & Key Set Type',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -283,7 +308,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'dropdown',
@@ -296,21 +321,20 @@ module.exports = {
 						{ id: '01', label: 'Luminance-White Key' },
 						{ id: '02', label: 'Luminance-Black Key' },
 						{ id: '03', label: 'Chroma Key' },
-					]
-				}
+					],
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}03`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}03`
 				let value = options.type
-				self.sendCommand(address, value);
-			}
-		};
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.pnpkey_positionH = {
 			name: 'PnP & Key Position Horizontal',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -321,7 +345,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'number',
@@ -333,24 +357,23 @@ module.exports = {
 					default: 50.0,
 					step: 0.1,
 					required: true,
-					range: true
-				}
+					range: true,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
-				
-				let bytes = self.calculateBytes(options.position);
-				
-				self.sendCommand(address + '04', bytes[0]);
-				self.sendCommand(address + '05', bytes[1]);
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
+
+				let bytes = self.calculateBytes(options.position)
+
+				self.sendCommand(address + '04', bytes[0])
+				self.sendCommand(address + '05', bytes[1])
+			},
+		}
 
 		actions.pnpkey_positionV = {
 			name: 'PnP & Key Position Vertical',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -361,7 +384,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'number',
@@ -373,24 +396,23 @@ module.exports = {
 					default: 50.0,
 					step: 0.1,
 					required: true,
-					range: true
-				}
+					range: true,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
 
-				let bytes = self.calculateBytes(options.position);
+				let bytes = self.calculateBytes(options.position)
 
-				self.sendCommand(address + '06', bytes[0]);
-				self.sendCommand(address + '07', bytes[1]);
-			}
-		};
+				self.sendCommand(address + '06', bytes[0])
+				self.sendCommand(address + '07', bytes[1])
+			},
+		}
 
 		actions.pnpkey_size = {
 			name: 'PnP & Key Size',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -401,7 +423,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'number',
@@ -413,24 +435,23 @@ module.exports = {
 					default: 50.0,
 					step: 0.1,
 					required: true,
-					range: true
-				}
+					range: true,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
 
-				let bytes = self.calculateBytes(options.size);				
-				
-				self.sendCommand(address + '08', bytes[0]);
-				self.sendCommand(address + '09', bytes[1]);
-			}
-		};
+				let bytes = self.calculateBytes(options.size)
+
+				self.sendCommand(address + '08', bytes[0])
+				self.sendCommand(address + '09', bytes[1])
+			},
+		}
 
 		actions.pnpkey_croppingH = {
 			name: 'PnP & Key Cropping Horizontal',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -441,7 +462,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'number',
@@ -453,24 +474,23 @@ module.exports = {
 					default: 0.0,
 					step: 0.1,
 					required: true,
-					range: true
-				}
+					range: true,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
 
-				let bytes = self.calculateBytes(options.cropping);
+				let bytes = self.calculateBytes(options.cropping)
 
-				self.sendCommand(address + '0A', bytes[0]);
-				self.sendCommand(address + '0B', bytes[1]);
-			}
-		};
+				self.sendCommand(address + '0A', bytes[0])
+				self.sendCommand(address + '0B', bytes[1])
+			},
+		}
 
 		actions.pnpkey_croppingV = {
 			name: 'PnP & Key Cropping Vertical',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -481,7 +501,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'number',
@@ -493,24 +513,23 @@ module.exports = {
 					default: 0.0,
 					step: 0.1,
 					required: true,
-					range: true
-				}
+					range: true,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
 
-				let bytes = self.calculateBytes(options.cropping);		
+				let bytes = self.calculateBytes(options.cropping)
 
-				self.sendCommand(address + '0C', bytes[0]);
-				self.sendCommand(address + '0D', bytes[1]);
-			}
-		};
+				self.sendCommand(address + '0C', bytes[0])
+				self.sendCommand(address + '0D', bytes[1])
+			},
+		}
 
 		actions.pnpkey_shape = {
 			name: 'PnP & Key Shape',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -521,7 +540,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'dropdown',
@@ -532,21 +551,20 @@ module.exports = {
 						{ id: '00', label: 'Rectangle' },
 						{ id: '01', label: 'Circle' },
 						{ id: '02', label: 'Diamond' },
-					]
-				}
+					],
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
 				let value = options.shape
-				self.sendCommand(address + '0E', value);
-			}
-		};
+				self.sendCommand(address + '0E', value)
+			},
+		}
 
 		actions.pnpkey_borderColor = {
 			name: 'PnP & Key Border Color',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -557,7 +575,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'dropdown',
@@ -575,21 +593,20 @@ module.exports = {
 						{ id: '07', label: 'Black' },
 						{ id: '08', label: 'Custom' },
 						{ id: '09', label: 'Soft Edge' },
-					]
-				}
+					],
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
 				let value = options.color
-				self.sendCommand(address + '0F', value);
-			}
-		};
+				self.sendCommand(address + '0F', value)
+			},
+		}
 
 		actions.pnpkey_borderWidth = {
 			name: 'PnP & Key Border Width',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -600,7 +617,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'number',
@@ -612,22 +629,21 @@ module.exports = {
 					default: 5,
 					step: 1,
 					required: true,
-					range: true
-				}
+					range: true,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
 
-				let value = options.width.toString(16).padStart(2, '0').toUpperCase();
-				self.sendCommand(address + '10', value);
-			}
-		};
+				let value = options.width.toString(16).padStart(2, '0').toUpperCase()
+				self.sendCommand(address + '10', value)
+			},
+		}
 
 		actions.pnpkey_viewPositionH = {
 			name: 'PnP & Key View Position Horizontal',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -638,7 +654,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'number',
@@ -650,24 +666,23 @@ module.exports = {
 					default: 0.0,
 					step: 0.1,
 					required: true,
-					range: true
-				}
+					range: true,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
 
-				let bytes = self.calculateBytes(options.position);
+				let bytes = self.calculateBytes(options.position)
 
-				self.sendCommand(address + '11', bytes[0]);
-				self.sendCommand(address + '12', bytes[1]);
-			}
-		};
+				self.sendCommand(address + '11', bytes[0])
+				self.sendCommand(address + '12', bytes[1])
+			},
+		}
 
 		actions.pnpkey_viewPositionV = {
 			name: 'PnP & Key View Position Vertical',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -678,7 +693,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'number',
@@ -690,24 +705,23 @@ module.exports = {
 					default: 0.0,
 					step: 0.1,
 					required: true,
-					range: true
-				}
+					range: true,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
 
-				let bytes = self.calculateBytes(options.position);
+				let bytes = self.calculateBytes(options.position)
 
-				self.sendCommand(address + '13', bytes[0]);
-				self.sendCommand(address + '14', bytes[1]);
-			}
-		};
+				self.sendCommand(address + '13', bytes[0])
+				self.sendCommand(address + '14', bytes[1])
+			},
+		}
 
 		actions.pnpkey_viewZoom = {
 			name: 'PnP & Key View Zoom',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -718,7 +732,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'number',
@@ -730,24 +744,23 @@ module.exports = {
 					default: 100,
 					step: 1,
 					required: true,
-					range: true
-				}
+					range: true,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
 
-				let bytes = self.calculateBytes(options.zoom);		
+				let bytes = self.calculateBytes(options.zoom)
 
-				self.sendCommand(address + '15', bytes[0]);
-				self.sendCommand(address + '16', bytes[1]);
-			}
-		};
+				self.sendCommand(address + '15', bytes[0])
+				self.sendCommand(address + '16', bytes[1])
+			},
+		}
 
 		actions.pnpkey_keyLevel = {
 			name: 'PnP & Key Key Level',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -758,7 +771,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'number',
@@ -770,24 +783,23 @@ module.exports = {
 					default: 50,
 					step: 1,
 					required: true,
-					range: true
-				}
+					range: true,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
 
-				let bytes = self.calculateBytes(options.level);		
+				let bytes = self.calculateBytes(options.level)
 
-				self.sendCommand(address + '17', bytes[0]);
-				self.sendCommand(address + '18', bytes[1]);
-			}
-		};
+				self.sendCommand(address + '17', bytes[0])
+				self.sendCommand(address + '18', bytes[1])
+			},
+		}
 
 		actions.pnpkey_keyGain = {
 			name: 'PnP & Key Key Gain',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -798,7 +810,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'number',
@@ -810,24 +822,23 @@ module.exports = {
 					default: 50,
 					step: 1,
 					required: true,
-					range: true
-				}
+					range: true,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
 
-				let bytes = self.calculateBytes(options.gain);		
+				let bytes = self.calculateBytes(options.gain)
 
-				self.sendCommand(address + '19', bytes[0]);
-				self.sendCommand(address + '1A', bytes[1]);
-			}
-		};
+				self.sendCommand(address + '19', bytes[0])
+				self.sendCommand(address + '1A', bytes[1])
+			},
+		}
 
 		actions.pnpkey_mixLevel = {
 			name: 'PnP & Key Mix Level',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -838,7 +849,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'number',
@@ -850,24 +861,23 @@ module.exports = {
 					default: 50,
 					step: 1,
 					required: true,
-					range: true
-				}
+					range: true,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
 
-				let bytes = self.calculateBytes(options.level);		
+				let bytes = self.calculateBytes(options.level)
 
-				self.sendCommand(address + '1B', bytes[0]);
-				self.sendCommand(address + '1C', bytes[1]);
-			}
-		};
+				self.sendCommand(address + '1B', bytes[0])
+				self.sendCommand(address + '1C', bytes[1])
+			},
+		}
 
 		actions.pnpkey_chromaColor = {
 			name: 'PnP & Key Chroma Color',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -878,7 +888,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'dropdown',
@@ -888,21 +898,20 @@ module.exports = {
 					choices: [
 						{ id: '00', label: 'Green' },
 						{ id: '01', label: 'Blue' },
-					]
-				}
+					],
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
 				let value = options.color
-				self.sendCommand(address + '1D', value);
-			}
-		};
+				self.sendCommand(address + '1D', value)
+			},
+		}
 
 		actions.pnpkey_hueWidth = {
 			name: 'PnP & Key Hue Width',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -913,7 +922,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'number',
@@ -925,21 +934,20 @@ module.exports = {
 					default: 0,
 					step: 1,
 					required: true,
-					range: true
-				}
+					range: true,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
 				let value = options.width
-				self.sendCommand(address + '1E', value);
-			}
-		};
+				self.sendCommand(address + '1E', value)
+			},
+		}
 
 		actions.pnpkey_hueFine = {
 			name: 'PnP & Key Hue Fine',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -950,7 +958,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'number',
@@ -962,24 +970,23 @@ module.exports = {
 					default: 0,
 					step: 1,
 					required: true,
-					range: true
-				}
+					range: true,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
-	
-				let bytes = self.calculateBytes(options.fine);		
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
 
-				self.sendCommand(address + '1F', bytes[0]);
-				self.sendCommand(address + '20', bytes[1]);
-			}
-		};
+				let bytes = self.calculateBytes(options.fine)
+
+				self.sendCommand(address + '1F', bytes[0])
+				self.sendCommand(address + '20', bytes[1])
+			},
+		}
 
 		actions.pnpkey_saturationWidth = {
 			name: 'PnP & Key Saturation Width',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -990,7 +997,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'number',
@@ -1002,24 +1009,23 @@ module.exports = {
 					default: 0,
 					step: 1,
 					required: true,
-					range: true
-				}
+					range: true,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
 
-				let bytes = self.calculateBytes(options.width);
+				let bytes = self.calculateBytes(options.width)
 
-				self.sendCommand(address + '21', bytes[0]);
-				self.sendCommand(address + '22', bytes[1]);
-			}
-		};
+				self.sendCommand(address + '21', bytes[0])
+				self.sendCommand(address + '22', bytes[1])
+			},
+		}
 
 		actions.pnpkey_saturationFine = {
 			name: 'PnP & Key Saturation Fine',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -1030,7 +1036,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'number',
@@ -1042,24 +1048,23 @@ module.exports = {
 					default: 0,
 					step: 1,
 					required: true,
-					range: true
-				}
+					range: true,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
 
-				let bytes = self.calculateBytes(options.fine);
+				let bytes = self.calculateBytes(options.fine)
 
-				self.sendCommand(address + '23', bytes[0]);
-				self.sendCommand(address + '24', bytes[1]);
-			}
-		};
+				self.sendCommand(address + '23', bytes[0])
+				self.sendCommand(address + '24', bytes[1])
+			},
+		}
 
 		actions.pnpkey_borderColorRed = {
 			name: 'PnP & Key Border Color Red',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -1070,7 +1075,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'number',
@@ -1082,24 +1087,23 @@ module.exports = {
 					default: 0,
 					step: 1,
 					required: true,
-					range: true
-				}
+					range: true,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
 
-				let bytes = self.calculateBytes(options.red);
+				let bytes = self.calculateBytes(options.red)
 
-				self.sendCommand(address + '25', bytes[0]);
-				self.sendCommand(address + '26', bytes[1]);
-			}
-		};
+				self.sendCommand(address + '25', bytes[0])
+				self.sendCommand(address + '26', bytes[1])
+			},
+		}
 
 		actions.pnpkey_borderColorGreen = {
 			name: 'PnP & Key Border Color Green',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -1110,7 +1114,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'number',
@@ -1122,24 +1126,23 @@ module.exports = {
 					default: 0,
 					step: 1,
 					required: true,
-					range: true
-				}
+					range: true,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
 
-				let bytes = self.calculateBytes(options.green);
+				let bytes = self.calculateBytes(options.green)
 
-				self.sendCommand(address + '27', bytes[0]);
-				self.sendCommand(address + '28', bytes[1]);
-			}
-		};
+				self.sendCommand(address + '27', bytes[0])
+				self.sendCommand(address + '28', bytes[1])
+			},
+		}
 
 		actions.pnpkey_borderColorBlue = {
 			name: 'PnP & Key Border Color Blue',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
@@ -1150,7 +1153,7 @@ module.exports = {
 						{ id: '1C', label: 'PnP/Key 2' },
 						{ id: '1D', label: 'PnP/Key 3' },
 						{ id: '1E', label: 'PnP/Key 4' },
-					]
+					],
 				},
 				{
 					type: 'number',
@@ -1162,24 +1165,23 @@ module.exports = {
 					default: 0,
 					step: 1,
 					required: true,
-					range: true
-				}
+					range: true,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.pinp}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.pinp}`
 
-				let bytes = self.calculateBytes(options.blue);
+				let bytes = self.calculateBytes(options.blue)
 
-				self.sendCommand(address + '29', bytes[0]);
-				self.sendCommand(address + '2A', bytes[1]);
-			}
-		};
+				self.sendCommand(address + '29', bytes[0])
+				self.sendCommand(address + '2A', bytes[1])
+			},
+		}
 
 		actions.dsk_busselect = {
 			name: 'DSK Bus Select',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'DSK',
@@ -1188,7 +1190,7 @@ module.exports = {
 					choices: [
 						{ id: '1F', label: 'DSK 1' },
 						{ id: '20', label: 'DSK 2' },
-					]
+					],
 				},
 				{
 					type: 'dropdown',
@@ -1198,7 +1200,7 @@ module.exports = {
 					choices: [
 						{ id: '00', label: 'Program (PGM)' },
 						{ id: '01', label: 'Preview (PVW)' },
-					]
+					],
 				},
 				{
 					type: 'dropdown',
@@ -1208,28 +1210,26 @@ module.exports = {
 					choices: [
 						{ id: '00', label: 'Off' },
 						{ id: '01', label: 'On' },
-					]
-				}
+					],
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `00${options.dsk}${options.bus}`;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `00${options.dsk}${options.bus}`
 				let value = options.onoff
-				self.sendCommand(address, value);
-			}
-		};
-
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.set_transition_time = {
 			name: 'Set Transition Time',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Transition Type',
 					id: 'type',
 					default: self.CHOICES_TRANSITION_TIME_TYPES[0].id,
-					choices: self.CHOICES_TRANSITION_TIME_TYPES
+					choices: self.CHOICES_TRANSITION_TIME_TYPES,
 				},
 				{
 					type: 'number',
@@ -1241,420 +1241,400 @@ module.exports = {
 					default: 1.0,
 					step: 0.1,
 					required: true,
-					range: true
-				}
+					range: true,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = options.type;
+			callback: function (action, bank) {
+				let options = action.options
+				let address = options.type
 
-				let time = options.time * 10;
+				let time = options.time * 10
 
-				let value = time.toString(16).padStart(2, '0').toUpperCase();
-				self.sendCommand(address, value);
-			}
-		};
+				let value = time.toString(16).padStart(2, '0').toUpperCase()
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.set_transition_type = {
 			name: 'Set Transition Type',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Transition Type',
 					id: 'type',
 					default: self.CHOICES_TRANSITION_TYPES[0].id,
-					choices: self.CHOICES_TRANSITION_TYPES
-				}
+					choices: self.CHOICES_TRANSITION_TYPES,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '00' + '18' + '00';
+			callback: function (action, bank) {
+				let options = action.options
+				let address = '00' + '18' + '00'
 
-				let value = options.type.toString(16).padStart(2, '0').toUpperCase();
-				self.sendCommand(address, value);
-			}
-		};
+				let value = options.type.toString(16).padStart(2, '0').toUpperCase()
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.set_mix_type = {
 			name: 'Set Mix Type',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Mix Type',
 					id: 'type',
 					default: self.CHOICES_MIX_TYPES[0].id,
-					choices: self.CHOICES_MIX_TYPES
-				}
+					choices: self.CHOICES_MIX_TYPES,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '00' + '18' + '01';
+			callback: function (action, bank) {
+				let options = action.options
+				let address = '00' + '18' + '01'
 
-				let value = options.type.toString(16).padStart(2, '0').toUpperCase();
-				self.sendCommand(address, value);
-			}
-		};
+				let value = options.type.toString(16).padStart(2, '0').toUpperCase()
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.set_wipe_type = {
 			name: 'Set Wipe Type',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Wipe Type',
 					id: 'type',
 					default: self.CHOICES_WIPE_TYPES[0].id,
-					choices: self.CHOICES_WIPE_TYPES
-				}
+					choices: self.CHOICES_WIPE_TYPES,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '00' + '18' + '02';
+			callback: function (action, bank) {
+				let options = action.options
+				let address = '00' + '18' + '02'
 
-				let value = options.type.toString(16).padStart(2, '0').toUpperCase();
-				self.sendCommand(address, value);
-			}
-		};
+				let value = options.type.toString(16).padStart(2, '0').toUpperCase()
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.set_wipe_direction = {
 			name: 'Set Wipe Direction',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Wipe Direction',
 					id: 'direction',
 					default: self.CHOICES_WIPE_DIRECTIONS[0].id,
-					choices: self.CHOICES_WIPE_DIRECTIONS
-				}
+					choices: self.CHOICES_WIPE_DIRECTIONS,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '00' + '18' + '03';
+			callback: function (action, bank) {
+				let options = action.options
+				let address = '00' + '18' + '03'
 
-				let value = options.type.toString(16).padStart(2, '0').toUpperCase();
-				self.sendCommand(address, value);
-			}
-		};
+				let value = options.type.toString(16).padStart(2, '0').toUpperCase()
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.press_and_release_switch = {
 			name: 'Press and Release Panel Switch',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Switch',
 					id: 'switch',
 					default: self.CHOICES_SWITCHES[0].id,
-					choices: self.CHOICES_SWITCHES
-				}
+					choices: self.CHOICES_SWITCHES,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				self.sendCommand(options.switch, '01');
-				setTimeout(function() {
-					self.sendCommand(options.switch, '00');
-				}, 200);
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				self.sendCommand(options.switch, '01')
+				setTimeout(function () {
+					self.sendCommand(options.switch, '00')
+				}, 200)
+			},
+		}
 
 		actions.press_switch = {
-			name: 'Press Panel Switch (Don\'t Release)',
-			options:
-			[
+			name: "Press Panel Switch (Don't Release)",
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Switch',
 					id: 'switch',
 					default: self.CHOICES_SWITCHES[0].id,
-					choices: self.CHOICES_SWITCHES
-				}
+					choices: self.CHOICES_SWITCHES,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				self.sendCommand(options.switch, '01');
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				self.sendCommand(options.switch, '01')
+			},
+		}
 
 		actions.release_switch = {
 			name: 'Release Panel Switch',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Switch',
 					id: 'switch',
 					default: self.CHOICES_SWITCHES[0].id,
-					choices: self.CHOICES_SWITCHES
-				}
+					choices: self.CHOICES_SWITCHES,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				self.sendCommand(options.switch, '00');
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				self.sendCommand(options.switch, '00')
+			},
+		}
 
 		actions.set_pinp_source = {
 			name: 'Set PnP & Key Source',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
 					id: 'pinp',
 					default: self.CHOICES_PINP_KEYS[0].id,
-					choices: self.CHOICES_PINP_KEYS
+					choices: self.CHOICES_PINP_KEYS,
 				},
 				{
 					type: 'dropdown',
 					label: 'Input Type',
 					id: 'assign',
 					default: self.CHOICES_INPUTSASSIGN[0].id,
-					choices: self.CHOICES_INPUTSASSIGN
-				}
+					choices: self.CHOICES_INPUTSASSIGN,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '00' + options.pinp.toString(16).padStart(2, '0').toUpperCase() + '02';
-				let value = options.assign.toString(16).padStart(2, '0').toUpperCase();
-				self.sendCommand(address, value);
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = '00' + options.pinp.toString(16).padStart(2, '0').toUpperCase() + '02'
+				let value = options.assign.toString(16).padStart(2, '0').toUpperCase()
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.set_pinp_type = {
 			name: 'Set PnP & Key Type',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'PnP/Key',
 					id: 'pinp',
 					default: self.CHOICES_PINP_KEYS[0].id,
-					choices: self.CHOICES_PINP_KEYS
+					choices: self.CHOICES_PINP_KEYS,
 				},
 				{
 					type: 'dropdown',
 					label: 'Key Type',
 					id: 'key',
 					default: self.CHOICES_PINP_TYPES[0].id,
-					choices: self.CHOICES_PINP_TYPES
-				}
+					choices: self.CHOICES_PINP_TYPES,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '00' + options.pinp.toString(16).padStart(2, '0').toUpperCase() + '03';
-				let value = options.key.toString(16).padStart(2, '0').toUpperCase();
-				self.sendCommand(address, value);
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = '00' + options.pinp.toString(16).padStart(2, '0').toUpperCase() + '03'
+				let value = options.key.toString(16).padStart(2, '0').toUpperCase()
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.set_dsk_key_source = {
 			name: 'Set DSK Key Source',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'DSK',
 					id: 'dsk',
 					default: self.CHOICES_DSK[0].id,
-					choices: self.CHOICES_DSK
+					choices: self.CHOICES_DSK,
 				},
 				{
 					type: 'dropdown',
 					label: 'Input Type',
 					id: 'assign',
 					default: self.CHOICES_INPUTSASSIGN[0].id,
-					choices: self.CHOICES_INPUTSASSIGN
-				}
+					choices: self.CHOICES_INPUTSASSIGN,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '00' + options.dsk.toString(16).padStart(2, '0').toUpperCase() + '03';
-				let value = options.assign.toString(16).padStart(2, '0').toUpperCase();
-				self.sendCommand(address, value);
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = '00' + options.dsk.toString(16).padStart(2, '0').toUpperCase() + '03'
+				let value = options.assign.toString(16).padStart(2, '0').toUpperCase()
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.set_dsk_fill_source = {
 			name: 'Set DSK Fill Source',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'DSK',
 					id: 'dsk',
 					default: self.CHOICES_DSK[0].id,
-					choices: self.CHOICES_DSK
+					choices: self.CHOICES_DSK,
 				},
 				{
 					type: 'dropdown',
 					label: 'Input Type',
 					id: 'assign',
 					default: self.CHOICES_INPUTSASSIGN[0].id,
-					choices: self.CHOICES_INPUTSASSIGN
-				}
+					choices: self.CHOICES_INPUTSASSIGN,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '00' + options.dsk.toString(16).padStart(2, '0').toUpperCase() + '04';
-				let value = options.assign.toString(16).padStart(2, '0').toUpperCase();
-				self.sendCommand(address, value);
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = '00' + options.dsk.toString(16).padStart(2, '0').toUpperCase() + '04'
+				let value = options.assign.toString(16).padStart(2, '0').toUpperCase()
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.set_dsk_type = {
 			name: 'Set DSK Key Type',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'DSK',
 					id: 'dsk',
 					default: self.CHOICES_DSK[0].id,
-					choices: self.CHOICES_DSK
+					choices: self.CHOICES_DSK,
 				},
 				{
 					type: 'dropdown',
 					label: 'Key Type',
 					id: 'key',
 					default: self.CHOICES_DSK_TYPES[0].id,
-					choices: self.CHOICES_DSK_TYPES
-				}
+					choices: self.CHOICES_DSK_TYPES,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '00' + options.dsk.toString(16).padStart(2, '0').toUpperCase() + '05';
-				let value = options.key.toString(16).padStart(2, '0').toUpperCase();
-				self.sendCommand(address, value);
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = '00' + options.dsk.toString(16).padStart(2, '0').toUpperCase() + '05'
+				let value = options.key.toString(16).padStart(2, '0').toUpperCase()
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.select_pgm = {
 			name: 'Select PGM Source',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Input',
 					id: 'input',
 					default: self.CHOICES_PGMPVW_SELECT[0].id,
-					choices: self.CHOICES_PGMPVW_SELECT
-				}
+					choices: self.CHOICES_PGMPVW_SELECT,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '00' + '21' + '00';
-				let value = options.input;
-				self.sendCommand(address, value);
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = '00' + '21' + '00'
+				let value = options.input
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.select_pvw = {
 			name: 'Select PVW Source',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Input',
 					id: 'input',
 					default: self.CHOICES_PGMPVW_SELECT[0].id,
-					choices: self.CHOICES_PGMPVW_SELECT
-				}
+					choices: self.CHOICES_PGMPVW_SELECT,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '00' + '21' + '01';
-				let value = options.input;
-				self.sendCommand(address, value);
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = '00' + '21' + '01'
+				let value = options.input
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.load_memory_trigger = {
 			name: 'Load Memory Trigger',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Memory',
 					id: 'memory',
 					default: self.CHOICES_MEMORY[0].id,
-					choices: self.CHOICES_MEMORY
-				}
+					choices: self.CHOICES_MEMORY,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '0A' + '00' + '00';
-				let value = options.memory.toString(16).padStart(2, '0').toUpperCase();
-				self.sendCommand(address, value);
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = '0A' + '00' + '00'
+				let value = options.memory.toString(16).padStart(2, '0').toUpperCase()
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.save_memory_trigger = {
 			name: 'Save Memory Trigger',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Memory',
 					id: 'memory',
 					default: self.CHOICES_MEMORY[0].id,
-					choices: self.CHOICES_MEMORY
-				}
+					choices: self.CHOICES_MEMORY,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '0A' + '00' + '01';
-				let value = options.memory.toString(16).padStart(2, '0').toUpperCase();
-				self.sendCommand(address, value);
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = '0A' + '00' + '01'
+				let value = options.memory.toString(16).padStart(2, '0').toUpperCase()
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.initialize_memory_trigger = {
 			name: 'Initialize Memory Trigger',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Memory',
 					id: 'memory',
 					default: self.CHOICES_MEMORY[0].id,
-					choices: self.CHOICES_MEMORY
-				}
+					choices: self.CHOICES_MEMORY,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '0A' + '00' + '02';
-				let value = options.memory.toString(16).padStart(2, '0').toUpperCase();
-				self.sendCommand(address, value);
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = '0A' + '00' + '02'
+				let value = options.memory.toString(16).padStart(2, '0').toUpperCase()
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.freezeSwitchOn = {
 			name: 'Freeze Switch On',
-			options:
-			[],
-			callback: function(action, bank) {
+			options: [],
+			callback: function (action, bank) {
 				let address = '020500'
-				self.sendCommand(address, '01');
-			}
-		};
+				self.sendCommand(address, '01')
+			},
+		}
 
 		actions.freezeSwitchOff = {
 			name: 'Freeze Switch Off',
-			options:
-			[],
-			callback: function(action, bank) {
+			options: [],
+			callback: function (action, bank) {
 				let address = '020500'
-				self.sendCommand(address, '00');
-			}
-		};
+				self.sendCommand(address, '00')
+			},
+		}
 
 		actions.freezeSwitchType = {
 			name: 'Freeze Switch Type',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Type',
@@ -1663,44 +1643,43 @@ module.exports = {
 					choices: [
 						{ id: '00', label: 'All' },
 						{ id: '01', label: 'Select' },
-					]
-				}
+					],
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '020501';
-				let value = options.type;
-				self.sendCommand(address, value);
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = '020501'
+				let value = options.type
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.freezeSwitchSelectEnableDisable = {
 			name: 'Freeze Switch Select Enable/Disable',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Input',
 					id: 'input',
 					default: '02',
 					choices: [
-						{ id: '02', label: 'HDMI IN 1'},
-						{ id: '03', label: 'HDMI IN 2'},
-						{ id: '04', label: 'HDMI IN 3'},
-						{ id: '05', label: 'HDMI IN 4'},
-						{ id: '06', label: 'HDMI IN 5'},
-						{ id: '07', label: 'HDMI IN 6'},
-						{ id: '08', label: 'HDMI IN 7'},
-						{ id: '09', label: 'HDMI IN 8'},
-						{ id: '0A', label: 'SDI IN 1'},
-						{ id: '0B', label: 'SDI IN 2'},
-						{ id: '0C', label: 'SDI IN 3'},
-						{ id: '0D', label: 'SDI IN 4'},
-						{ id: '0E', label: 'SDI IN 5'},
-						{ id: '0F', label: 'SDI IN 6'},
-						{ id: '10', label: 'SDI IN 7'},
-						{ id: '11', label: 'SDI IN 8'},
-					]
+						{ id: '02', label: 'HDMI IN 1' },
+						{ id: '03', label: 'HDMI IN 2' },
+						{ id: '04', label: 'HDMI IN 3' },
+						{ id: '05', label: 'HDMI IN 4' },
+						{ id: '06', label: 'HDMI IN 5' },
+						{ id: '07', label: 'HDMI IN 6' },
+						{ id: '08', label: 'HDMI IN 7' },
+						{ id: '09', label: 'HDMI IN 8' },
+						{ id: '0A', label: 'SDI IN 1' },
+						{ id: '0B', label: 'SDI IN 2' },
+						{ id: '0C', label: 'SDI IN 3' },
+						{ id: '0D', label: 'SDI IN 4' },
+						{ id: '0E', label: 'SDI IN 5' },
+						{ id: '0F', label: 'SDI IN 6' },
+						{ id: '10', label: 'SDI IN 7' },
+						{ id: '11', label: 'SDI IN 8' },
+					],
 				},
 				{
 					type: 'dropdown',
@@ -1708,31 +1687,30 @@ module.exports = {
 					id: 'enable',
 					default: 1,
 					choices: [
-						{ id: '00', label: 'Disable'},
-						{ id: '01', label: 'Enable'}
-					]
-				}
+						{ id: '00', label: 'Disable' },
+						{ id: '01', label: 'Enable' },
+					],
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = '0205' + options.input;
-				let value = options.enable;
-				self.sendCommand(address, value);
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = '0205' + options.input
+				let value = options.enable
+				self.sendCommand(address, value)
+			},
+		}
 
 		//Camera Control
 
 		actions.cameraCurrentPreset = {
 			name: 'Camera Current Preset',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
-					choices: self.CHOICES_CAMERAS
+					choices: self.CHOICES_CAMERAS,
 				},
 				{
 					type: 'dropdown',
@@ -1751,141 +1729,134 @@ module.exports = {
 						{ id: '07', label: '8' },
 						{ id: '08', label: '9' },
 						{ id: '09', label: '10' },
-					]
-				}
+					],
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `02${options.camera}21`;
-				let value = options.preset;
-				self.sendCommand(address, value);
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `02${options.camera}21`
+				let value = options.preset
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.cameraPanLeft = {
 			name: 'Camera Pan Left',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
-					choices: self.CHOICES_CAMERAS
-				}
+					choices: self.CHOICES_CAMERAS,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `02${options.camera}22`;
-				self.sendCommand(address, '7F');
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `02${options.camera}22`
+				self.sendCommand(address, '7F')
+			},
+		}
 
 		actions.cameraPanRight = {
 			name: 'Camera Pan Right',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
-					choices: self.CHOICES_CAMERAS
-				}
+					choices: self.CHOICES_CAMERAS,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `02${options.camera}22`;
-				self.sendCommand(address, '01');
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `02${options.camera}22`
+				self.sendCommand(address, '01')
+			},
+		}
 
 		actions.cameraPanStop = {
 			name: 'Camera Pan Stop',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
-					choices: self.CHOICES_CAMERAS
-				}
+					choices: self.CHOICES_CAMERAS,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `02${options.camera}22`;
-				self.sendCommand(address, '00');
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `02${options.camera}22`
+				self.sendCommand(address, '00')
+			},
+		}
 
 		actions.cameraTiltUp = {
 			name: 'Camera Tilt Up',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
-					choices: self.CHOICES_CAMERAS
-				}
+					choices: self.CHOICES_CAMERAS,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `02${options.camera}23`;
-				self.sendCommand(address, '01');
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `02${options.camera}23`
+				self.sendCommand(address, '01')
+			},
+		}
 
 		actions.cameraTiltDown = {
 			name: 'Camera Tilt Down',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
-					choices: self.CHOICES_CAMERAS
-				}
+					choices: self.CHOICES_CAMERAS,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `02${options.camera}23`;
-				self.sendCommand(address, '7F');
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `02${options.camera}23`
+				self.sendCommand(address, '7F')
+			},
+		}
 
 		actions.cameraTiltStop = {
 			name: 'Camera Tilt Stop',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
-					choices: self.CHOICES_CAMERAS
-				}
+					choices: self.CHOICES_CAMERAS,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `02${options.camera}23`;
-				self.sendCommand(address, '00');
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `02${options.camera}23`
+				self.sendCommand(address, '00')
+			},
+		}
 
 		actions.cameraPTSpeed = {
 			name: 'Camera Pan/Tilt Speed',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
-					choices: self.CHOICES_CAMERAS
+					choices: self.CHOICES_CAMERAS,
 				},
 				{
 					type: 'number',
@@ -1897,122 +1868,116 @@ module.exports = {
 					default: 10,
 					step: 1,
 					required: true,
-					range: false
-				}
+					range: false,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `02${options.camera}24`;
-				let value = options.speed.toString(16).padStart(2, '0').toUpperCase();
-				self.sendCommand(address, value);
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `02${options.camera}24`
+				let value = options.speed.toString(16).padStart(2, '0').toUpperCase()
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.cameraZoomInFast = {
 			name: 'Camera Zoom In Fast',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
-					choices: self.CHOICES_CAMERAS
-				}
+					choices: self.CHOICES_CAMERAS,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `02${options.camera}25`;
-				self.sendCommand(address, '02');
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `02${options.camera}25`
+				self.sendCommand(address, '02')
+			},
+		}
 
 		actions.cameraZoomInSlow = {
 			name: 'Camera Zoom In Slow',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
-					choices: self.CHOICES_CAMERAS
-				}
+					choices: self.CHOICES_CAMERAS,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `02${options.camera}25`;
-				self.sendCommand(address, '01');
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `02${options.camera}25`
+				self.sendCommand(address, '01')
+			},
+		}
 
 		actions.cameraZoomOutFast = {
 			name: 'Camera Zoom Out Fast',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
-					choices: self.CHOICES_CAMERAS
-				}
+					choices: self.CHOICES_CAMERAS,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `02${options.camera}25`;
-				self.sendCommand(address, '7E');
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `02${options.camera}25`
+				self.sendCommand(address, '7E')
+			},
+		}
 
 		actions.cameraZoomOutSlow = {
 			name: 'Camera Zoom Out Slow',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
-					choices: self.CHOICES_CAMERAS
-				}
+					choices: self.CHOICES_CAMERAS,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `02${options.camera}25`;
-				self.sendCommand(address, '7F');
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `02${options.camera}25`
+				self.sendCommand(address, '7F')
+			},
+		}
 
 		actions.cameraZoomStop = {
 			name: 'Camera Zoom Stop',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
-					choices: self.CHOICES_CAMERAS
-				}
+					choices: self.CHOICES_CAMERAS,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `02${options.camera}25`;
-				self.sendCommand(address, '00');
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `02${options.camera}25`
+				self.sendCommand(address, '00')
+			},
+		}
 
 		actions.focus = {
 			name: 'Camera Focus',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
-					choices: self.CHOICES_CAMERAS
+					choices: self.CHOICES_CAMERAS,
 				},
 				{
 					type: 'dropdown',
@@ -2023,65 +1988,62 @@ module.exports = {
 						{ id: '7F', label: 'Near' },
 						{ id: '00', label: 'Stop' },
 						{ id: '01', label: 'Far' },
-					]
-				}
+					],
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `02${options.camera}26`;
-				let value = options.focus;
-				self.sendCommand(address, value);
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `02${options.camera}26`
+				let value = options.focus
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.autoFocusOn = {
 			name: 'Camera Auto Focus - On',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
-					choices: self.CHOICES_CAMERAS
-				}
+					choices: self.CHOICES_CAMERAS,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `02${options.camera}27`;
-				self.sendCommand(address, '01');
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `02${options.camera}27`
+				self.sendCommand(address, '01')
+			},
+		}
 
 		actions.autoFocusOff = {
 			name: 'Camera Auto Focus - Off',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
-					choices: self.CHOICES_CAMERAS
-				}
+					choices: self.CHOICES_CAMERAS,
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `02${options.camera}27`;
-				self.sendCommand(address, '00');
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `02${options.camera}27`
+				self.sendCommand(address, '00')
+			},
+		}
 
 		actions.cameraExposure = {
 			name: 'Camera Exposure',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
-					choices: self.CHOICES_CAMERAS
+					choices: self.CHOICES_CAMERAS,
 				},
 				{
 					type: 'dropdown',
@@ -2091,34 +2053,34 @@ module.exports = {
 					choices: [
 						{ id: '00', label: 'Manual' },
 						{ id: '01', label: 'Auto' },
-					]
-				}
+					],
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `02${options.camera}28`;
-				let value = options.exposure;
-				self.sendCommand(address, value);
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `02${options.camera}28`
+				let value = options.exposure
+				self.sendCommand(address, value)
+			},
+		}
 
 		actions.cameraSetTallyChannel = {
 			name: 'Camera Set Tally Channel',
-			options:
-			[
+			options: [
 				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
-					choices: self.CHOICES_CAMERAS
+					choices: self.CHOICES_CAMERAS,
 				},
 				{
 					type: 'dropdown',
 					label: 'Input for Tally',
 					id: 'channel',
 					default: '00',
-					choices: [ //HDMI 1-8, SDI 1-8
+					choices: [
+						//HDMI 1-8, SDI 1-8
 						{ id: '00', label: 'HDMI 1' },
 						{ id: '01', label: 'HDMI 2' },
 						{ id: '02', label: 'HDMI 3' },
@@ -2135,17 +2097,17 @@ module.exports = {
 						{ id: '0D', label: 'SDI 6' },
 						{ id: '0E', label: 'SDI 7' },
 						{ id: '0F', label: 'SDI 8' },
-					]
-				}
+					],
+				},
 			],
-			callback: function(action, bank) {
-				let options = action.options;
-				let address = `02${options.camera}29`;
-				let value = options.channel;
-				self.sendCommand(address, value);
-			}
-		};
+			callback: function (action, bank) {
+				let options = action.options
+				let address = `02${options.camera}29`
+				let value = options.channel
+				self.sendCommand(address, value)
+			},
+		}
 
-		self.setActionDefinitions(actions);
-	}
+		self.setActionDefinitions(actions)
+	},
 }

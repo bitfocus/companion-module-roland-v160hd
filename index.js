@@ -31,11 +31,11 @@ class v160Instance extends InstanceBase {
 			...constants,
 		})
 
-		this.INTERVAL = null; //used for polling device for feedbacks
-		this.RECONNECT_INTERVAL = 30000; //used for reconnecting to device
+		this.INTERVAL = null //used for polling device for feedbacks
+		this.RECONNECT_INTERVAL = 30000 //used for reconnecting to device
 
-		this.MODEL = 'V-160HD';
-		this.VERSION = '';
+		this.MODEL = 'V-160HD'
+		this.VERSION = ''
 
 		this.DATA = {
 			data_1B00: '00',
@@ -56,11 +56,11 @@ class v160Instance extends InstanceBase {
 	async destroy() {
 		try {
 			if (this.socket !== undefined) {
-				this.socket.destroy();
+				this.socket.destroy()
 			}
-		
-			clearInterval(this.INTERVAL);
-			clearInterval(this.RECONNECT_INTERVAL);
+
+			clearInterval(this.INTERVAL)
+			clearInterval(this.RECONNECT_INTERVAL)
 
 			this.log('debug', 'destroy')
 		} catch (error) {

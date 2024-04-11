@@ -10,7 +10,7 @@ module.exports = {
 				id: 'info',
 				width: 12,
 				label: 'Information',
-				value: 'This module will connect to a Roland V-160HD.'
+				value: 'This module will connect to a Roland V-160HD.',
 			},
 			{
 				type: 'static-text',
@@ -40,14 +40,14 @@ module.exports = {
 				label: 'IP Address',
 				width: 6,
 				default: '192.168.0.1',
-				regex: Regex.IP
+				regex: Regex.IP,
 			},
 			{
 				type: 'textinput',
 				id: 'password',
 				label: 'Password',
 				width: 6,
-				default: '0000'
+				default: '0000',
 			},
 			{
 				type: 'static-text',
@@ -65,14 +65,14 @@ module.exports = {
 						<br>
 						<strong>This could have an undesired performance effect on your Device, depending on the polling rate.</strong>
 						<br>
-				`
+				`,
 			},
 			{
 				type: 'checkbox',
 				id: 'polling',
 				label: 'Enable Polling (necessary for feedbacks and variables)',
 				default: false,
-				width: 3
+				width: 3,
 			},
 			{
 				type: 'textinput',
@@ -94,7 +94,7 @@ module.exports = {
 				id: 'verbose',
 				label: 'Enable Verbose Logging',
 				default: false,
-				width: 3
+				width: 3,
 			},
 			{
 				type: 'static-text',
