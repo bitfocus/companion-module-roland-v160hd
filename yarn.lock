@@ -2854,9 +2854,9 @@ __metadata:
   linkType: hard
 
 "word-wrap@npm:^1.2.3":
-  version: 1.2.3
-  resolution: "word-wrap@npm:1.2.3"
-  checksum: 1cb6558996deb22c909330db1f01d672feee41d7f0664492912de3de282da3f28ba2d49e87b723024e99d56ba2dac2f3ab28f8db07ac199f5e5d5e2e437833de
+  version: 1.2.5
+  resolution: "word-wrap@npm:1.2.5"
+  checksum: 8/f93ba3586fc181f94afdaff3a6fef27920b4b6d9eaefed0f428f8e07adea2a7f54a5f2830ce59406c8416f033f86902b91eb824072354645eea687dff3691ccb
   languageName: node
   linkType: hard
 
