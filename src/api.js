@@ -129,6 +129,8 @@ module.exports = {
 		self.getPinpKeyData()
 		self.getAuxData()
 		self.getFreezeData()
+		self.getOutputData()
+		self.getAuxLinkData()
 	},
 
 	getPinpKeyData: function () {
@@ -160,6 +162,27 @@ module.exports = {
 		let self = this
 
 		self.sendRawCommand('RQH:020500,000001;') //Freeze on/off
+	},
+
+	getOutputData: function () {
+		let self = this
+
+		self.sendRawCommand('RQH:00000A,000001;') //HDMI 1 output assign
+		self.sendRawCommand('RQH:00000B,000001;') //HDMI 2 output assign
+		self.sendRawCommand('RQH:00000C,000001;') //HDMI 3 output assign
+		self.sendRawCommand('RQH:00000D,000001;') //SDI 1 output assign
+		self.sendRawCommand('RQH:00000E,000001;') //SDI 2 output assign
+		self.sendRawCommand('RQH:00000F,000001;') //SDI 3 output assign
+		self.sendRawCommand('RQH:000010,000001;') //USB output assign
+	},
+
+	getAuxLinkData: function () {
+		let self = this
+
+		self.sendRawCommand('RQH:02010D,000001;') //Aux Link Mode Off/Auto/Manual
+		self.sendRawCommand('RQH:020154,000001;') //Aux 1 link on/off
+		self.sendRawCommand('RQH:020155,000001;') //Aux 2 link on/off
+		self.sendRawCommand('RQH:020156,000001;') //Aux 3 link on/off
 	},
 
 	/*getTallyData: function() {
@@ -267,6 +290,8 @@ module.exports = {
 														//aux 3 source
 														self.DATA.aux3source = value
 													} else {
+														//other data
+														self.DATA[`data_${param1}${param2}${param3}`] = value //this should take care of all requested data
 														self.DATA[`data_${param2}${param3}`] = value //this should take care of all requested data
 													}
 												}
@@ -289,6 +314,61 @@ module.exports = {
 												if (param1 == '01' && param2 == '26' && param3 == '03') {
 													//aux 3 mute
 													self.DATA.aux3mute = value
+												}
+
+												if (param1 == '00' && param2 == '00' && param3 == '0A') {
+													//hdmi 1 output assign
+													self.DATA.hdmi1assign = value
+												}
+
+												if (param1 == '00' && param2 == '00' && param3 == '0B') {
+													//hdmi 2 output assign
+													self.DATA.hdmi2assign = value
+												}
+
+												if (param1 == '00' && param2 == '00' && param3 == '0C') {
+													//hdmi 3 output assign
+													self.DATA.hdmi3assign = value
+												}
+
+												if (param1 == '00' && param2 == '00' && param3 == '0D') {
+													//sdi 1 output assign
+													self.DATA.sdi1assign = value
+												}
+
+												if (param1 == '00' && param2 == '00' && param3 == '0E') {
+													//sdi 2 output assign
+													self.DATA.sdi2assign = value
+												}
+
+												if (param1 == '00' && param2 == '00' && param3 == '0F') {
+													//sdi 3 output assign
+													self.DATA.sdi3assign = value
+												}
+
+												if (param1 == '00' && param2 == '00' && param3 == '10') {
+													//usb output assign
+													self.DATA.usbassign = value
+												}
+
+												if (param1 == '02' && param2 == '01' && param3 == '0D') {
+													//aux link mode
+													self.DATA.auxlinkmode = value
+												}
+
+												if (param1 == '02' && param2 == '01' && param3 == '54') {
+													//aux 1 link
+													self.DATA.aux1link = value
+												}
+
+												if (param1 == '02' && param2 == '01' && param3 == '55') {
+													//aux 2 link
+													self.DATA.aux2link = value
+												}
+
+												if (param1 == '02' && param2 == '01' && param3 == '56') {
+													//aux 3 link
+													self.DATA.aux3link = value
 												}
 											}
 										}

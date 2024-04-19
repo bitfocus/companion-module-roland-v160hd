@@ -76,16 +76,63 @@ module.exports = {
 			],
 			callback: function (action, bank) {
 				let options = action.options
-				let address = '00'
+				let address = options.output
+				let value = options.assign
+				self.sendCommand(address, value)
+			},
+		}
 
-				if (options.output === 16) {
-					//USB OUTPUT
-					address += '01' + options.output.toString(16).padStart(2, '0').toUpperCase()
-				} else {
-					address += '00' + options.output.toString(16).padStart(2, '0').toUpperCase()
-				}
+		actions.aux_linked_pgm_mode = {
+			name: 'Aux Linked PGM Mode',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Mode',
+					id: 'mode',
+					default: '00',
+					choices: [
+						{ id: '00', label: 'Off' },
+						{ id: '01', label: 'Auto Link' },
+						{ id: '02', label: 'Manual Link' },
+					],
+				},
+			],
+			callback: function (action, bank) {
+				let options = action.options
+				let value = options.mode
+				self.sendCommand('02010D', value)
+			},
+		}
 
-				let value = options.assign.toString(16).padStart(2, '0').toUpperCase()
+		actions.aux_linked = {
+			name: 'Aux Linked',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Aux',
+					id: 'aux',
+					default: '020154',
+					choices: [
+						{ id: '020154', label: 'Aux 1' },
+						{ id: '020155', label: 'Aux 2' },
+						{ id: '020156', label: 'Aux 3' },
+					],
+				},
+				{
+					type: 'dropdown',
+					label: 'On/Off',
+					id: 'value',
+					default: '00',
+					choices: [
+						{ id: '00', label: 'Off' },
+						{ id: '01', label: 'On' },
+					],
+				},
+			],
+			callback: function (action, bank) {
+				let options = action.options
+				let address = options.aux
+				let value = options.value
 				self.sendCommand(address, value)
 			},
 		}

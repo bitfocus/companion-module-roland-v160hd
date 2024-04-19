@@ -169,6 +169,167 @@ module.exports = {
 			},
 		}
 
+		feedbacks.outputAssign = {
+			type: 'boolean',
+			name: 'Output Assign State',
+			description: 'Indicate if Output is Assigned to a specific Source',
+			style: {
+				color: foregroundColor,
+				bgcolor: backgroundColorRed,
+			},
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Output',
+					id: 'output',
+					default: self.CHOICES_OUTPUTS[0].id,
+					choices: self.CHOICES_OUTPUTS,
+				},
+				{
+					type: 'dropdown',
+					label: 'Type',
+					id: 'assign',
+					default: self.CHOICES_OUTPUTSASSIGN[0].id,
+					choices: self.CHOICES_OUTPUTSASSIGN,
+				},
+			],
+			callback: function (feedback, bank) {
+				let opt = feedback.options
+
+				if (opt.output == '00000A') { //hdmi 1 output
+					if (self.DATA.hdmi1source == opt.assign) {
+						return true
+					}
+				}
+
+				if (opt.output == '00000B') { //hdmi 2 output
+					if (self.DATA.hdmi2source == opt.assign) {
+						return true
+					}
+				}
+
+				if (opt.output == '00000C') { //hdmi 3 output
+					if (self.DATA.hdmi3source == opt.assign) {
+						return true
+					}
+				}
+
+				if (opt.output == '00000D') { //sdi 1 output
+					if (self.DATA.sdi1source == opt.assign) {
+						return true
+					}
+				}
+
+				if (opt.output == '00000E') { //sdi 2 output
+					if (self.DATA.sdi2source == opt.assign) {
+						return true
+					}
+				}
+
+				if (opt.output == '00000F') { //sdi 3 output
+					if (self.DATA.sdi3source == opt.assign) {
+						return true
+					}
+				}
+
+				if (opt.output == '000010') { //usb output
+					if (self.DATA.usbsource == opt.assign) {
+						return true
+					}
+				}
+
+				return false
+			},
+		}
+
+		feedbacks.auxLinkMode = {
+			type: 'boolean',
+			name: 'Aux Link Mode',
+			description: 'Indicate if Aux Link Mode is Off, Auto Link, or Manual Link',
+			style: {
+				color: foregroundColor,
+				bgcolor: backgroundColorRed,
+			},
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Mode',
+					id: 'mode',
+					default: '00',
+					choices: [
+						{ id: '00', label: 'Off' },
+						{ id: '01', label: 'Auto Link' },
+						{ id: '02', label: 'Manual Link' },
+					],
+				},
+			],
+			callback: function (feedback, bank) {
+				let opt = feedback.options
+
+				if (self.DATA.auxlinkmode == opt.mode) {
+					return true
+				}
+
+				return false
+			},
+		}
+
+		feedbacks.auxLink = {
+			type: 'boolean',
+			name: 'Aux Link State',
+			description: 'Indicate if Aux Channel is Linked to PGM',
+			style: {
+				color: foregroundColor,
+				bgcolor: backgroundColorRed,
+			},
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Aux',
+					id: 'aux',
+					default: '11',
+					choices: [
+						{ id: 'aux1', label: 'Aux 1' },
+						{ id: 'aux2', label: 'Aux 2' },
+						{ id: 'aux3', label: 'Aux 3' },
+					],
+				},
+				{
+					type: 'dropdown',
+					label: 'Link Mode',
+					id: 'link',
+					default: '00',
+					choices: [
+						{ id: '00', label: 'Off' },
+						{ id: '01', label: 'On' },
+					],
+				},
+			],
+			callback: function (feedback, bank) {
+				let opt = feedback.options
+
+				if (opt.aux == 'aux1') {
+					if (self.DATA.aux1link == opt.link) {
+						return true
+					}
+				}
+
+				if (opt.aux == 'aux2') {
+					if (self.DATA.aux2link == opt.link) {
+						return true
+					}
+				}
+
+				if (opt.aux == 'aux3') {
+					if (self.DATA.aux3link == opt.link) {
+						return true
+					}
+				}
+
+				return false
+			},
+		}
+
 		feedbacks.keyOnAir = {
 			type: 'boolean',
 			name: 'Key is Selected on Bus',
