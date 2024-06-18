@@ -47,6 +47,8 @@ class v160Instance extends InstanceBase {
 			data_1E00: '00',
 			data_1E01: '00',
 		}
+
+		this.selectedCamera = '01' //camera 1
 	}
 
 	async init(config) {

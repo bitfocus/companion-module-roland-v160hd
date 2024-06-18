@@ -1749,8 +1749,8 @@ module.exports = {
 
 		//Camera Control
 
-		actions.cameraCurrentPreset = {
-			name: 'Camera Current Preset',
+		actions.selectCamera = {
+			name: 'Select Camera',
 			options: [
 				{
 					type: 'dropdown',
@@ -1758,6 +1758,32 @@ module.exports = {
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
 					choices: self.CHOICES_CAMERAS,
+				},
+			],
+			callback: function (action, bank) {
+				let options = action.options
+
+				self.selectedCamera = options.camera
+			},
+		}
+
+		actions.cameraCurrentPreset = {
+			name: 'Camera Current Preset',
+			options: [
+				{
+					type: 'checkbox',
+					label: 'Use Selected Camera',
+					id: 'useSelected',
+					default: false,
+					tooltip: 'Use the selected camera instead of the camera selected in the action',
+				},
+				{
+					type: 'dropdown',
+					label: 'Camera',
+					id: 'camera',
+					default: self.CHOICES_CAMERAS[0].id,
+					choices: self.CHOICES_CAMERAS,
+					isVisible: (options) => options.useSelected === false,
 				},
 				{
 					type: 'dropdown',
@@ -1781,6 +1807,15 @@ module.exports = {
 			],
 			callback: function (action, bank) {
 				let options = action.options
+
+				if (options.useSelected === true) {
+					if (self.selectedCamera === undefined) {
+						self.selectedCamera = '01'
+					}
+
+					options.camera = self.selectedCamera
+				}
+
 				let address = `02${options.camera}21`
 				let value = options.preset
 				self.sendCommand(address, value)
@@ -1791,15 +1826,32 @@ module.exports = {
 			name: 'Camera Pan Left',
 			options: [
 				{
+					type: 'checkbox',
+					label: 'Use Selected Camera',
+					id: 'useSelected',
+					default: false,
+					tooltip: 'Use the selected camera instead of the camera selected in the action',
+				},
+				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
 					choices: self.CHOICES_CAMERAS,
+					isVisible: (options) => options.useSelected === false,
 				},
 			],
 			callback: function (action, bank) {
 				let options = action.options
+
+				if (options.useSelected === true) {
+					if (self.selectedCamera === undefined) {
+						self.selectedCamera = '01'
+					}
+
+					options.camera = self.selectedCamera
+				}
+
 				let address = `02${options.camera}22`
 				self.sendCommand(address, '7F')
 			},
@@ -1809,15 +1861,32 @@ module.exports = {
 			name: 'Camera Pan Right',
 			options: [
 				{
+					type: 'checkbox',
+					label: 'Use Selected Camera',
+					id: 'useSelected',
+					default: false,
+					tooltip: 'Use the selected camera instead of the camera selected in the action',
+				},
+				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
 					choices: self.CHOICES_CAMERAS,
+					isVisible: (options) => options.useSelected === false,
 				},
 			],
 			callback: function (action, bank) {
 				let options = action.options
+
+				if (options.useSelected === true) {
+					if (self.selectedCamera === undefined) {
+						self.selectedCamera = '01'
+					}
+
+					options.camera = self.selectedCamera
+				}
+
 				let address = `02${options.camera}22`
 				self.sendCommand(address, '01')
 			},
@@ -1827,15 +1896,32 @@ module.exports = {
 			name: 'Camera Pan Stop',
 			options: [
 				{
+					type: 'checkbox',
+					label: 'Use Selected Camera',
+					id: 'useSelected',
+					default: false,
+					tooltip: 'Use the selected camera instead of the camera selected in the action',
+				},
+				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
 					choices: self.CHOICES_CAMERAS,
+					isVisible: (options) => options.useSelected === false,
 				},
 			],
 			callback: function (action, bank) {
 				let options = action.options
+
+				if (options.useSelected === true) {
+					if (self.selectedCamera === undefined) {
+						self.selectedCamera = '01'
+					}
+
+					options.camera = self.selectedCamera
+				}
+
 				let address = `02${options.camera}22`
 				self.sendCommand(address, '00')
 			},
@@ -1845,15 +1931,32 @@ module.exports = {
 			name: 'Camera Tilt Up',
 			options: [
 				{
+					type: 'checkbox',
+					label: 'Use Selected Camera',
+					id: 'useSelected',
+					default: false,
+					tooltip: 'Use the selected camera instead of the camera selected in the action',
+				},
+				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
 					choices: self.CHOICES_CAMERAS,
+					isVisible: (options) => options.useSelected === false,
 				},
 			],
 			callback: function (action, bank) {
 				let options = action.options
+
+				if (options.useSelected === true) {
+					if (self.selectedCamera === undefined) {
+						self.selectedCamera = '01'
+					}
+
+					options.camera = self.selectedCamera
+				}
+
 				let address = `02${options.camera}23`
 				self.sendCommand(address, '01')
 			},
@@ -1863,15 +1966,32 @@ module.exports = {
 			name: 'Camera Tilt Down',
 			options: [
 				{
+					type: 'checkbox',
+					label: 'Use Selected Camera',
+					id: 'useSelected',
+					default: false,
+					tooltip: 'Use the selected camera instead of the camera selected in the action',
+				},
+				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
 					choices: self.CHOICES_CAMERAS,
+					isVisible: (options) => options.useSelected === false,
 				},
 			],
 			callback: function (action, bank) {
 				let options = action.options
+
+				if (options.useSelected === true) {
+					if (self.selectedCamera === undefined) {
+						self.selectedCamera = '01'
+					}
+
+					options.camera = self.selectedCamera
+				}
+
 				let address = `02${options.camera}23`
 				self.sendCommand(address, '7F')
 			},
@@ -1881,15 +2001,32 @@ module.exports = {
 			name: 'Camera Tilt Stop',
 			options: [
 				{
+					type: 'checkbox',
+					label: 'Use Selected Camera',
+					id: 'useSelected',
+					default: false,
+					tooltip: 'Use the selected camera instead of the camera selected in the action',
+				},
+				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
 					choices: self.CHOICES_CAMERAS,
+					isVisible: (options) => options.useSelected === false,
 				},
 			],
 			callback: function (action, bank) {
 				let options = action.options
+
+				if (options.useSelected === true) {
+					if (self.selectedCamera === undefined) {
+						self.selectedCamera = '01'
+					}
+
+					options.camera = self.selectedCamera
+				}
+
 				let address = `02${options.camera}23`
 				self.sendCommand(address, '00')
 			},
@@ -1899,11 +2036,19 @@ module.exports = {
 			name: 'Camera Pan/Tilt Speed',
 			options: [
 				{
+					type: 'checkbox',
+					label: 'Use Selected Camera',
+					id: 'useSelected',
+					default: false,
+					tooltip: 'Use the selected camera instead of the camera selected in the action',
+				},
+				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
 					choices: self.CHOICES_CAMERAS,
+					isVisible: (options) => options.useSelected === false,
 				},
 				{
 					type: 'number',
@@ -1920,6 +2065,15 @@ module.exports = {
 			],
 			callback: function (action, bank) {
 				let options = action.options
+
+				if (options.useSelected === true) {
+					if (self.selectedCamera === undefined) {
+						self.selectedCamera = '01'
+					}
+
+					options.camera = self.selectedCamera
+				}
+
 				let address = `02${options.camera}24`
 				let value = options.speed.toString(16).padStart(2, '0').toUpperCase()
 				self.sendCommand(address, value)
@@ -1930,15 +2084,32 @@ module.exports = {
 			name: 'Camera Zoom In Fast',
 			options: [
 				{
+					type: 'checkbox',
+					label: 'Use Selected Camera',
+					id: 'useSelected',
+					default: false,
+					tooltip: 'Use the selected camera instead of the camera selected in the action',
+				},
+				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
 					choices: self.CHOICES_CAMERAS,
+					isVisible: (options) => options.useSelected === false,
 				},
 			],
 			callback: function (action, bank) {
 				let options = action.options
+
+				if (options.useSelected === true) {
+					if (self.selectedCamera === undefined) {
+						self.selectedCamera = '01'
+					}
+
+					options.camera = self.selectedCamera
+				}
+
 				let address = `02${options.camera}25`
 				self.sendCommand(address, '02')
 			},
@@ -1948,15 +2119,32 @@ module.exports = {
 			name: 'Camera Zoom In Slow',
 			options: [
 				{
+					type: 'checkbox',
+					label: 'Use Selected Camera',
+					id: 'useSelected',
+					default: false,
+					tooltip: 'Use the selected camera instead of the camera selected in the action',
+				},
+				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
 					choices: self.CHOICES_CAMERAS,
+					isVisible: (options) => options.useSelected === false,
 				},
 			],
 			callback: function (action, bank) {
 				let options = action.options
+
+				if (options.useSelected === true) {
+					if (self.selectedCamera === undefined) {
+						self.selectedCamera = '01'
+					}
+
+					options.camera = self.selectedCamera
+				}
+
 				let address = `02${options.camera}25`
 				self.sendCommand(address, '01')
 			},
@@ -1966,15 +2154,32 @@ module.exports = {
 			name: 'Camera Zoom Out Fast',
 			options: [
 				{
+					type: 'checkbox',
+					label: 'Use Selected Camera',
+					id: 'useSelected',
+					default: false,
+					tooltip: 'Use the selected camera instead of the camera selected in the action',
+				},
+				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
 					choices: self.CHOICES_CAMERAS,
+					isVisible: (options) => options.useSelected === false,
 				},
 			],
 			callback: function (action, bank) {
 				let options = action.options
+
+				if (options.useSelected === true) {
+					if (self.selectedCamera === undefined) {
+						self.selectedCamera = '01'
+					}
+
+					options.camera = self.selectedCamera
+				}
+
 				let address = `02${options.camera}25`
 				self.sendCommand(address, '7E')
 			},
@@ -1984,15 +2189,32 @@ module.exports = {
 			name: 'Camera Zoom Out Slow',
 			options: [
 				{
+					type: 'checkbox',
+					label: 'Use Selected Camera',
+					id: 'useSelected',
+					default: false,
+					tooltip: 'Use the selected camera instead of the camera selected in the action',
+				},
+				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
 					choices: self.CHOICES_CAMERAS,
+					isVisible: (options) => options.useSelected === false,
 				},
 			],
 			callback: function (action, bank) {
 				let options = action.options
+
+				if (options.useSelected === true) {
+					if (self.selectedCamera === undefined) {
+						self.selectedCamera = '01'
+					}
+
+					options.camera = self.selectedCamera
+				}
+
 				let address = `02${options.camera}25`
 				self.sendCommand(address, '7F')
 			},
@@ -2002,15 +2224,32 @@ module.exports = {
 			name: 'Camera Zoom Stop',
 			options: [
 				{
+					type: 'checkbox',
+					label: 'Use Selected Camera',
+					id: 'useSelected',
+					default: false,
+					tooltip: 'Use the selected camera instead of the camera selected in the action',
+				},
+				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
 					choices: self.CHOICES_CAMERAS,
+					isVisible: (options) => options.useSelected === false,
 				},
 			],
 			callback: function (action, bank) {
 				let options = action.options
+
+				if (options.useSelected === true) {
+					if (self.selectedCamera === undefined) {
+						self.selectedCamera = '01'
+					}
+
+					options.camera = self.selectedCamera
+				}
+
 				let address = `02${options.camera}25`
 				self.sendCommand(address, '00')
 			},
@@ -2020,11 +2259,19 @@ module.exports = {
 			name: 'Camera Focus',
 			options: [
 				{
+					type: 'checkbox',
+					label: 'Use Selected Camera',
+					id: 'useSelected',
+					default: false,
+					tooltip: 'Use the selected camera instead of the camera selected in the action',
+				},
+				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
 					choices: self.CHOICES_CAMERAS,
+					isVisible: (options) => options.useSelected === false,
 				},
 				{
 					type: 'dropdown',
@@ -2040,6 +2287,15 @@ module.exports = {
 			],
 			callback: function (action, bank) {
 				let options = action.options
+
+				if (options.useSelected === true) {
+					if (self.selectedCamera === undefined) {
+						self.selectedCamera = '01'
+					}
+
+					options.camera = self.selectedCamera
+				}
+
 				let address = `02${options.camera}26`
 				let value = options.focus
 				self.sendCommand(address, value)
@@ -2050,15 +2306,32 @@ module.exports = {
 			name: 'Camera Auto Focus - On',
 			options: [
 				{
+					type: 'checkbox',
+					label: 'Use Selected Camera',
+					id: 'useSelected',
+					default: false,
+					tooltip: 'Use the selected camera instead of the camera selected in the action',
+				},
+				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
 					choices: self.CHOICES_CAMERAS,
+					isVisible: (options) => options.useSelected === false,
 				},
 			],
 			callback: function (action, bank) {
 				let options = action.options
+
+				if (options.useSelected === true) {
+					if (self.selectedCamera === undefined) {
+						self.selectedCamera = '01'
+					}
+
+					options.camera = self.selectedCamera
+				}
+
 				let address = `02${options.camera}27`
 				self.sendCommand(address, '01')
 			},
@@ -2068,15 +2341,32 @@ module.exports = {
 			name: 'Camera Auto Focus - Off',
 			options: [
 				{
+					type: 'checkbox',
+					label: 'Use Selected Camera',
+					id: 'useSelected',
+					default: false,
+					tooltip: 'Use the selected camera instead of the camera selected in the action',
+				},
+				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
 					choices: self.CHOICES_CAMERAS,
+					isVisible: (options) => options.useSelected === false,
 				},
 			],
 			callback: function (action, bank) {
 				let options = action.options
+
+				if (options.useSelected === true) {
+					if (self.selectedCamera === undefined) {
+						self.selectedCamera = '01'
+					}
+
+					options.camera = self.selectedCamera
+				}
+
 				let address = `02${options.camera}27`
 				self.sendCommand(address, '00')
 			},
@@ -2086,11 +2376,19 @@ module.exports = {
 			name: 'Camera Exposure',
 			options: [
 				{
+					type: 'checkbox',
+					label: 'Use Selected Camera',
+					id: 'useSelected',
+					default: false,
+					tooltip: 'Use the selected camera instead of the camera selected in the action',
+				},
+				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
 					choices: self.CHOICES_CAMERAS,
+					isVisible: (options) => options.useSelected === false,
 				},
 				{
 					type: 'dropdown',
@@ -2105,6 +2403,15 @@ module.exports = {
 			],
 			callback: function (action, bank) {
 				let options = action.options
+
+				if (options.useSelected === true) {
+					if (self.selectedCamera === undefined) {
+						self.selectedCamera = '01'
+					}
+
+					options.camera = self.selectedCamera
+				}
+
 				let address = `02${options.camera}28`
 				let value = options.exposure
 				self.sendCommand(address, value)
@@ -2115,11 +2422,19 @@ module.exports = {
 			name: 'Camera Set Tally Channel',
 			options: [
 				{
+					type: 'checkbox',
+					label: 'Use Selected Camera',
+					id: 'useSelected',
+					default: false,
+					tooltip: 'Use the selected camera instead of the camera selected in the action',
+				},
+				{
 					type: 'dropdown',
 					label: 'Camera',
 					id: 'camera',
 					default: self.CHOICES_CAMERAS[0].id,
 					choices: self.CHOICES_CAMERAS,
+					isVisible: (options) => options.useSelected === false,
 				},
 				{
 					type: 'dropdown',
@@ -2149,6 +2464,15 @@ module.exports = {
 			],
 			callback: function (action, bank) {
 				let options = action.options
+
+				if (options.useSelected === true) {
+					if (self.selectedCamera === undefined) {
+						self.selectedCamera = '01'
+					}
+
+					options.camera = self.selectedCamera
+				}
+
 				let address = `02${options.camera}29`
 				let value = options.channel
 				self.sendCommand(address, value)
