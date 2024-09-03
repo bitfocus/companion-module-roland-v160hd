@@ -414,6 +414,48 @@ module.exports = {
 			},
 		}
 
+		feedbacks.pnpKeySource = {
+			type: 'boolean',
+			name: 'PnP/Key Source State',
+			description: 'Indicate if PnP/Key Source is Selected on PnP/Key',
+			style: {
+				color: foregroundColor,
+				bgcolor: backgroundColorRed,
+			},
+			options: [
+				{
+					type: 'dropdown',
+					label: 'PnP/Key',
+					id: 'pinp',
+					default: '1B',
+					choices: [
+						{ id: 'pnpkey1', label: 'PnP/Key 1' },
+						{ id: 'pnpkey2', label: 'PnP/Key 2' },
+						{ id: 'pnpkey3', label: 'PnP/Key 3' },
+						{ id: 'pnpkey4', label: 'PnP/Key 4' },
+					],
+				},
+				{
+					type: 'dropdown',
+					label: 'Source',
+					id: 'source',
+					default: self.CHOICES_PGMPVW_SELECT[0].id,
+					choices: self.CHOICES_PGMPVW_SELECT,
+				},
+			],
+			callback: function (feedback, bank) {
+				let opt = feedback.options
+
+				let obj = self.DATA[opt.pinp + 'source'];
+
+				if (obj == opt.source) {
+					return true
+				}
+
+				return false
+			},
+		}
+
 		self.setFeedbackDefinitions(feedbacks)
 	},
 }

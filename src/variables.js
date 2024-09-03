@@ -10,13 +10,6 @@ module.exports = {
 			variables.push({ variableId: 'tally_' + self.TALLYDATA[i].shortlabel, name: self.TALLYDATA[i].label + ' Tally' })
 		}
 
-		/*
-		{ id: '1B', label: 'PnP/Key 1' },
-						{ id: '1C', label: 'PnP/Key 2' },
-						{ id: '1D', label: 'PnP/Key 3' },
-						{ id: '1E', label: 'PnP/Key 4' },
-						*/
-
 		variables.push({ variableId: 'pnpkey1_pgm', name: 'PnP/Key 1 on PGM' })
 		variables.push({ variableId: 'pnpkey1_pvw', name: 'PnP/Key 1 on PVW' })
 		variables.push({ variableId: 'pnpkey2_pgm', name: 'PnP/Key 2 on PGM' })
@@ -25,6 +18,12 @@ module.exports = {
 		variables.push({ variableId: 'pnpkey3_pvw', name: 'PnP/Key 3 on PVW' })
 		variables.push({ variableId: 'pnpkey4_pgm', name: 'PnP/Key 4 on PGM' })
 		variables.push({ variableId: 'pnpkey4_pvw', name: 'PnP/Key 4 on PVW' })
+
+		//pnp/key sources
+		variables.push({ variableId: 'pnpkey1_source', name: 'PnP/Key 1 Source' })
+		variables.push({ variableId: 'pnpkey2_source', name: 'PnP/Key 2 Source' })
+		variables.push({ variableId: 'pnpkey3_source', name: 'PnP/Key 3 Source' })
+		variables.push({ variableId: 'pnpkey4_source', name: 'PnP/Key 4 Source' })
 
 		//Output Assigns
 		variables.push({ variableId: 'hdmi1', name: 'HDMI Output 1 Source' })
@@ -50,6 +49,15 @@ module.exports = {
 		variables.push({ variableId: 'aux3link', name: 'Aux Link' })
 
 		variables.push({ variableI: 'freeze', name: 'Freeze On/Off' })
+
+		//memory names
+		for (let i = 1; i <= 30; i++) {
+			variables.push({ variableId: 'memoryname_' + i, name: 'Memory Name' + i })
+		}
+
+		//last memory loaded, number and name
+		variables.push({ variableId: 'lastmemorynumber', name: 'Last Memory Number Loaded' })
+		variables.push({ variableId: 'lastmemoryname', name: 'Last Memory Name Loaded' })
 
 		self.setVariableDefinitions(variables)
 	},
@@ -84,6 +92,12 @@ module.exports = {
 			variableObj.pnpkey3_pvw = self.DATA.data_1D01 == '01' ? 'On' : 'Off'
 			variableObj.pnpkey4_pgm = self.DATA.data_1E00 == '01' ? 'On' : 'Off'
 			variableObj.pnpkey4_pvw = self.DATA.data_1E01 == '01' ? 'On' : 'Off'
+
+			//pnpkey sources
+			variableObj['pnpkey1_source'] = self.DATA.pnpkey1sourcename;
+			variableObj['pnpkey2_source'] = self.DATA.pnpkey2sourcename;
+			variableObj['pnpkey3_source'] = self.DATA.pnpkey3sourcename;
+			variableObj['pnpkey4_source'] = self.DATA.pnpkey4sourcename;
 
 			//Output Assigns
 			let hdmi1assign = self.CHOICES_OUTPUTSASSIGN.find((item) => {

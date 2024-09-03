@@ -131,6 +131,9 @@ module.exports = {
 		self.getFreezeData()
 		self.getOutputData()
 		self.getAuxLinkData()
+
+		self.getMemoryNames()
+		self.getLastMemoryLoaded()
 	},
 
 	getPinpKeyData: function () {
@@ -144,6 +147,12 @@ module.exports = {
 		self.sendRawCommand('RQH:001D01,000001;') //PnP/Key 3 on PVW
 		self.sendRawCommand('RQH:001E00,000001;') //PnP/Key 4 on PGM
 		self.sendRawCommand('RQH:001E01,000001;') //PnP/Key 4 on PVW
+
+		//get sources for pnp/keys
+		self.sendRawCommand('RQH:001B02,000001;') //PnP/Key 1 source
+		self.sendRawCommand('RQH:001C02,000001;') //PnP/Key 2 source
+		self.sendRawCommand('RQH:001D02,000001;') //PnP/Key 3 source
+		self.sendRawCommand('RQH:001E02,000001;') //PnP/Key 4 source
 	},
 
 	getAuxData: function () {
@@ -195,6 +204,25 @@ module.exports = {
 			self.sendRawCommand('RQH:' + command);
 		}
 	},*/
+
+	getMemoryNames: function () {
+		let self = this;
+
+		for (let i = 0; i < 30; i++) {
+			let hexMemory = i.toString(16).padStart(2, '0').toUpperCase();
+			for (let j = 0; j < 8; j++) {
+				let hex = j.toString(16).padStart(2, '0').toUpperCase();
+				let command = '60' + hexMemory + hex + ',000001;';
+				self.sendRawCommand('RQH:' + command);
+			}
+		}
+	},
+
+	getLastMemoryLoaded: function () {
+		let self = this
+
+		self.sendRawCommand('RQH:0A0003,000001;')
+	},
 
 	subscribeToTally: function () {
 		let self = this
@@ -289,7 +317,44 @@ module.exports = {
 													} else if (param2 == '00' && param3 == '2F') {
 														//aux 3 source
 														self.DATA.aux3source = value
-													} else {
+													} else if (param2 == '1B' && param3 == '02') {
+														//pnp key 1 source
+														let lookup = self.CHOICES_PGMPVW_SELECT.find((item) => {
+															return item.id == value
+														})
+														self.DATA.pnpkey1source = value
+														if (lookup) {
+															self.DATA.pnpkey1sourcename = lookup.label
+														}
+													} else if (param2 == '1C' && param3 == '02') {
+														//pnp key 2 source
+														let lookup = self.CHOICES_PGMPVW_SELECT.find((item) => {
+															return item.id == value
+														})
+														self.DATA.pnpkey2source = value
+														if (lookup) {
+															self.DATA.pnpkey2sourcename = lookup.label
+														}
+													} else if (param2 == '1D' && param3 == '02') {
+														//pnp key 3 source
+														let lookup = self.CHOICES_PGMPVW_SELECT.find((item) => {
+															return item.id == value
+														})
+														self.DATA.pnpkey3source = value
+														if (lookup) {
+															self.DATA.pnpkey3sourcename = lookup.label
+														}
+													} else if (param2 == '1E' && param3 == '02') {
+														//pnp key 4 source
+														let lookup = self.CHOICES_PGMPVW_SELECT.find((item) => {
+															return item.id == value
+														})
+														self.DATA.pnpkey4source = value
+														if (lookup) {
+															self.DATA.pnpkey4sourcename = lookup.label
+														}
+													}
+													else {
 														//other data
 														self.DATA[`data_${param1}${param2}${param3}`] = value //this should take care of all requested data
 														self.DATA[`data_${param2}${param3}`] = value //this should take care of all requested data
@@ -370,6 +435,44 @@ module.exports = {
 													//aux 3 link
 													self.DATA.aux3link = value
 												}
+
+												if (param1 == '60') {
+													//memory names
+													let memoryNumber = parseInt(param2, 16)
+													let memoryCharIndex = parseInt(param3, 16)
+
+													//there are 8 characters in each memory name and they will all come in as individual messages
+													//and not necessarily in order
+													let memoryName = self.DATA[`memory${memoryNumber}`]
+													if (memoryName === undefined) {
+														memoryName = ''
+													}
+
+													//value is the character, put it in the correct spot in the memory name based on the memoryCharIndex
+													memoryName = memoryName.substring(0, memoryCharIndex * 2) + value + memoryName.substring(memoryCharIndex * 2 + 1) //replace the character at the index
+
+													self.DATA[`memory${memoryNumber}`] = memoryName
+													let variableObj = {}
+													variableObj[`memoryname_${memoryNumber + 1}`] = memoryName
+													self.setVariableValues(variableObj)
+												}
+
+												if (param1 == '0A') { //memory functions
+													if (param2 == '00' && param3 == '03') {
+														//last memory loaded
+														self.DATA.lastMemory = parseInt(value, 16)
+
+														//get the memory name based on the last memory loaded
+														let memoryName = self.DATA[`memory${self.DATA.lastMemory}`]
+
+														//update variables
+														let variableObj = {}
+														variableObj['lastmemorynumber'] = self.DATA.lastMemory
+														variableObj['lastmemoryname'] = memoryName
+														self.setVariableValues(variableObj)
+													}
+												}
+
 											}
 										}
 									}
