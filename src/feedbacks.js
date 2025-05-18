@@ -446,7 +446,7 @@ module.exports = {
 			callback: function (feedback, bank) {
 				let opt = feedback.options
 
-				let obj = self.DATA[opt.pinp + 'source'];
+				let obj = self.DATA[opt.pinp + 'source']
 
 				if (obj == opt.source) {
 					return true

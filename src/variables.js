@@ -94,10 +94,10 @@ module.exports = {
 			variableObj.pnpkey4_pvw = self.DATA.data_1E01 == '01' ? 'On' : 'Off'
 
 			//pnpkey sources
-			variableObj['pnpkey1_source'] = self.DATA.pnpkey1sourcename;
-			variableObj['pnpkey2_source'] = self.DATA.pnpkey2sourcename;
-			variableObj['pnpkey3_source'] = self.DATA.pnpkey3sourcename;
-			variableObj['pnpkey4_source'] = self.DATA.pnpkey4sourcename;
+			variableObj['pnpkey1_source'] = self.DATA.pnpkey1sourcename
+			variableObj['pnpkey2_source'] = self.DATA.pnpkey2sourcename
+			variableObj['pnpkey3_source'] = self.DATA.pnpkey3sourcename
+			variableObj['pnpkey4_source'] = self.DATA.pnpkey4sourcename
 
 			//Output Assigns
 			let hdmi1assign = self.CHOICES_OUTPUTSASSIGN.find((item) => {

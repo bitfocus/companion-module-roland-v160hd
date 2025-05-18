@@ -206,14 +206,14 @@ module.exports = {
 	},*/
 
 	getMemoryNames: function () {
-		let self = this;
+		let self = this
 
 		for (let i = 0; i < 30; i++) {
-			let hexMemory = i.toString(16).padStart(2, '0').toUpperCase();
+			let hexMemory = i.toString(16).padStart(2, '0').toUpperCase()
 			for (let j = 0; j < 8; j++) {
-				let hex = j.toString(16).padStart(2, '0').toUpperCase();
-				let command = '60' + hexMemory + hex + ',000001;';
-				self.sendRawCommand('RQH:' + command);
+				let hex = j.toString(16).padStart(2, '0').toUpperCase()
+				let command = '60' + hexMemory + hex + ',000001;'
+				self.sendRawCommand('RQH:' + command)
 			}
 		}
 	},
@@ -365,8 +365,7 @@ module.exports = {
 															self.DATA.pnpkey4sourcename = lookup.label
 															self.logVerbose('PnP/Key 4 Source Name: ' + lookup.label)
 														}
-													}
-													else {
+													} else {
 														//other data
 														self.DATA[`data_${param1}${param2}${param3}`] = value //this should take care of all requested data
 														self.DATA[`data_${param2}${param3}`] = value //this should take care of all requested data
@@ -476,7 +475,10 @@ module.exports = {
 													}
 
 													//value is the character, put it in the correct spot in the memory name based on the memoryCharIndex
-													memoryName = memoryName.substring(0, memoryCharIndex * 2) + value + memoryName.substring(memoryCharIndex * 2 + 1) //replace the character at the index
+													memoryName =
+														memoryName.substring(0, memoryCharIndex * 2) +
+														value +
+														memoryName.substring(memoryCharIndex * 2 + 1) //replace the character at the index
 
 													self.DATA[`memory${memoryNumber}`] = memoryName
 													let variableObj = {}
@@ -484,7 +486,8 @@ module.exports = {
 													self.setVariableValues(variableObj)
 												}
 
-												if (param1 == '0A') { //memory functions
+												if (param1 == '0A') {
+													//memory functions
 													if (param2 == '00' && param3 == '03') {
 														//last memory loaded
 														self.DATA.lastMemory = parseInt(value, 16)
@@ -499,7 +502,6 @@ module.exports = {
 														self.setVariableValues(variableObj)
 													}
 												}
-
 											}
 										}
 									}
