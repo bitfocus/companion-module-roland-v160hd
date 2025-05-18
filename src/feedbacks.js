@@ -439,8 +439,8 @@ module.exports = {
 					type: 'dropdown',
 					label: 'Source',
 					id: 'source',
-					default: self.CHOICES_PGMPVW_SELECT[0].id,
-					choices: self.CHOICES_PGMPVW_SELECT,
+					default: self.CHOICES_PNPKEY_SOURCES[0].id,
+					choices: self.CHOICES_PNPKEY_SOURCES,
 				},
 			],
 			callback: function (feedback, bank) {
