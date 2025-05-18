@@ -292,6 +292,7 @@ module.exports = {
 
 												if (param1 == '0C' && param2 == '00' && param3 == '00') {
 													//subscribe tally message
+													self.logVerbose('Received Subscribe Tally Message')
 													let index = 0
 													let halfLength = value.length / 2
 													for (let t = 0; t < halfLength; t++) {
@@ -310,48 +311,59 @@ module.exports = {
 												if (param1 == '00') {
 													if (param2 == '00' && param3 == '11') {
 														//aux 1 source
+														self.logVerbose('Received Aux 1 Source: ' + value)
 														self.DATA.aux1source = value
 													} else if (param2 == '00' && param3 == '2E') {
 														//aux 2 source
+														self.logVerbose('Received Aux 2 Source: ' + value)
 														self.DATA.aux2source = value
 													} else if (param2 == '00' && param3 == '2F') {
 														//aux 3 source
+														self.logVerbose('Received Aux 3 Source: ' + value)
 														self.DATA.aux3source = value
 													} else if (param2 == '1B' && param3 == '02') {
 														//pnp key 1 source
-														let lookup = self.CHOICES_PGMPVW_SELECT.find((item) => {
+														let lookup = self.CHOICES_PNPKEY_SOURCES.find((item) => {
 															return item.id == value
 														})
 														self.DATA.pnpkey1source = value
+														self.logVerbose('Received PnP/Key 1 Source: ' + value)
 														if (lookup) {
 															self.DATA.pnpkey1sourcename = lookup.label
+															self.logVerbose('PnP/Key 1 Source Name: ' + lookup.label)
 														}
 													} else if (param2 == '1C' && param3 == '02') {
 														//pnp key 2 source
-														let lookup = self.CHOICES_PGMPVW_SELECT.find((item) => {
+														let lookup = self.CHOICES_PNPKEY_SOURCES.find((item) => {
 															return item.id == value
 														})
 														self.DATA.pnpkey2source = value
+														self.logVerbose('Received PnP/Key 2 Source: ' + value)
 														if (lookup) {
 															self.DATA.pnpkey2sourcename = lookup.label
+															self.logVerbose('PnP/Key 2 Source Name: ' + lookup.label)
 														}
 													} else if (param2 == '1D' && param3 == '02') {
 														//pnp key 3 source
-														let lookup = self.CHOICES_PGMPVW_SELECT.find((item) => {
+														let lookup = self.CHOICES_PNPKEY_SOURCES.find((item) => {
 															return item.id == value
 														})
 														self.DATA.pnpkey3source = value
+														self.logVerbose('Received PnP/Key 3 Source: ' + value)
 														if (lookup) {
 															self.DATA.pnpkey3sourcename = lookup.label
+															self.logVerbose('PnP/Key 3 Source Name: ' + lookup.label)
 														}
 													} else if (param2 == '1E' && param3 == '02') {
 														//pnp key 4 source
-														let lookup = self.CHOICES_PGMPVW_SELECT.find((item) => {
+														let lookup = self.CHOICES_PNPKEY_SOURCES.find((item) => {
 															return item.id == value
 														})
 														self.DATA.pnpkey4source = value
+														self.logVerbose('Received PnP/Key 4 Source: ' + value)
 														if (lookup) {
 															self.DATA.pnpkey4sourcename = lookup.label
+															self.logVerbose('PnP/Key 4 Source Name: ' + lookup.label)
 														}
 													}
 													else {
@@ -364,76 +376,91 @@ module.exports = {
 												if (param1 == '02' && param2 == '05' && param3 == '00') {
 													//freeze state
 													self.DATA.freeze = value
+													self.logVerbose('Received Freeze State: ' + value)
 												}
 
 												if (param1 == '01' && param2 == '22' && param3 == '03') {
 													//aux 1 mute
 													self.DATA.aux1mute = value
+													self.logVerbose('Received Aux 1 Mute: ' + value)
 												}
 
 												if (param1 == '01' && param2 == '25' && param3 == '03') {
 													//aux 2 mute
 													self.DATA.aux2mute = value
+													self.logVerbose('Received Aux 2 Mute: ' + value)
 												}
 
 												if (param1 == '01' && param2 == '26' && param3 == '03') {
 													//aux 3 mute
 													self.DATA.aux3mute = value
+													self.logVerbose('Received Aux 3 Mute: ' + value)
 												}
 
 												if (param1 == '00' && param2 == '00' && param3 == '0A') {
 													//hdmi 1 output assign
 													self.DATA.hdmi1assign = value
+													self.logVerbose('Received HDMI 1 Output Assign: ' + value)
 												}
 
 												if (param1 == '00' && param2 == '00' && param3 == '0B') {
 													//hdmi 2 output assign
 													self.DATA.hdmi2assign = value
+													self.logVerbose('Received HDMI 2 Output Assign: ' + value)
 												}
 
 												if (param1 == '00' && param2 == '00' && param3 == '0C') {
 													//hdmi 3 output assign
 													self.DATA.hdmi3assign = value
+													self.logVerbose('Received HDMI 3 Output Assign: ' + value)
 												}
 
 												if (param1 == '00' && param2 == '00' && param3 == '0D') {
 													//sdi 1 output assign
 													self.DATA.sdi1assign = value
+													self.logVerbose('Received SDI 1 Output Assign: ' + value)
 												}
 
 												if (param1 == '00' && param2 == '00' && param3 == '0E') {
 													//sdi 2 output assign
 													self.DATA.sdi2assign = value
+													self.logVerbose('Received SDI 2 Output Assign: ' + value)
 												}
 
 												if (param1 == '00' && param2 == '00' && param3 == '0F') {
 													//sdi 3 output assign
 													self.DATA.sdi3assign = value
+													self.logVerbose('Received SDI 3 Output Assign: ' + value)
 												}
 
 												if (param1 == '00' && param2 == '00' && param3 == '10') {
 													//usb output assign
 													self.DATA.usbassign = value
+													self.logVerbose('Received USB Output Assign: ' + value)
 												}
 
 												if (param1 == '02' && param2 == '01' && param3 == '0D') {
 													//aux link mode
 													self.DATA.auxlinkmode = value
+													self.logVerbose('Received Aux Link Mode: ' + value)
 												}
 
 												if (param1 == '02' && param2 == '01' && param3 == '54') {
 													//aux 1 link
 													self.DATA.aux1link = value
+													self.logVerbose('Received Aux 1 Link: ' + value)
 												}
 
 												if (param1 == '02' && param2 == '01' && param3 == '55') {
 													//aux 2 link
 													self.DATA.aux2link = value
+													self.logVerbose('Received Aux 2 Link: ' + value)
 												}
 
 												if (param1 == '02' && param2 == '01' && param3 == '56') {
 													//aux 3 link
 													self.DATA.aux3link = value
+													self.logVerbose('Received Aux 3 Link: ' + value)
 												}
 
 												if (param1 == '60') {
@@ -539,6 +566,14 @@ module.exports = {
 			if (self.config.verbose) {
 				self.log('warn', 'Unable to send: Socket not connected.')
 			}
+		}
+	},
+
+	logVerbose: function (message) {
+		let self = this
+
+		if (self.config.verbose) {
+			self.log('debug', message)
 		}
 	},
 
