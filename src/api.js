@@ -579,7 +579,7 @@ module.exports = {
 		}
 	},
 
-	calculateBytes: function (value) {
+	calculateBytes: function (value, scale = 10) {
 		/*
 		From Roland:
 		Due to MIDI protocol restrictions, 8-bit data must be separated into 7-bit sections.
@@ -588,30 +588,9 @@ module.exports = {
 		Then mask the data with a 14-bit pattern.
 		*/
 
-		//Shift the decimal point one place to the right
-		let decimalValue = value * 10
-
-		// Convert decimal to hexadecimal
-		let hexadecimalValue = decimalValue.toString(16).toUpperCase()
-
-		// Convert hexadecimal string to a 32-bit signed integer
-		let signedInt32 = parseInt(hexadecimalValue, 16) | 0
-
-		// Extract lower 16 bits
-		let lower16Bits = signedInt32 & 0xffff
-
-		// Convert back to hexadecimal
-		let truncatedHex = lower16Bits.toString(16).toUpperCase()
-
-		//Apply the 14-bit mask
-		let maskedValue = lower16Bits & 0x3fff
-
-		// Convert back to hexadecimal string and make sure it is 4 characters long
-		let maskedHex = maskedValue.toString(16).padStart(4, '0').toUpperCase()
-
-		let value1 = maskedHex.substring(0, 2)
-		let value2 = maskedHex.substring(2, 4)
-
-		return [value1, value2]
+		const scaled = Math.round(value * scale) & 0x3fff
+		const lsb = scaled & 0x7f
+		const msb = (scaled >> 7) & 0x7f
+		return [msb, lsb]
 	},
 }
