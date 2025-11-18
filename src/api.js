@@ -168,6 +168,38 @@ module.exports = {
 		self.sendRawCommand('RQH:001C02,000001;') //PnP/Key 2 source
 		self.sendRawCommand('RQH:001D02,000001;') //PnP/Key 3 source
 		self.sendRawCommand('RQH:001E02,000001;') //PnP/Key 4 source
+
+        //get what Video Buses pnp/keys enabled on
+		self.sendRawCommand('RQH:000012,000001;') //PnP/Key 1 Enabled on PGM 
+		self.sendRawCommand('RQH:000013,000001;') //PnP/Key 2 Enabled on PGM 
+		self.sendRawCommand('RQH:000014,000001;') //PnP/Key 3 Enabled on PGM 
+        self.sendRawCommand('RQH:000015,000001;') //PnP/Key 4 Enabled on PGM 
+        self.sendRawCommand('RQH:000016,000001;') //DSK 1 Enabled on PGM 
+		self.sendRawCommand('RQH:000017,000001;') //DSK 2 Enabled on PGM 
+		self.sendRawCommand('RQH:000018,000001;') //PnP/Key 1 Enabled on SUB PGM 
+		self.sendRawCommand('RQH:000019,000001;') //PnP/Key 2 Enabled on SUB PGM 
+		self.sendRawCommand('RQH:00001A,000001;') //PnP/Key 3 Enabled on SUB PGM 
+        self.sendRawCommand('RQH:00001B,000001;') //PnP/Key 4 Enabled on SUB PGM 
+        self.sendRawCommand('RQH:00001C,000001;') //DSK 1 Enabled on SUB PGM 
+		self.sendRawCommand('RQH:00001D,000001;') //DSK 2 Enabled on SUB PGM 
+		self.sendRawCommand('RQH:00001E,000001;') //PnP/Key 1 Enabled on Aux 1 
+		self.sendRawCommand('RQH:00001F,000001;') //PnP/Key 2 Enabled on Aux 1 
+		self.sendRawCommand('RQH:000020,000001;') //PnP/Key 3 Enabled on Aux 1 
+        self.sendRawCommand('RQH:000021,000001;') //PnP/Key 4 Enabled on Aux 1 
+        self.sendRawCommand('RQH:000022,000001;') //DSK 1 Enabled on Aux 1 
+		self.sendRawCommand('RQH:000023,000001;') //DSK 2 Enabled on Aux 1 
+		self.sendRawCommand('RQH:000030,000001;') //PnP/Key 1 Enabled on Aux 2 
+		self.sendRawCommand('RQH:000031,000001;') //PnP/Key 2 Enabled on Aux 2 
+		self.sendRawCommand('RQH:000032,000001;') //PnP/Key 3 Enabled on Aux 2 
+        self.sendRawCommand('RQH:000033,000001;') //PnP/Key 4 Enabled on Aux 2 
+        self.sendRawCommand('RQH:000034,000001;') //DSK 1 Enabled on Aux 2 
+		self.sendRawCommand('RQH:000035,000001;') //DSK 2 Enabled on Aux 2 
+		self.sendRawCommand('RQH:000036,000001;') //PnP/Key 1 Enabled on Aux 3 
+		self.sendRawCommand('RQH:000037,000001;') //PnP/Key 2 Enabled on Aux 3 
+		self.sendRawCommand('RQH:000038,000001;') //PnP/Key 3 Enabled on Aux 3 
+        self.sendRawCommand('RQH:000039,000001;') //PnP/Key 4 Enabled on Aux 3 
+        self.sendRawCommand('RQH:00003A,000001;') //DSK 1 Enabled on Aux 3 
+		self.sendRawCommand('RQH:00003B,000001;') //DSK 2 Enabled on Aux 3 
 	},
 
 	getAuxData: function () {

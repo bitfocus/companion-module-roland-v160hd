@@ -25,6 +25,38 @@ module.exports = {
 		variables.push({ variableId: 'pnpkey3_source', name: 'PnP/Key 3 Source' })
 		variables.push({ variableId: 'pnpkey4_source', name: 'PnP/Key 4 Source' })
 
+        //pnp/key enabled
+        variables.push({ variableId: 'pnpkey1_pgm_enabled', name: 'PnP/Key 1 enabled on PGM'})
+        variables.push({ variableId: 'pnpkey2_pgm_enabled', name: 'PnP/Key 2 enabled on PGM'})
+        variables.push({ variableId: 'pnpkey3_pgm_enabled', name: 'PnP/Key 3 enabled on PGM'})
+        variables.push({ variableId: 'pnpkey4_pgm_enabled', name: 'PnP/Key 4 enabled on PGM'})
+        variables.push({ variableId: 'dsk1_pgm_enabled', name: 'DSK 1 enabled on PGM'})
+        variables.push({ variableId: 'dsk2_pgm_enabled', name: 'DSK 2 enabled on PGM'})
+        variables.push({ variableId: 'pnpkey1_sub_pgm_enabled', name: 'PnP/Key 1 enabled on SUB PGM'})
+        variables.push({ variableId: 'pnpkey2_sub_pgm_enabled', name: 'PnP/Key 2 enabled on SUB PGM'})
+        variables.push({ variableId: 'pnpkey3_sub_pgm_enabled', name: 'PnP/Key 3 enabled on SUB PGM'})
+        variables.push({ variableId: 'pnpkey4_sub_pgm_enabled', name: 'PnP/Key 4 enabled on SUB PGM'})
+        variables.push({ variableId: 'dsk1_sub_pgm_enabled', name: 'DSK 1 enabled on SUB PGM'})
+        variables.push({ variableId: 'dsk2_sub_pgm_enabled', name: 'DSK 2 enabled on SUB PGM'})
+        variables.push({ variableId: 'pnpkey1_aux1_enabled', name: 'PnP/Key 1 enabled on Aux 1'})
+        variables.push({ variableId: 'pnpkey2_aux1_enabled', name: 'PnP/Key 2 enabled on Aux 1'})
+        variables.push({ variableId: 'pnpkey3_aux1_enabled', name: 'PnP/Key 3 enabled on Aux 1'})
+        variables.push({ variableId: 'pnpkey4_aux1_enabled', name: 'PnP/Key 4 enabled on Aux 1'})
+        variables.push({ variableId: 'dsk1_aux1_enabled', name: 'DSK 1 enabled on Aux 1'})
+        variables.push({ variableId: 'dsk2_aux1_enabled', name: 'DSK 2 enabled on Aux 1'})
+        variables.push({ variableId: 'pnpkey1_aux2_enabled', name: 'PnP/Key 1 enabled on Aux 2'})
+        variables.push({ variableId: 'pnpkey2_aux2_enabled', name: 'PnP/Key 2 enabled on Aux 2'})
+        variables.push({ variableId: 'pnpkey3_aux2_enabled', name: 'PnP/Key 3 enabled on Aux 2'})
+        variables.push({ variableId: 'pnpkey4_aux2_enabled', name: 'PnP/Key 4 enabled on Aux 2'})
+        variables.push({ variableId: 'dsk1_aux2_enabled', name: 'DSK 1 enabled on Aux 2'})
+        variables.push({ variableId: 'dsk2_aux2_enabled', name: 'DSK 2 enabled on Aux 2'})
+        variables.push({ variableId: 'pnpkey1_aux3_enabled', name: 'PnP/Key 1 enabled on Aux 3'})
+        variables.push({ variableId: 'pnpkey2_aux3_enabled', name: 'PnP/Key 2 enabled on Aux 3'})
+        variables.push({ variableId: 'pnpkey3_aux3_enabled', name: 'PnP/Key 3 enabled on Aux 3'})
+        variables.push({ variableId: 'pnpkey4_aux3_enabled', name: 'PnP/Key 4 enabled on Aux 3'})
+        variables.push({ variableId: 'dsk1_aux3_enabled', name: 'DSK 1 enabled on Aux 3'})
+        variables.push({ variableId: 'dsk2_aux3_enabled', name: 'DSK 2 enabled on Aux 3'})
+
 		//Output Assigns
 		variables.push({ variableId: 'hdmi1', name: 'HDMI Output 1 Source' })
 		variables.push({ variableId: 'hdmi2', name: 'HDMI Output 2 Source' })
@@ -92,6 +124,39 @@ module.exports = {
 			variableObj.pnpkey3_pvw = self.DATA.data_1D01 == '01' ? 'On' : 'Off'
 			variableObj.pnpkey4_pgm = self.DATA.data_1E00 == '01' ? 'On' : 'Off'
 			variableObj.pnpkey4_pvw = self.DATA.data_1E01 == '01' ? 'On' : 'Off'
+
+            //PnP/Keys Enabbled
+            //Treating Always as On
+			variableObj.pnpkey1_pgm_enabled = self.DATA.data_000012 == '00' ? 'Off' : 'On'
+			variableObj.pnpkey2_pgm_enabled = self.DATA.data_000013 == '00' ? 'Off' : 'On'
+			variableObj.pnpkey3_pgm_enabled = self.DATA.data_000014 == '00' ? 'Off' : 'On'
+			variableObj.pnpkey4_pgm_enabled = self.DATA.data_000015 == '00' ? 'Off' : 'On'
+			variableObj.dsk1_pgm_enabled = self.DATA.data_000016 == '00' ? 'Off' : 'On'
+			variableObj.dsk2_pgm_enabled = self.DATA.data_000017 == '00' ? 'Off' : 'On'
+			variableObj.pnpkey1_sub_pgm_enabled = self.DATA.data_000018 == '00' ? 'Off' : 'On'
+			variableObj.pnpkey2_sub_pgm_enabled = self.DATA.data_000019 == '00' ? 'Off' : 'On'
+			variableObj.pnpkey3_sub_pgm_enabled = self.DATA.data_00001A == '00' ? 'Off' : 'On'
+			variableObj.pnpkey4_sub_pgm_enabled = self.DATA.data_00001B == '00' ? 'Off' : 'On'
+			variableObj.dsk1_sub_pgm_enabled = self.DATA.data_00001C == '00' ? 'Off' : 'On'
+			variableObj.dsk2_sub_pgm_enabled = self.DATA.data_00001D == '00' ? 'Off' : 'On'
+			variableObj.pnpkey1_aux1_enabled = self.DATA.data_00001E == '00' ? 'Off' : 'On'
+			variableObj.pnpkey2_aux1_enabled = self.DATA.data_00001F == '00' ? 'Off' : 'On'
+			variableObj.pnpkey3_aux1_enabled = self.DATA.data_000020 == '00' ? 'Off' : 'On'
+			variableObj.pnpkey4_aux1_enabled = self.DATA.data_000021 == '00' ? 'Off' : 'On'
+			variableObj.dsk1_aux1_enabled = self.DATA.data_000022 == '00' ? 'Off' : 'On'
+			variableObj.dsk2_aux1_enabled = self.DATA.data_000023 == '00' ? 'Off' : 'On'
+			variableObj.pnpkey1_aux2_enabled = self.DATA.data_000030 == '00' ? 'Off' : 'On'
+			variableObj.pnpkey2_aux2_enabled = self.DATA.data_000031 == '00' ? 'Off' : 'On'
+			variableObj.pnpkey3_aux2_enabled = self.DATA.data_000032 == '00' ? 'Off' : 'On'
+			variableObj.pnpkey4_aux2_enabled = self.DATA.data_000033 == '00' ? 'Off' : 'On'
+			variableObj.dsk1_aux2_enabled = self.DATA.data_000034 == '00' ? 'Off' : 'On'
+			variableObj.dsk2_aux2_enabled = self.DATA.data_000035 == '00' ? 'Off' : 'On'
+			variableObj.pnpkey1_aux3_enabled = self.DATA.data_000036 == '00' ? 'Off' : 'On'
+			variableObj.pnpkey2_aux3_enabled = self.DATA.data_000037 == '00' ? 'Off' : 'On'
+			variableObj.pnpkey3_aux3_enabled = self.DATA.data_000038 == '00' ? 'Off' : 'On'
+			variableObj.pnpkey4_aux3_enabled = self.DATA.data_000039 == '00' ? 'Off' : 'On'
+			variableObj.dsk1_aux3_enabled = self.DATA.data_00003A == '00' ? 'Off' : 'On'
+			variableObj.dsk2_aux3_enabled = self.DATA.data_00003B == '00' ? 'Off' : 'On'
 
 			//pnpkey sources
 			variableObj['pnpkey1_source'] = self.DATA.pnpkey1sourcename

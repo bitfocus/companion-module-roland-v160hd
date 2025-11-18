@@ -220,6 +220,7 @@ module.exports = {
 					choices: [
 						{ id: 0, label: 'Disable' },
 						{ id: 1, label: 'Enable' },
+						{ id: 2, label: 'Always' },
 					],
 				},
 			],

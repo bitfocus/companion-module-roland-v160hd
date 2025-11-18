@@ -129,6 +129,26 @@ module.exports = {
 		{ id: 27, label: 'Sub Program Layer PinP & Key 4' },
 		{ id: 28, label: 'Sub Program Layer DSK 1' },
 		{ id: 29, label: 'Sub Program Layer DSK 2' },
+		{ id: 30, label: 'Aux 1 PinP & Key 1' },
+		{ id: 31, label: 'Aux 1 PinP & Key 2' },
+		{ id: 32, label: 'Aux 1 PinP & Key 3' },
+		{ id: 33, label: 'Aux 1 PinP & Key 4' },
+		{ id: 34, label: 'Aux 1 DSK 1' },
+		{ id: 35, label: 'Aux 1 DSK 2' },
+        //Input 11-20, Aux 2 and 3 Sources are inbetween 
+        //Aux 1 DSK and Aux 2 PinP number
+		{ id: 48, label: 'Aux 2 PinP & Key 1' },
+		{ id: 49, label: 'Aux 2 PinP & Key 2' },
+		{ id: 50, label: 'Aux 2 PinP & Key 3' },
+		{ id: 51, label: 'Aux 2 PinP & Key 4' },
+		{ id: 52, label: 'Aux 2 DSK 1' },
+		{ id: 53, label: 'Aux 2 DSK 2' },
+		{ id: 54, label: 'Aux 3 PinP & Key 1' },
+		{ id: 55, label: 'Aux 3 PinP & Key 2' },
+		{ id: 56, label: 'Aux 3 PinP & Key 3' },
+		{ id: 57, label: 'Aux 3 PinP & Key 4' },
+		{ id: 58, label: 'Aux 3 DSK 1' },
+		{ id: 59, label: 'Aux 3 DSK 2' },
 	],
 
 	CHOICES_TRANSITION_TIME_TYPES: [
