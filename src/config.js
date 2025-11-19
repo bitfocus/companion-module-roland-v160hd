@@ -90,6 +90,40 @@ module.exports = {
 				value: '<hr />',
 			},
 			{
+				type: 'static-text',
+				id: 'info3',
+				label: 'Request Initial Feedback Data',
+				width: 12,
+				value: `
+					    This is an alternative to Polling. 
+                        This will request all the variables when module is first
+                        started. 
+                        <br>
+                        Module will take 20 seconds to load all initial variables
+						<br>
+						<strong>This does not enable polling. If you want the
+                        feedbacks to update, you must you must use the Request 
+                        Feedback Data action on a button
+                        </strong>
+						<br>
+				`,
+			},
+			{
+				type: 'checkbox',
+				id: 'manualfeedback',
+				label: 'Enable Initial Feedback Values Load',
+				default: false,
+				width: 3,
+
+			},
+			{
+				type: 'static-text',
+				id: 'hr1',
+				width: 12,
+				label: ' ',
+				value: '<hr />',
+			},
+			{
 				type: 'checkbox',
 				id: 'verbose',
 				label: 'Enable Verbose Logging',

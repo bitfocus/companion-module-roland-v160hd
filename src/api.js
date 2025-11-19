@@ -117,7 +117,22 @@ module.exports = {
 			}
 
 			self.INTERVAL = setInterval(self.getData.bind(this), parseInt(self.config.pollingrate))
-		} else {
+		} else if (self.config.manualfeedback) {
+            self.log('info', 'Request Feedback is enabled, Fetching Initial Data.')
+            self.getData()
+            // request memory names, this takes multiple requests
+            // will run for every second for 20 seconds
+            for( let i = 0; i < 20; i++) {
+
+                setTimeout(() => {
+                    self.getMemoryNames()
+                    if ( i > 18) {
+                        self.getLastMemoryLoaded()
+                    }
+                }, 1000*i)
+            }
+        } else {
+            self.log('info',  self.config.keys)
 			self.log('info', 'Polling is disabled. Module will not request new data at a regular rate.')
 		}
 	},
@@ -132,8 +147,8 @@ module.exports = {
 		self.getOutputData()
 		self.getAuxLinkData()
 
-		self.getMemoryNames()
 		self.getLastMemoryLoaded()
+		//self.getMemoryNames()
 	},
 
 	getPinpKeyData: function () {
