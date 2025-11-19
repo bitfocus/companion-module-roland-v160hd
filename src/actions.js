@@ -2333,41 +2333,6 @@ module.exports = {
 				}
 
 				let address = `02${options.camera}27`
-				self.sendCommand(address, '01')
-			},
-		}
-
-		actions.autoFocusOff = {
-			name: 'Camera Auto Focus - Off',
-			options: [
-				{
-					type: 'checkbox',
-					label: 'Use Selected Camera',
-					id: 'useSelected',
-					default: false,
-					tooltip: 'Use the selected camera instead of the camera selected in the action',
-				},
-				{
-					type: 'dropdown',
-					label: 'Camera',
-					id: 'camera',
-					default: self.CHOICES_CAMERAS[0].id,
-					choices: self.CHOICES_CAMERAS,
-					isVisible: (options) => options.useSelected === false,
-				},
-			],
-			callback: function (action, bank) {
-				let options = action.options
-
-				if (options.useSelected === true) {
-					if (self.selectedCamera === undefined) {
-						self.selectedCamera = '01'
-					}
-
-					options.camera = self.selectedCamera
-				}
-
-				let address = `02${options.camera}27`
 				self.sendCommand(address, '00')
 			},
 		}
@@ -2526,6 +2491,195 @@ module.exports = {
 			},
 		}
 
+        actions.audioFollowVideo = {
+ 			name: 'Audio Follow Video',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Video Source',
+					id: 'input',
+					default: self.CHOICES_INPUTS_VIDEO[0].id,
+					choices: self.CHOICES_INPUTS_VIDEO,
+				},
+				{
+					type: 'checkbox',
+					label: 'Audio Follows Video',
+					id: 'follow',
+					default: false,
+                },
+            ],
+            callback: function (action, bank) {
+                let value = '00'
+				if (options.follow === true) {
+                    value = '01'
+				}
+
+				let address = `0130${options.input}`
+				self.sendCommand(address, value)
+			},
+		}
+
+        actions.audioFollowVideoSource = {
+ 			name: 'Audio Follow Video Source',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Audio Input',
+					id: 'input',
+					default: self.CHOICES_INPUTS_AUDIO[0].id,
+					choices: self.CHOICES_INPUTS_AUDIO,
+				},
+				{
+					type: 'dropdown',
+					label: 'Source to follow',
+					id: 'follow',
+					default: self.CHOICES_AUDIO_FOLLOW_SOURCES[0].id,
+					choices: self.CHOICES_AUDIO_FOLLOW_SOURCES,
+				},
+			],
+			callback: function (action, bank) {
+				let options = action.options
+                let value = options.follow
+				let address = `0130${options.input}`
+				self.sendCommand(address, value)
+			},
+		}
+
+        actions.audioOutputOverAudio = {
+ 			name: 'Audio Output Source - Audio Only',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Audio Output',
+					id: 'output',
+                    default: '00',
+                    choices: [
+                        { id: '00', label: 'AUDIO OUT XLR' },
+                        { id: '01', label: 'AUDIO OUT RCA' },
+                        { id: '02', label: 'Headphones' },
+                    ],
+				},
+				{
+					type: 'dropdown',
+					label: 'Source',
+					id: 'source',
+					default: '00',
+					choices: [
+						{ id: '00', label: 'Master Output' },
+						{ id: '01', label: 'Aux 1' },
+						{ id: '02', label: 'Aux2' },
+						{ id: '03', label: 'Aux3' },
+                    ],
+				},
+			],
+			callback: function (action, bank) {
+				let options = action.options
+                let value = options.source
+				let address = `0120${options.output}`
+				self.sendCommand(address, value)
+			},
+		}
+
+        actions.audioOutputOverAudioVideo = {
+ 			name: 'Audio Output Source - Audio/Video Outputs',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Audio Output',
+					id: 'output',
+                    default: '03',
+                    choices: [
+                        { id: '03', label: 'USB Out' },
+                        { id: '04', label: 'HDMI Output 1' },
+                        { id: '05', label: 'HDMI Output 2' },
+                        { id: '06', label: 'HDMI Output 3' },
+                        { id: '07', label: 'SDI Output 1' },
+                        { id: '08', label: 'SDI Output 2' },
+                        { id: '09', label: 'SDI Output 3' },
+                    ],
+				},
+				{
+					type: 'dropdown',
+					label: 'Source',
+					id: 'source',
+					default: '00',
+					choices: [
+						{ id: '00', label: 'Auto' },
+						{ id: '01', label: 'Master Output' },
+						{ id: '02', label: 'Aux 1' },
+						{ id: '03', label: 'Aux 2' },
+						{ id: '04', label: 'Aux 3' },
+                    ],
+				},
+			],
+			callback: function (action, bank) {
+				let options = action.options
+                let value = options.source
+				let address = `0120${options.output}`
+				self.sendCommand(address, value)
+			},
+		}
+
+        actions.audioInputMute = {
+ 			name: 'Audio Input Mute',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Audio Input',
+					id: 'input',
+                    default: '00',
+					default: self.CHOICES_INPUTS_AUDIO_ALL[0].id,
+					choices: self.CHOICES_INPUTS_AUDIO_ALL,
+				},
+				{
+					type: 'dropdown',
+					label: 'Mute',
+					id: 'mute',
+					default: '01',
+					choices: [
+						{ id: '01', label: 'Mute' },
+						{ id: '00', label: 'Un-Mute' },
+                    ],
+				},
+			],
+			callback: function (action, bank) {
+				let options = action.options
+                let value = options.mute
+				let address = `01${options.input}06`
+				self.sendCommand(address, value)
+			},
+		}
+
+        actions.audioInputSendToMain = {
+ 			name: 'Audio Input Send To Master Output',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Audio Input',
+					id: 'input',
+                    default: '00',
+					default: self.CHOICES_INPUTS_AUDIO_ALL[0].id,
+					choices: self.CHOICES_INPUTS_AUDIO_ALL,
+				},
+				{
+					type: 'dropdown',
+					label: 'Sent to Main',
+					id: 'mute',
+					default: '01',
+					choices: [
+						{ id: '01', label: 'Send' },
+						{ id: '00', label: "Don't Send" },
+                    ],
+				},
+			],
+			callback: function (action, bank) {
+				let options = action.options
+                let value = options.mute
+				let address = `01${options.input}2E`
+				self.sendCommand(address, value)
+			},
+		}
+>>>>>>> 2b93331 (Adding Audio Follow, Main Send, Input Mute and Output Source Select and variables associated)
 		self.setActionDefinitions(actions)
 	},
 }

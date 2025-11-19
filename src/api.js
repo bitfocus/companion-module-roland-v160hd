@@ -147,6 +147,12 @@ module.exports = {
 		self.getOutputData()
 		self.getAuxLinkData()
 
+        self.getAudioFollowData()
+        self.getAudioInputMuteData()
+        self.getAudioInputMainSendData()
+        self.getAudioOutputData()
+
+		self.getMemoryNames()
 		self.getLastMemoryLoaded()
 		//self.getMemoryNames()
 	},
@@ -208,6 +214,46 @@ module.exports = {
 		self.sendRawCommand('RQH:020155,000001;') //Aux 2 link on/off
 		self.sendRawCommand('RQH:020156,000001;') //Aux 3 link on/off
 	},
+
+    getAudioFollowData: function () {
+        let self = this
+
+        for (let i = 0; i <  27; i++) {
+            let hexNumber = i.toString(16).padStart(2, '0').toUpperCase()
+            let command = '0130' + hexNumber + ',000001;'
+            self.sendRawCommand('RQH:' + command)
+        }
+    },
+
+    getAudioInputMuteData: function () {
+        let self = this
+
+        for (let i = 0; i < self.CHOICES_INPUTS_AUDIO_ALL.length; i++) {
+            let id = self.CHOICES_INPUTS_AUDIO_ALL[i].id
+            let command = '01' + id + '06,000001;'
+            self.sendRawCommand('RQH:' + command)
+        }
+    },
+
+    getAudioInputMainSendData: function () {
+        let self = this
+
+        for (let i = 0; i < 14; i++) {
+            let hexNumber = i.toString(16).padStart(2, '0').toUpperCase()
+            let command = '01' + hexNumber + '2E,000001;'
+            self.sendRawCommand('RQH:' + command)
+        }
+    },
+
+    getAudioOutputData: function () {
+        let self = this
+
+        for (let i = 0; i < 10; i++) {
+            let hexNumber = i.toString(16).padStart(2, '0').toUpperCase()
+            let command = '0120' + hexNumber + ',000001;'
+            self.sendRawCommand('RQH:' + command)
+        }
+    },
 
 	/*getTallyData: function() {
 		let self = this;
@@ -411,6 +457,42 @@ module.exports = {
 													self.DATA.aux3mute = value
 													self.logVerbose('Received Aux 3 Mute: ' + value)
 												}
+
+                                                if (param1 == '01' && param3 == '06') {
+                                                    //audio mutes
+                                                    let param2int = parseInt(param2, 16)
+                                                    if (param2int <= 20) { 
+                                                        // values larger than 20 are for different commands
+                                                        let dataName = 'audiomute-' + param2
+                                                        self.DATA[dataName] = value
+                                                        self.logVerbose('Received Audio Input Mute Data for:"' + param2 + '" - Mute: ' + value)
+                                                    }
+                                                }
+
+                                                if (param1 == '01' && param3 == '2E') {
+                                                    //audio main send
+                                                    let param2int = parseInt(param2, 16)
+                                                    if (param2int <= 20) { 
+                                                        // values larger than 20 are for different commands
+                                                        let dataName = 'audio-main-send-' + param2
+                                                        self.DATA[dataName] = value
+                                                        self.logVerbose('Received Audio Main Send Data for:"' + param2 + '" - Mute: ' + value)
+                                                    }
+                                                }
+                                                
+                                                if (param1 == '01' && param2 == '30') {
+                                                    //audio follows
+                                                    let dataName = 'audiofollow-' + param3
+                                                    self.DATA[dataName] = value
+                                                    self.logVerbose('Received Audio Follow Data for:"' + param3 + '" - Follow: ' + value)
+                                                }
+                                                
+                                                if (param1 == '01' && param2 == '20') {
+                                                    //audio output source
+                                                    let dataName = 'audio-output-source-' + param3
+                                                    self.DATA[dataName] = value
+                                                    self.logVerbose('Received Audio Output Data for:"' + param3 + '" - Output: ' + value)
+                                                }
 
 												if (param1 == '00' && param2 == '00' && param3 == '0A') {
 													//hdmi 1 output assign

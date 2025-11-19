@@ -50,6 +50,87 @@ module.exports = {
 
 		variables.push({ variableId: 'freeze', name: 'Freeze On/Off' })
 
+        //Audio Mutes
+		variables.push({ variableId: 'audio_mute_audio1', name: 'Audio In 1 Mute' })
+		variables.push({ variableId: 'audio_mute_audio2', name: 'Audio In 2 Mute' })
+		variables.push({ variableId: 'audio_mute_audio3', name: 'Audio In 3/4 Mute' })
+		variables.push({ variableId: 'audio_mute_usb_in', name: 'USB Audio In Mute' })
+		variables.push({ variableId: 'audio_mute_bluetooth_in', name: 'Bluetooth Audio In Mute' })
+		variables.push({ variableId: 'audio_mute_hdmi1', name: 'HDMI 1 Mute' })
+		variables.push({ variableId: 'audio_mute_hdmi2', name: 'HDMI 2 Mute' })
+		variables.push({ variableId: 'audio_mute_hdmi3', name: 'HDMI 3 Mute' })
+		variables.push({ variableId: 'audio_mute_hdmi4', name: 'HDMI 4 Mute' })
+		variables.push({ variableId: 'audio_mute_hdmi5', name: 'HDMI 5 Mute' })
+		variables.push({ variableId: 'audio_mute_hdmi6', name: 'HDMI 6 Mute' })
+		variables.push({ variableId: 'audio_mute_hdmi7', name: 'HDMI 7 Mute' })
+		variables.push({ variableId: 'audio_mute_hdmi8', name: 'HDMI 8 Mute' })
+		variables.push({ variableId: 'audio_mute_sdi1', name: 'SDI 1 Mute' })
+		variables.push({ variableId: 'audio_mute_sdi2', name: 'SDI 2 Mute' })
+		variables.push({ variableId: 'audio_mute_sdi3', name: 'SDI 3 Mute' })
+		variables.push({ variableId: 'audio_mute_sdi4', name: 'SDI 4 Mute' })
+		variables.push({ variableId: 'audio_mute_sdi5', name: 'SDI 5 Mute' })
+		variables.push({ variableId: 'audio_mute_sdi6', name: 'SDI 6 Mute' })
+		variables.push({ variableId: 'audio_mute_sdi7', name: 'SDI 7 Mute' })
+		variables.push({ variableId: 'audio_mute_sdi8', name: 'SDI 8 Mute' })
+        
+        //Audio Follows
+		variables.push({ variableId: 'audio_follow_audio1', name: 'Audio In 1 Audio Follow' })
+		variables.push({ variableId: 'audio_follow_audio2', name: 'Audio In 2 Audio Follow' })
+		variables.push({ variableId: 'audio_follow_audio3', name: 'Audio In 3/4 Audio Follow' })
+		variables.push({ variableId: 'audio_follow_usb_in', name: 'USB Audio In Audio Follow' })
+		variables.push({ variableId: 'audio_follow_bluetooth_in', name: 'Bluetooth Audio In Audio Follow' })
+		variables.push({ variableId: 'audio_follow_hdmi1', name: 'HDMI 1 Audio Follow' })
+		variables.push({ variableId: 'audio_follow_hdmi2', name: 'HDMI 2 Audio Follow' })
+		variables.push({ variableId: 'audio_follow_hdmi3', name: 'HDMI 3 Audio Follow' })
+		variables.push({ variableId: 'audio_follow_hdmi4', name: 'HDMI 4 Audio Follow' })
+		variables.push({ variableId: 'audio_follow_hdmi5', name: 'HDMI 5 Audio Follow' })
+		variables.push({ variableId: 'audio_follow_hdmi6', name: 'HDMI 6 Audio Follow' })
+		variables.push({ variableId: 'audio_follow_hdmi7', name: 'HDMI 7 Audio Follow' })
+		variables.push({ variableId: 'audio_follow_hdmi8', name: 'HDMI 8 Audio Follow' })
+		variables.push({ variableId: 'audio_follow_sdi1', name: 'SDI 1 Audio Follow' })
+		variables.push({ variableId: 'audio_follow_sdi2', name: 'SDI 2 Audio Follow' })
+		variables.push({ variableId: 'audio_follow_sdi3', name: 'SDI 3 Audio Follow' })
+		variables.push({ variableId: 'audio_follow_sdi4', name: 'SDI 4 Audio Follow' })
+		variables.push({ variableId: 'audio_follow_sdi5', name: 'SDI 5 Audio Follow' })
+		variables.push({ variableId: 'audio_follow_sdi6', name: 'SDI 6 Audio Follow' })
+		variables.push({ variableId: 'audio_follow_sdi7', name: 'SDI 7 Audio Follow' })
+		variables.push({ variableId: 'audio_follow_sdi8', name: 'SDI 8 Audio Follow' })
+ 
+        //Audio Main Send
+		variables.push({ variableId: 'audio_main_send_audio1', name: 'Audio In 1 Audio Main Send' })
+		variables.push({ variableId: 'audio_main_send_audio2', name: 'Audio In 2 Audio Main Send' })
+		variables.push({ variableId: 'audio_main_send_audio3', name: 'Audio In 3/4 Audio Main Send' })
+		variables.push({ variableId: 'audio_main_send_usb_in', name: 'USB Audio In Audio Main Send' })
+		variables.push({ variableId: 'audio_main_send_bluetooth_in', name: 'Bluetooth Audio In Audio Main Send' })
+		variables.push({ variableId: 'audio_main_send_hdmi1', name: 'HDMI 1 Audio Main Send' })
+		variables.push({ variableId: 'audio_main_send_hdmi2', name: 'HDMI 2 Audio Main Send' })
+		variables.push({ variableId: 'audio_main_send_hdmi3', name: 'HDMI 3 Audio Main Send' })
+		variables.push({ variableId: 'audio_main_send_hdmi4', name: 'HDMI 4 Audio Main Send' })
+		variables.push({ variableId: 'audio_main_send_hdmi5', name: 'HDMI 5 Audio Main Send' })
+		variables.push({ variableId: 'audio_main_send_hdmi6', name: 'HDMI 6 Audio Main Send' })
+		variables.push({ variableId: 'audio_main_send_hdmi7', name: 'HDMI 7 Audio Main Send' })
+		variables.push({ variableId: 'audio_main_send_hdmi8', name: 'HDMI 8 Audio Main Send' })
+		variables.push({ variableId: 'audio_main_send_sdi1', name: 'SDI 1 Audio Main Send' })
+		variables.push({ variableId: 'audio_main_send_sdi2', name: 'SDI 2 Audio Main Send' })
+		variables.push({ variableId: 'audio_main_send_sdi3', name: 'SDI 3 Audio Main Send' })
+		variables.push({ variableId: 'audio_main_send_sdi4', name: 'SDI 4 Audio Main Send' })
+		variables.push({ variableId: 'audio_main_send_sdi5', name: 'SDI 5 Audio Main Send' })
+		variables.push({ variableId: 'audio_main_send_sdi6', name: 'SDI 6 Audio Main Send' })
+		variables.push({ variableId: 'audio_main_send_sdi7', name: 'SDI 7 Audio Main Send' })
+		variables.push({ variableId: 'audio_main_send_sdi8', name: 'SDI 8 Audio Main Send' })
+
+        //Audio Output Sources
+		variables.push({ variableId: 'audio_output_source_xlr', name: 'XLR Audio Out Source' })
+		variables.push({ variableId: 'audio_output_source_rca', name: 'RCA Audio Out Source' })
+		variables.push({ variableId: 'audio_output_source_headphones', name: 'Headphones Source' })
+		variables.push({ variableId: 'audio_output_source_usb', name: 'USB Audio Out Source' })
+		variables.push({ variableId: 'audio_output_source_hdmi1', name: 'HDMI Output 1 Audio Source' })
+		variables.push({ variableId: 'audio_output_source_hdmi2', name: 'HDMI Output 2 Audio Source' })
+		variables.push({ variableId: 'audio_output_source_hdmi3', name: 'HDMI Output 3 Audio Source' })
+		variables.push({ variableId: 'audio_output_source_sdi1', name: 'SDI Output 1 Audio Source' })
+		variables.push({ variableId: 'audio_output_source_sdi2', name: 'SDI Output 2 Audio Source' })
+		variables.push({ variableId: 'audio_output_source_sdi3', name: 'SDI Output 3 Audio Source' })
+
 		//memory names
 		for (let i = 1; i <= 30; i++) {
 			variables.push({ variableId: 'memoryname_' + i, name: 'Memory Name' + i })
@@ -207,6 +288,53 @@ module.exports = {
 
 			//Freeze
 			variableObj.freeze = self.DATA.freeze == '01' ? 'On' : 'Off'
+
+            //Audio Input Mutes
+			for (let i = 0; i < self.CHOICES_INPUTS_AUDIO_ALL.length; i++) {
+				let id = self.CHOICES_INPUTS_AUDIO_ALL[i].id
+				let shortLabel = self.CHOICES_INPUTS_AUDIO_ALL[i].shortlabel
+                let dataName = 'audiomute-' + id
+                if (self.DATA[dataName]) {
+                    variableObj['audio_mute_' + shortLabel] = self.DATA[dataName] == '01' ? 'On' : 'Off'
+                }
+			}
+
+            //Audio Follow Self
+ 			for (let i = 0; i < self.CHOICES_INPUTS_VIDEO.length; i++) {
+                let id = self.CHOICES_INPUTS_VIDEO[i].id
+                let shortLabel = self.CHOICES_INPUTS_VIDEO[i].shortlabel
+                let dataName = 'audiofollow-' + id
+                if (self.DATA[dataName]) {
+                    variableObj['audio_follow_' + shortLabel] = self.DATA[dataName] == '01' ? 'On' : 'Off'
+                }
+            }
+
+            //Audio Follows Other
+ 			for (let i = 0; i < self.CHOICES_INPUTS_AUDIO.length; i++) {
+                let id = self.CHOICES_INPUTS_AUDIO[i].id
+                let shortLabel = self.CHOICES_INPUTS_AUDIO[i].shortlabel
+                let dataName = 'audiofollow-' + id
+                if (self.DATA[dataName]) {
+                    let dataValue = self.DATA[dataName]
+                    let followValue = self.CHOICES_AUDIO_FOLLOW_SOURCES.find(x => x.id == dataValue).label
+                    variableObj['audio_follow_' + shortLabel] = followValue
+                }
+            }
+
+            //Audio Output Source 
+			for (let i = 0; i < self.CHOICES_OUTPUTS_AUDIO.length; i++) {
+				let id = self.CHOICES_OUTPUTS_AUDIO[i].id
+				let shortLabel = self.CHOICES_OUTPUTS_AUDIO[i].shortlabel
+                let dataName = 'audio-output-source-' + id
+                if (self.DATA[dataName]) {
+                    let dataValue = parseInt(self.DATA[dataName], 16)
+                    if (id == '00' || id == '01' || id == '02') {
+                        dataValue += 1 //No Auto Choice on Audio only Outputs
+                    }
+                    let followValue = self.CHOICES_OUTPUTSASSIGN_AUDIO.find(x => x.id == dataValue).label
+                    variableObj['audio_output_source_' + shortLabel] = followValue
+                }
+			}
 
 			self.setVariableValues(variableObj)
 		} catch (error) {
