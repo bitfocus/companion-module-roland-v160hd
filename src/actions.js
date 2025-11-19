@@ -2333,6 +2333,41 @@ module.exports = {
 				}
 
 				let address = `02${options.camera}27`
+				self.sendCommand(address, '01')
+			},
+		}
+
+		actions.autoFocusOff = {
+			name: 'Camera Auto Focus - Off',
+			options: [
+				{
+					type: 'checkbox',
+					label: 'Use Selected Camera',
+					id: 'useSelected',
+					default: false,
+					tooltip: 'Use the selected camera instead of the camera selected in the action',
+				},
+				{
+					type: 'dropdown',
+					label: 'Camera',
+					id: 'camera',
+					default: self.CHOICES_CAMERAS[0].id,
+					choices: self.CHOICES_CAMERAS,
+					isVisible: (options) => options.useSelected === false,
+				},
+			],
+			callback: function (action, bank) {
+				let options = action.options
+
+				if (options.useSelected === true) {
+					if (self.selectedCamera === undefined) {
+						self.selectedCamera = '01'
+					}
+
+					options.camera = self.selectedCamera
+				}
+
+                let address = `02${options.camera}27`
 				self.sendCommand(address, '00')
 			},
 		}
