@@ -476,7 +476,7 @@ module.exports = {
                                                         // values larger than 20 are for different commands
                                                         let dataName = 'audio-main-send-' + param2
                                                         self.DATA[dataName] = value
-                                                        self.logVerbose('Received Audio Main Send Data for:"' + param2 + '" - Mute: ' + value)
+                                                        self.logVerbose('Received Audio Main Send Data for:"' + param2 + '" - Value: ' + value)
                                                     }
                                                 }
                                                 

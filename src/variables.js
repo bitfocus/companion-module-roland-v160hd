@@ -299,6 +299,16 @@ module.exports = {
                 }
 			}
 
+            //Audio Input Main Send
+			for (let i = 0; i < self.CHOICES_INPUTS_AUDIO_ALL.length; i++) {
+				let id = self.CHOICES_INPUTS_AUDIO_ALL[i].id
+				let shortLabel = self.CHOICES_INPUTS_AUDIO_ALL[i].shortlabel
+                let dataName = 'audio-main-send-' + id
+                if (self.DATA[dataName]) {
+                    variableObj['audio_main_send_' + shortLabel] = self.DATA[dataName] == '01' ? 'On' : 'Off'
+                }
+			}
+
             //Audio Follow Self
  			for (let i = 0; i < self.CHOICES_INPUTS_VIDEO.length; i++) {
                 let id = self.CHOICES_INPUTS_VIDEO[i].id

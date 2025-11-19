@@ -2453,6 +2453,11 @@ module.exports = {
 					id: 'requested',
 					choices: [
                         {id: 'All', label: 'All' },
+                        {id: 'All Audio', label: 'All Audio' },
+                        {id: 'Audio Follow', label: 'Audio Follow Data' },
+                        {id: 'Audio Input Mute', label: 'Audio Input Mute Data' },
+                        {id: 'Audio Main Send', label: 'Audio Main Send Data' },
+                        {id: 'Audio Output', label: 'Audio Output Data' },
                         {id: 'Aux', label: 'Aux Data' },
                         {id: 'Freeze', label: 'Freeze Data' },
                         {id: 'Output', label: 'Output Data' },
@@ -2468,6 +2473,24 @@ module.exports = {
                     case 'All':
                         self.getData();
                         self.getMemoryNames(); //separated in api
+                        break;
+                    case 'All Audio':
+                        self.getAudioFollowData();
+                        self.getAudioInputMuteData();
+                        self.getAudioInputMainSendData();
+                        self.getAudioOutputData();
+                        break;
+                    case 'Audio Follow':
+                        self.getAudioFollowData();
+                        break;
+                    case 'Audio Input Mute':
+                        self.getAudioInputMuteData();
+                        break;
+                    case 'Audio Main Send':
+                        self.getAudioInputMainSendData();
+                        break;
+                    case 'Audio Output':
+                        self.getAudioOutputData();
                         break;
                     case 'Aux':
                         self.getAuxData();
@@ -2679,7 +2702,7 @@ module.exports = {
 				self.sendCommand(address, value)
 			},
 		}
->>>>>>> 2b93331 (Adding Audio Follow, Main Send, Input Mute and Output Source Select and variables associated)
-		self.setActionDefinitions(actions)
+		
+        self.setActionDefinitions(actions)
 	},
 }
