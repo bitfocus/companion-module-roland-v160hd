@@ -117,7 +117,22 @@ module.exports = {
 			}
 
 			self.INTERVAL = setInterval(self.getData.bind(this), parseInt(self.config.pollingrate))
-		} else {
+		} else if (self.config.manualfeedback) {
+            self.log('info', 'Request Feedback is enabled, Fetching Initial Data.')
+            self.getData()
+            // request memory names, this takes multiple requests
+            // will run for every second for 20 seconds
+            for( let i = 0; i < 20; i++) {
+
+                setTimeout(() => {
+                    self.getMemoryNames()
+                    if ( i > 18) {
+                        self.getLastMemoryLoaded()
+                    }
+                }, 1000*i)
+            }
+        } else {
+            self.log('info',  self.config.keys)
 			self.log('info', 'Polling is disabled. Module will not request new data at a regular rate.')
 		}
 	},
@@ -132,8 +147,14 @@ module.exports = {
 		self.getOutputData()
 		self.getAuxLinkData()
 
+        self.getAudioFollowData()
+        self.getAudioInputMuteData()
+        self.getAudioInputMainSendData()
+        self.getAudioOutputData()
+
 		self.getMemoryNames()
 		self.getLastMemoryLoaded()
+		//self.getMemoryNames()
 	},
 
 	getPinpKeyData: function () {
@@ -194,6 +215,46 @@ module.exports = {
 		self.sendRawCommand('RQH:020156,000001;') //Aux 3 link on/off
 	},
 
+    getAudioFollowData: function () {
+        let self = this
+
+        for (let i = 0; i <  27; i++) {
+            let hexNumber = i.toString(16).padStart(2, '0').toUpperCase()
+            let command = '0130' + hexNumber + ',000001;'
+            self.sendRawCommand('RQH:' + command)
+        }
+    },
+
+    getAudioInputMuteData: function () {
+        let self = this
+
+        for (let i = 0; i < self.CHOICES_INPUTS_AUDIO_ALL.length; i++) {
+            let id = self.CHOICES_INPUTS_AUDIO_ALL[i].id
+            let command = '01' + id + '06,000001;'
+            self.sendRawCommand('RQH:' + command)
+        }
+    },
+
+    getAudioInputMainSendData: function () {
+        let self = this
+
+        for (let i = 0; i < 14; i++) {
+            let hexNumber = i.toString(16).padStart(2, '0').toUpperCase()
+            let command = '01' + hexNumber + '2E,000001;'
+            self.sendRawCommand('RQH:' + command)
+        }
+    },
+
+    getAudioOutputData: function () {
+        let self = this
+
+        for (let i = 0; i < 10; i++) {
+            let hexNumber = i.toString(16).padStart(2, '0').toUpperCase()
+            let command = '0120' + hexNumber + ',000001;'
+            self.sendRawCommand('RQH:' + command)
+        }
+    },
+
 	/*getTallyData: function() {
 		let self = this;
 
@@ -208,7 +269,7 @@ module.exports = {
 	getMemoryNames: function () {
 		let self = this
 
-		for (let i = 0; i < 30; i++) {
+		for (let i = 0; i < 11; i++) {
 			let hexMemory = i.toString(16).padStart(2, '0').toUpperCase()
 			for (let j = 0; j < 8; j++) {
 				let hex = j.toString(16).padStart(2, '0').toUpperCase()
@@ -244,7 +305,7 @@ module.exports = {
 		} else if (data.trim() == 'Welcome to V-160HD.') {
 			self.updateStatus(InstanceStatus.Ok)
 			self.log('info', 'Authenticated.')
-			self.sendRawCommand('VER') //request version info
+			self.sendRawCommand('VER;') //request version info
 			self.startInterval() //request some states
 			self.subscribeToTally() //request tally changes
 		} else if (data.trim() == 'ERR:0;') {
@@ -273,6 +334,7 @@ module.exports = {
 										dataSuffix = dataSet[1].toString().split(',')
 
 										if (dataPrefix.indexOf('VER') > -1) {
+                                            self.log('info', 'version received');
 											self.MODEL = dataSuffix[0].toString()
 											self.VERSION = dataSuffix[1].toString()
 										}
@@ -396,6 +458,42 @@ module.exports = {
 													self.logVerbose('Received Aux 3 Mute: ' + value)
 												}
 
+                                                if (param1 == '01' && param3 == '06') {
+                                                    //audio mutes
+                                                    let param2int = parseInt(param2, 16)
+                                                    if (param2int <= 20) { 
+                                                        // values larger than 20 are for different commands
+                                                        let dataName = 'audiomute-' + param2
+                                                        self.DATA[dataName] = value
+                                                        self.logVerbose('Received Audio Input Mute Data for:"' + param2 + '" - Mute: ' + value)
+                                                    }
+                                                }
+
+                                                if (param1 == '01' && param3 == '2E') {
+                                                    //audio main send
+                                                    let param2int = parseInt(param2, 16)
+                                                    if (param2int <= 20) { 
+                                                        // values larger than 20 are for different commands
+                                                        let dataName = 'audio-main-send-' + param2
+                                                        self.DATA[dataName] = value
+                                                        self.logVerbose('Received Audio Main Send Data for:"' + param2 + '" - Value: ' + value)
+                                                    }
+                                                }
+                                                
+                                                if (param1 == '01' && param2 == '30') {
+                                                    //audio follows
+                                                    let dataName = 'audiofollow-' + param3
+                                                    self.DATA[dataName] = value
+                                                    self.logVerbose('Received Audio Follow Data for:"' + param3 + '" - Follow: ' + value)
+                                                }
+                                                
+                                                if (param1 == '01' && param2 == '20') {
+                                                    //audio output source
+                                                    let dataName = 'audio-output-source-' + param3
+                                                    self.DATA[dataName] = value
+                                                    self.logVerbose('Received Audio Output Data for:"' + param3 + '" - Output: ' + value)
+                                                }
+
 												if (param1 == '00' && param2 == '00' && param3 == '0A') {
 													//hdmi 1 output assign
 													self.DATA.hdmi1assign = value
@@ -466,6 +564,7 @@ module.exports = {
 													//memory names
 													let memoryNumber = parseInt(param2, 16)
 													let memoryCharIndex = parseInt(param3, 16)
+                                                    let character = String.fromCharCode(parseInt(value, 16))
 
 													//there are 8 characters in each memory name and they will all come in as individual messages
 													//and not necessarily in order
@@ -475,15 +574,18 @@ module.exports = {
 													}
 
 													//value is the character, put it in the correct spot in the memory name based on the memoryCharIndex
-													memoryName =
-														memoryName.substring(0, memoryCharIndex * 2) +
-														value +
-														memoryName.substring(memoryCharIndex * 2 + 1) //replace the character at the index
+													//This operation takes a lot of time, so only doing if needed
+                                                    if (memoryName[memoryCharIndex] != character) {
+                                                        memoryName =
+                                                            memoryName.substring(0, memoryCharIndex) +
+                                                            character +
+                                                            memoryName.substring(memoryCharIndex + 1) //replace the character at the index
 
-													self.DATA[`memory${memoryNumber}`] = memoryName
-													let variableObj = {}
-													variableObj[`memoryname_${memoryNumber + 1}`] = memoryName
-													self.setVariableValues(variableObj)
+                                                        self.DATA[`memory${memoryNumber}`] = memoryName
+                                                        let variableObj = {}
+                                                        variableObj[`memoryname_${memoryNumber + 1}`] = memoryName
+                                                        self.setVariableValues(variableObj)
+                                                    }
 												}
 
 												if (param1 == '0A') {
