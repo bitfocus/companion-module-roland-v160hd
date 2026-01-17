@@ -220,6 +220,7 @@ module.exports = {
 					choices: [
 						{ id: 0, label: 'Disable' },
 						{ id: 1, label: 'Enable' },
+						{ id: 2, label: 'Always' },
 					],
 				},
 			],
@@ -2476,6 +2477,53 @@ module.exports = {
 				let address = `02${options.camera}29`
 				let value = options.channel
 				self.sendCommand(address, value)
+			},
+		}
+
+		actions.requestFeedbackData = {
+			name: 'Request Feedback Data',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Feedback to request',
+					id: 'requested',
+					choices: [
+                        {id: 'All', label: 'All' },
+                        {id: 'Aux', label: 'Aux Data' },
+                        {id: 'Freeze', label: 'Freeze Data' },
+                        {id: 'Output', label: 'Output Data' },
+                        {id: 'Key', label: 'PinP & Key Data' },
+                        {id: 'Memory', label: 'Memory Data' },
+					],
+				},
+			],
+			callback: function (action, bank) {
+				let options = action.options
+
+                switch (options.requested) {
+                    case 'All':
+                        self.getData();
+                        self.getMemoryNames(); //separated in api
+                        break;
+                    case 'Aux':
+                        self.getAuxData();
+                        break;
+                    case 'Freeze':
+                        self.getFreezeData();
+                        break;
+                    case 'Output':
+                        self.getOutputData();
+                        break;
+                    case 'Key':
+                        self.getPinpKeyData();
+                        break;
+                    case 'Memory':
+                        self.getMemoryNames();
+                        self.getLastMemoryLoaded();
+                        break;
+                    default:
+                        self.log('debug', 'Requested Invalid Feedback Update: ' + options.requested)
+                }
 			},
 		}
 

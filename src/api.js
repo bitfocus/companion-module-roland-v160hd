@@ -117,7 +117,22 @@ module.exports = {
 			}
 
 			self.INTERVAL = setInterval(self.getData.bind(this), parseInt(self.config.pollingrate))
-		} else {
+		} else if (self.config.manualfeedback) {
+            self.log('info', 'Request Feedback is enabled, Fetching Initial Data.')
+            self.getData()
+            // request memory names, this takes multiple requests
+            // will run for every second for 20 seconds
+            for( let i = 0; i < 20; i++) {
+
+                setTimeout(() => {
+                    self.getMemoryNames()
+                    if ( i > 18) {
+                        self.getLastMemoryLoaded()
+                    }
+                }, 1000*i)
+            }
+        } else {
+            self.log('info',  self.config.keys)
 			self.log('info', 'Polling is disabled. Module will not request new data at a regular rate.')
 		}
 	},
@@ -132,8 +147,8 @@ module.exports = {
 		self.getOutputData()
 		self.getAuxLinkData()
 
-		self.getMemoryNames()
 		self.getLastMemoryLoaded()
+		//self.getMemoryNames()
 	},
 
 	getPinpKeyData: function () {
@@ -153,6 +168,38 @@ module.exports = {
 		self.sendRawCommand('RQH:001C02,000001;') //PnP/Key 2 source
 		self.sendRawCommand('RQH:001D02,000001;') //PnP/Key 3 source
 		self.sendRawCommand('RQH:001E02,000001;') //PnP/Key 4 source
+
+        //get what Video Buses pnp/keys enabled on
+		self.sendRawCommand('RQH:000012,000001;') //PnP/Key 1 Enabled on PGM 
+		self.sendRawCommand('RQH:000013,000001;') //PnP/Key 2 Enabled on PGM 
+		self.sendRawCommand('RQH:000014,000001;') //PnP/Key 3 Enabled on PGM 
+        self.sendRawCommand('RQH:000015,000001;') //PnP/Key 4 Enabled on PGM 
+        self.sendRawCommand('RQH:000016,000001;') //DSK 1 Enabled on PGM 
+		self.sendRawCommand('RQH:000017,000001;') //DSK 2 Enabled on PGM 
+		self.sendRawCommand('RQH:000018,000001;') //PnP/Key 1 Enabled on SUB PGM 
+		self.sendRawCommand('RQH:000019,000001;') //PnP/Key 2 Enabled on SUB PGM 
+		self.sendRawCommand('RQH:00001A,000001;') //PnP/Key 3 Enabled on SUB PGM 
+        self.sendRawCommand('RQH:00001B,000001;') //PnP/Key 4 Enabled on SUB PGM 
+        self.sendRawCommand('RQH:00001C,000001;') //DSK 1 Enabled on SUB PGM 
+		self.sendRawCommand('RQH:00001D,000001;') //DSK 2 Enabled on SUB PGM 
+		self.sendRawCommand('RQH:00001E,000001;') //PnP/Key 1 Enabled on Aux 1 
+		self.sendRawCommand('RQH:00001F,000001;') //PnP/Key 2 Enabled on Aux 1 
+		self.sendRawCommand('RQH:000020,000001;') //PnP/Key 3 Enabled on Aux 1 
+        self.sendRawCommand('RQH:000021,000001;') //PnP/Key 4 Enabled on Aux 1 
+        self.sendRawCommand('RQH:000022,000001;') //DSK 1 Enabled on Aux 1 
+		self.sendRawCommand('RQH:000023,000001;') //DSK 2 Enabled on Aux 1 
+		self.sendRawCommand('RQH:000030,000001;') //PnP/Key 1 Enabled on Aux 2 
+		self.sendRawCommand('RQH:000031,000001;') //PnP/Key 2 Enabled on Aux 2 
+		self.sendRawCommand('RQH:000032,000001;') //PnP/Key 3 Enabled on Aux 2 
+        self.sendRawCommand('RQH:000033,000001;') //PnP/Key 4 Enabled on Aux 2 
+        self.sendRawCommand('RQH:000034,000001;') //DSK 1 Enabled on Aux 2 
+		self.sendRawCommand('RQH:000035,000001;') //DSK 2 Enabled on Aux 2 
+		self.sendRawCommand('RQH:000036,000001;') //PnP/Key 1 Enabled on Aux 3 
+		self.sendRawCommand('RQH:000037,000001;') //PnP/Key 2 Enabled on Aux 3 
+		self.sendRawCommand('RQH:000038,000001;') //PnP/Key 3 Enabled on Aux 3 
+        self.sendRawCommand('RQH:000039,000001;') //PnP/Key 4 Enabled on Aux 3 
+        self.sendRawCommand('RQH:00003A,000001;') //DSK 1 Enabled on Aux 3 
+		self.sendRawCommand('RQH:00003B,000001;') //DSK 2 Enabled on Aux 3 
 	},
 
 	getAuxData: function () {
@@ -208,7 +255,7 @@ module.exports = {
 	getMemoryNames: function () {
 		let self = this
 
-		for (let i = 0; i < 30; i++) {
+		for (let i = 0; i < 11; i++) {
 			let hexMemory = i.toString(16).padStart(2, '0').toUpperCase()
 			for (let j = 0; j < 8; j++) {
 				let hex = j.toString(16).padStart(2, '0').toUpperCase()
@@ -244,7 +291,7 @@ module.exports = {
 		} else if (data.trim() == 'Welcome to V-160HD.') {
 			self.updateStatus(InstanceStatus.Ok)
 			self.log('info', 'Authenticated.')
-			self.sendRawCommand('VER') //request version info
+			self.sendRawCommand('VER;') //request version info
 			self.startInterval() //request some states
 			self.subscribeToTally() //request tally changes
 		} else if (data.trim() == 'ERR:0;') {
@@ -273,6 +320,7 @@ module.exports = {
 										dataSuffix = dataSet[1].toString().split(',')
 
 										if (dataPrefix.indexOf('VER') > -1) {
+                                            self.log('info', 'version received');
 											self.MODEL = dataSuffix[0].toString()
 											self.VERSION = dataSuffix[1].toString()
 										}
@@ -466,6 +514,7 @@ module.exports = {
 													//memory names
 													let memoryNumber = parseInt(param2, 16)
 													let memoryCharIndex = parseInt(param3, 16)
+                                                    let character = String.fromCharCode(parseInt(value, 16))
 
 													//there are 8 characters in each memory name and they will all come in as individual messages
 													//and not necessarily in order
@@ -475,15 +524,18 @@ module.exports = {
 													}
 
 													//value is the character, put it in the correct spot in the memory name based on the memoryCharIndex
-													memoryName =
-														memoryName.substring(0, memoryCharIndex * 2) +
-														value +
-														memoryName.substring(memoryCharIndex * 2 + 1) //replace the character at the index
+													//This operation takes a lot of time, so only doing if needed
+                                                    if (memoryName[memoryCharIndex] != character) {
+                                                        memoryName =
+                                                            memoryName.substring(0, memoryCharIndex) +
+                                                            character +
+                                                            memoryName.substring(memoryCharIndex + 1) //replace the character at the index
 
-													self.DATA[`memory${memoryNumber}`] = memoryName
-													let variableObj = {}
-													variableObj[`memoryname_${memoryNumber + 1}`] = memoryName
-													self.setVariableValues(variableObj)
+                                                        self.DATA[`memory${memoryNumber}`] = memoryName
+                                                        let variableObj = {}
+                                                        variableObj[`memoryname_${memoryNumber + 1}`] = memoryName
+                                                        self.setVariableValues(variableObj)
+                                                    }
 												}
 
 												if (param1 == '0A') {
