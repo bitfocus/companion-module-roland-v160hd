@@ -3,6 +3,15 @@ module.exports = {
 		let self = this
 		let actions = {}
 
+		actions.refresh_memory_names = {
+			name: 'Refresh Memory Names',
+			description: 'Reads all memory names once in the background without adding them to the continuous polling cycle.',
+			options: [],
+			callback: function () {
+				self.getMemoryNames()
+			},
+		}
+
 		actions.run_macro = {
 			name: 'Run Macro',
 			options: [

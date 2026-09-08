@@ -1,8 +1,13 @@
 const { InstanceStatus, TCPHelper } = require('@companion-module/base')
+const { normalizeCommand, buildMemoryNameRequests } = require('./protocol')
+
+const MEMORY_NAME_REQUEST_INTERVAL_MS = 75
 
 module.exports = {
 	initConnection: function () {
 		let self = this
+
+		self.stopMemoryNameRefresh()
 
 		if (self.socket !== undefined) {
 			self.socket.destroy()
@@ -24,6 +29,7 @@ module.exports = {
 				}
 
 				clearInterval(self.INTERVAL)
+				self.stopMemoryNameRefresh()
 				self.handleError(err)
 			})
 
@@ -132,7 +138,6 @@ module.exports = {
 		self.getOutputData()
 		self.getAuxLinkData()
 
-		self.getMemoryNames()
 		self.getLastMemoryLoaded()
 	},
 
@@ -208,14 +213,29 @@ module.exports = {
 	getMemoryNames: function () {
 		let self = this
 
-		for (let i = 0; i < 30; i++) {
-			let hexMemory = i.toString(16).padStart(2, '0').toUpperCase()
-			for (let j = 0; j < 8; j++) {
-				let hex = j.toString(16).padStart(2, '0').toUpperCase()
-				let command = '60' + hexMemory + hex + ',000001;'
-				self.sendRawCommand('RQH:' + command)
+		self.MEMORY_NAME_QUEUE = buildMemoryNameRequests()
+		if (self.MEMORY_NAME_INTERVAL !== undefined) return
+
+		self.log('info', 'Refreshing memory names in the background.')
+		self.MEMORY_NAME_INTERVAL = setInterval(function () {
+			const command = self.MEMORY_NAME_QUEUE.shift()
+			if (command === undefined) {
+				self.stopMemoryNameRefresh()
+				self.log('info', 'Memory name refresh complete.')
+				return
 			}
+			self.sendRawCommand(command)
+		}, MEMORY_NAME_REQUEST_INTERVAL_MS)
+	},
+
+	stopMemoryNameRefresh: function () {
+		let self = this
+
+		if (self.MEMORY_NAME_INTERVAL !== undefined) {
+			clearInterval(self.MEMORY_NAME_INTERVAL)
+			self.MEMORY_NAME_INTERVAL = undefined
 		}
+		self.MEMORY_NAME_QUEUE = []
 	},
 
 	getLastMemoryLoaded: function () {
@@ -239,12 +259,13 @@ module.exports = {
 
 		if (data.trim() == 'Enter password:') {
 			self.updateStatus(InstanceStatus.Connecting, 'Authenticating')
-			self.log('info', 'Sending passcode: ' + self.config.password)
+			self.log('info', 'Sending configured passcode.')
 			self.socket.send(self.config.password + '\n')
 		} else if (data.trim() == 'Welcome to V-160HD.') {
 			self.updateStatus(InstanceStatus.Ok)
 			self.log('info', 'Authenticated.')
 			self.sendRawCommand('VER') //request version info
+			self.getMemoryNames() //read static labels once without flooding every poll cycle
 			self.startInterval() //request some states
 			self.subscribeToTally() //request tally changes
 		} else if (data.trim() == 'ERR:0;') {
@@ -551,12 +572,8 @@ module.exports = {
 
 	sendRawCommand: function (command) {
 		let self = this
-
-		if (!command.indexOf(';')) {
-			command = command + ';'
-		}
-
-		let cmd = command + '\n'
+		let cmd = normalizeCommand(command)
+		if (!cmd) return
 
 		if (self.socket !== undefined && self.socket.isConnected) {
 			if (self.config.verbose) {

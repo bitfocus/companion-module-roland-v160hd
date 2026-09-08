@@ -57,6 +57,7 @@ class v160Instance extends InstanceBase {
 	// When module gets deleted
 	async destroy() {
 		try {
+			this.stopMemoryNameRefresh()
 			if (this.socket !== undefined) {
 				this.socket.destroy()
 			}

@@ -9,6 +9,12 @@ The switcher should be running firmware 1.04 or higher. A password must be set o
 - Enter the IP address of the device in the configuration settings.
 - The device will use TCP port 8023.
 
+## Polling and Memory Names
+
+Operational state is polled at the configured interval. Memory names are intentionally excluded from continuous polling because reading all 30 eight-character names requires 240 requests and can delay control commands on the switcher.
+
+Memory names are read once after authentication at a paced background rate. Use **Refresh Memory Names** after renaming memories on the switcher.
+
 ## Actions
 
 - Input 1-10 Assign (HDMI 1-8, SDI 1-8, STILL 1-16)
@@ -30,6 +36,7 @@ The switcher should be running firmware 1.04 or higher. A password must be set o
 - PGM Select
 - PVW Select
 - Load/Save Memory Trigger
+- Refresh Memory Names
 - PnP & Key:
   - Bus Select
   - Set Source
