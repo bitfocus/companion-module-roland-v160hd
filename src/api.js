@@ -1,5 +1,6 @@
 const { InstanceStatus, TCPHelper } = require('@companion-module/base')
 const { extractMessages } = require('./tcpParser')
+const { CommandQueue, PRIORITY } = require('./commandQueue')
 
 module.exports = {
 	initConnection: function () {
@@ -18,6 +19,17 @@ module.exports = {
 			self.log('info', `Opening connection to ${self.config.host}:${self.config.port}`)
 
 			self.tcpBuffer = ''
+			self._queue = new CommandQueue(
+				function (cmd) {
+					if (self.socket !== undefined && self.socket.isConnected) {
+						if (self.config.verbose) self.log('debug', 'Sending: ' + cmd.trimEnd())
+						self.socket.send(cmd)
+					} else {
+						if (self.config.verbose) self.log('warn', 'Unable to send: Socket not connected.')
+					}
+				},
+				{ minIntervalMs: 20 },
+			)
 
 			self.socket = new TCPHelper(self.config.host, self.config.port, {
 				reconnect: true,
@@ -35,6 +47,7 @@ module.exports = {
 
 			self.socket.on('connect', function () {
 				self.tcpBuffer = ''
+				self._queue.clear()
 				self.log('info', 'Connected')
 				self.updateStatus(InstanceStatus.Ok)
 			})
@@ -499,19 +512,9 @@ module.exports = {
 			command = command + ';'
 		}
 
-		let cmd = command + '\n'
-
-		if (self.socket !== undefined && self.socket.isConnected) {
-			if (self.config.verbose) {
-				self.log('debug', 'Sending: ' + cmd)
-			}
-
-			self.socket.send(cmd)
-		} else {
-			if (self.config.verbose) {
-				self.log('warn', 'Unable to send: Socket not connected.')
-			}
-		}
+		const cmd = command + '\n'
+		const priority = command.trimStart().startsWith('DTH:') ? PRIORITY.HIGH : PRIORITY.LOW
+		self._queue.enqueue(cmd, priority)
 	},
 
 	logVerbose: function (message) {
