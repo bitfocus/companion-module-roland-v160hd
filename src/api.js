@@ -18,7 +18,6 @@ module.exports = {
 			self.log('info', `Opening connection to ${self.config.host}:${self.config.port}`)
 
 			self.tcpBuffer = ''
-			self._passwordSent = false
 
 			self.socket = new TCPHelper(self.config.host, self.config.port, {
 				reconnect: true,
@@ -36,7 +35,6 @@ module.exports = {
 
 			self.socket.on('connect', function () {
 				self.tcpBuffer = ''
-				self._passwordSent = false
 				self.log('info', 'Connected')
 				self.updateStatus(InstanceStatus.Ok)
 			})
@@ -183,11 +181,6 @@ module.exports = {
 		}
 
 		if (data.trim() == 'Enter password:') {
-			if (self._passwordSent) {
-				self.log('warn', 'Received duplicate Enter password: prompt — ignoring')
-				return
-			}
-			self._passwordSent = true
 			self.updateStatus(InstanceStatus.Connecting, 'Authenticating')
 			self.log('info', 'Sending passcode')
 			self.socket.send(self.config.password + '\n')
@@ -202,7 +195,7 @@ module.exports = {
 		} else {
 			//do stuff with the data
 			try {
-				if (data.indexOf(';')) {
+				if (data.trim() !== '') {
 					let dataGroups = data.trim().split(';')
 
 					for (let j = 0; j < dataGroups.length; j++) {

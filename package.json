@@ -3,7 +3,7 @@
 	"version": "2.2.1",
 	"main": "index.js",
 	"scripts": {
-		"test": "node --test test/**/*.test.js",
+		"test": "node --test",
 		"format": "prettier -w .",
 		"lint:raw": "eslint --ext .ts --ext .js --ignore-pattern dist --ignore-pattern pkg",
 		"lint": "yarn lint:raw ."
