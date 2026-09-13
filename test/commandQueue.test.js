@@ -305,4 +305,23 @@ describe('clear()', () => {
 		assert.equal(sent.length, 1)
 		assert.equal(sent[0], 'fresh\n')
 	})
+
+	test('clear() resets the HIGH rate-limit timestamp', () => {
+		// A HIGH command sent just before clear() must not force the first
+		// command after clear() to wait for the remainder of its interval.
+		const q = new CommandQueue((cmd) => sent.push(cmd), { minIntervalMs: 20 })
+
+		q.enqueue('h1\n', PRIORITY.HIGH)
+		mock.timers.tick(20) // h1 sent at t=20; _lastHighSentAt=20
+		assert.equal(sent.length, 1)
+
+		q.clear() // must reset _lastHighSentAt to 0
+
+		// With a clean timestamp the first HIGH after clear() should need only
+		// the standard initial delay of 20 ms, not any leftover from before.
+		q.enqueue('h2\n', PRIORITY.HIGH)
+		mock.timers.tick(20) // h2 sent — full 20 ms delay, no residue from h1
+		assert.equal(sent.length, 2)
+		assert.equal(sent[1], 'h2\n')
+	})
 })

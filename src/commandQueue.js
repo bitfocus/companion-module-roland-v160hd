@@ -3,15 +3,17 @@
 const PRIORITY = { HIGH: 0, LOW: 1 }
 
 /**
- * Two-priority outbound command queue with a minimum send interval.
+ * Two-priority outbound command queue with a per-priority send interval.
  *
- * Commands at PRIORITY.HIGH are always dequeued before PRIORITY.LOW commands.
- * Within the same priority, commands are dispatched in FIFO order.
+ * Commands at PRIORITY.HIGH (Roland Data Set / DTH writes) are always
+ * dequeued before PRIORITY.LOW commands (RQH reads).  Within the same
+ * priority, commands are dispatched in FIFO order.
  *
- * The minimum interval between successive sends is enforced using wall-clock
- * timestamps (Date.now()) rather than assuming timer callbacks fire exactly on
- * schedule, so backpressure from a delayed event loop does not cause bunched
- * sends.
+ * The minimum interval (`minIntervalMs`, default 20) applies only to
+ * consecutive HIGH / DTH sends and is enforced using wall-clock timestamps
+ * (Date.now()) so backpressure from a delayed event loop does not cause
+ * bunched writes.  LOW / RQH commands are not subject to this interval and
+ * drain as fast as the event loop allows.
  *
  * @param {function(string): void} sendFn  Called with the formatted command string when it is time to send.
  * @param {{ minIntervalMs?: number }} [opts]
@@ -49,13 +51,15 @@ CommandQueue.prototype.enqueue = function (cmd, priority) {
 }
 
 /**
- * Discard all queued commands and cancel any pending drain timer.
- * Call this when a new connection is established to avoid replaying
- * stale commands from a previous session.
+ * Discard all queued commands, cancel any pending drain timer, and reset
+ * the HIGH rate-limit timestamp.  Call this whenever a connection is
+ * replaced so stale commands and inherited DTH timing state do not carry
+ * over to the new session.
  */
 CommandQueue.prototype.clear = function () {
 	this._high = []
 	this._low = []
+	this._lastHighSentAt = 0
 	if (this._timer !== null) {
 		clearTimeout(this._timer)
 		this._timer = null
