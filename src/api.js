@@ -280,9 +280,11 @@ module.exports = {
 															self.DATA.aux2source = block2E[0]
 															self.DATA.aux3source = block2E[1]
 															self.logVerbose('Received Aux 2+3 Source: ' + value)
-														} else {
+														} else if (self._parseHexBlock(value, 1)) {
 															self.DATA.aux2source = value
 															self.logVerbose('Received Aux 2 Source: ' + value)
+														} else {
+															self.log('warn', 'Unexpected DTH value at 00002E: ' + value)
 														}
 													} else if (param2 == '00' && param3 == '2F') {
 														//aux 3 source (single-byte device notification)
@@ -294,12 +296,11 @@ module.exports = {
 														if (block1B) {
 															self.DATA['data_1B00'] = block1B[0]
 															self.DATA['data_1B01'] = block1B[1]
-															self.DATA['data_001B00'] = block1B[0]
-															self.DATA['data_001B01'] = block1B[1]
 															self.logVerbose('Received PnP/Key 1 PGM+PVW: ' + value)
-														} else {
+														} else if (self._parseHexBlock(value, 1)) {
 															self.DATA['data_1B00'] = value
-															self.DATA['data_001B00'] = value
+														} else {
+															self.log('warn', 'Unexpected DTH value at 001B00: ' + value)
 														}
 													} else if (param2 == '1C' && param3 == '00') {
 														//pnp/key 2 PGM + PVW (2-byte block) or single-byte PGM
@@ -307,12 +308,11 @@ module.exports = {
 														if (block1C) {
 															self.DATA['data_1C00'] = block1C[0]
 															self.DATA['data_1C01'] = block1C[1]
-															self.DATA['data_001C00'] = block1C[0]
-															self.DATA['data_001C01'] = block1C[1]
 															self.logVerbose('Received PnP/Key 2 PGM+PVW: ' + value)
-														} else {
+														} else if (self._parseHexBlock(value, 1)) {
 															self.DATA['data_1C00'] = value
-															self.DATA['data_001C00'] = value
+														} else {
+															self.log('warn', 'Unexpected DTH value at 001C00: ' + value)
 														}
 													} else if (param2 == '1D' && param3 == '00') {
 														//pnp/key 3 PGM + PVW (2-byte block) or single-byte PGM
@@ -320,12 +320,11 @@ module.exports = {
 														if (block1D) {
 															self.DATA['data_1D00'] = block1D[0]
 															self.DATA['data_1D01'] = block1D[1]
-															self.DATA['data_001D00'] = block1D[0]
-															self.DATA['data_001D01'] = block1D[1]
 															self.logVerbose('Received PnP/Key 3 PGM+PVW: ' + value)
-														} else {
+														} else if (self._parseHexBlock(value, 1)) {
 															self.DATA['data_1D00'] = value
-															self.DATA['data_001D00'] = value
+														} else {
+															self.log('warn', 'Unexpected DTH value at 001D00: ' + value)
 														}
 													} else if (param2 == '1E' && param3 == '00') {
 														//pnp/key 4 PGM + PVW (2-byte block) or single-byte PGM
@@ -333,12 +332,11 @@ module.exports = {
 														if (block1E) {
 															self.DATA['data_1E00'] = block1E[0]
 															self.DATA['data_1E01'] = block1E[1]
-															self.DATA['data_001E00'] = block1E[0]
-															self.DATA['data_001E01'] = block1E[1]
 															self.logVerbose('Received PnP/Key 4 PGM+PVW: ' + value)
-														} else {
+														} else if (self._parseHexBlock(value, 1)) {
 															self.DATA['data_1E00'] = value
-															self.DATA['data_001E00'] = value
+														} else {
+															self.log('warn', 'Unexpected DTH value at 001E00: ' + value)
 														}
 													} else if (param2 == '1B' && param3 == '02') {
 														//pnp key 1 source
@@ -426,9 +424,11 @@ module.exports = {
 														self.DATA.sdi2assign = blockOA[4]
 														self.DATA.sdi3assign = blockOA[5]
 														self.logVerbose('Received HDMI1-3+SDI1-3 Output Assign: ' + value)
-													} else {
+													} else if (self._parseHexBlock(value, 1)) {
 														self.DATA.hdmi1assign = value
 														self.logVerbose('Received HDMI 1 Output Assign: ' + value)
+													} else {
+														self.log('warn', 'Unexpected DTH value at 00000A: ' + value)
 													}
 												}
 
@@ -482,9 +482,11 @@ module.exports = {
 														self.DATA.aux2link = block54[1]
 														self.DATA.aux3link = block54[2]
 														self.logVerbose('Received Aux 1-3 Link: ' + value)
-													} else {
+													} else if (self._parseHexBlock(value, 1)) {
 														self.DATA.aux1link = value
 														self.logVerbose('Received Aux 1 Link: ' + value)
+													} else {
+														self.log('warn', 'Unexpected DTH value at 020154: ' + value)
 													}
 												}
 

@@ -147,10 +147,15 @@ describe('DTH aux 2+3 source', () => {
 		assert.equal(data.aux3source, '07')
 	})
 
-	test('malformed block (wrong length) falls back to single-byte path', () => {
+	test('wrong-length value is not stored', () => {
 		const data = feedDTH('DTH:00002E,ABC')
-		assert.equal(data.aux2source, 'ABC')
+		assert.equal(data.aux2source, undefined)
 		assert.equal(data.aux3source, undefined)
+	})
+
+	test('non-hex single-byte value is not stored', () => {
+		const data = feedDTH('DTH:00002E,GG')
+		assert.equal(data.aux2source, undefined)
 	})
 })
 
@@ -163,15 +168,15 @@ describe('DTH PiP/Key 1 PGM+PVW (1B00)', () => {
 		assert.equal(data['data_1B01'], '00')
 	})
 
-	test('2-byte block also sets data_001B00 and data_001B01', () => {
-		const data = feedDTH('DTH:001B00,0100')
-		assert.equal(data['data_001B00'], '01')
-		assert.equal(data['data_001B01'], '00')
-	})
-
 	test('single-byte response sets data_1B00 only', () => {
 		const data = feedDTH('DTH:001B00,01')
 		assert.equal(data['data_1B00'], '01')
+		assert.equal(data['data_1B01'], undefined)
+	})
+
+	test('malformed value is not stored', () => {
+		const data = feedDTH('DTH:001B00,XYZ')
+		assert.equal(data['data_1B00'], undefined)
 		assert.equal(data['data_1B01'], undefined)
 	})
 })
@@ -244,10 +249,15 @@ describe('DTH HDMI1-3+SDI1-3 output assign', () => {
 		assert.equal(data.usbassign, '04')
 	})
 
-	test('malformed block (5 bytes) falls back to single-byte path', () => {
+	test('wrong-length value is not stored', () => {
 		const data = feedDTH('DTH:00000A,0102030405')
-		assert.equal(data.hdmi1assign, '0102030405')
+		assert.equal(data.hdmi1assign, undefined)
 		assert.equal(data.hdmi2assign, undefined)
+	})
+
+	test('non-hex value is not stored', () => {
+		const data = feedDTH('DTH:00000A,GG')
+		assert.equal(data.hdmi1assign, undefined)
 	})
 })
 
@@ -278,6 +288,13 @@ describe('DTH Aux 1-3 link', () => {
 	test('aux link mode query still handled independently', () => {
 		const data = feedDTH('DTH:02010D,01')
 		assert.equal(data.auxlinkmode, '01')
+	})
+
+	test('malformed value is not stored', () => {
+		const data = feedDTH('DTH:020154,XY')
+		assert.equal(data.aux1link, undefined)
+		assert.equal(data.aux2link, undefined)
+		assert.equal(data.aux3link, undefined)
 	})
 })
 
