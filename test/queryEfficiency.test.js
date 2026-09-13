@@ -1,0 +1,301 @@
+'use strict'
+
+const { test, describe } = require('node:test')
+const assert = require('node:assert/strict')
+
+const BASE_STUB = {
+	InstanceStatus: { Ok: 'ok', Connecting: 'connecting', Disconnected: 'disconnected', Error: 'error' },
+	TCPHelper: class {},
+}
+let baseResolved
+try {
+	baseResolved = require.resolve('@companion-module/base')
+} catch (_) {
+	baseResolved = null
+}
+if (baseResolved) {
+	require.cache[baseResolved] = {
+		id: baseResolved,
+		filename: baseResolved,
+		loaded: true,
+		exports: BASE_STUB,
+	}
+}
+
+const api = require('../src/api')
+
+function makeSelf() {
+	return {
+		config: { verbose: false },
+		DATA: {},
+		log: () => {},
+		logVerbose: () => {},
+		setVariableValues: () => {},
+		checkFeedbacks: () => {},
+		checkVariables: () => {},
+		CHOICES_PNPKEY_SOURCES: [],
+		_parseHexBlock: api._parseHexBlock,
+	}
+}
+
+// Record which RQH commands a polling function emits.
+function captureRQH(fn) {
+	const cmds = []
+	const self = { ...makeSelf(), sendRawCommand: (cmd) => cmds.push(cmd) }
+	fn.call(self)
+	return cmds
+}
+
+// Feed a single DTH message to updateData and return the resulting DATA object.
+function feedDTH(dth) {
+	const self = makeSelf()
+	api.updateData.call(self, dth + ';')
+	return self.DATA
+}
+
+// ── _parseHexBlock ───────────────────────────────────────────────────────────
+
+describe('_parseHexBlock', () => {
+	test('returns null for wrong length', () => {
+		assert.equal(api._parseHexBlock('AB', 2), null)
+	})
+
+	test('returns null for non-hex characters', () => {
+		assert.equal(api._parseHexBlock('ABCDGH', 3), null)
+	})
+
+	test('returns null for empty string when bytes > 0', () => {
+		assert.equal(api._parseHexBlock('', 1), null)
+	})
+
+	test('returns uppercased byte array for valid 2-byte block', () => {
+		assert.deepEqual(api._parseHexBlock('0102', 2), ['01', '02'])
+	})
+
+	test('returns uppercased byte array for valid 6-byte block', () => {
+		assert.deepEqual(api._parseHexBlock('0a0b0c0d0e0f', 6), ['0A', '0B', '0C', '0D', '0E', '0F'])
+	})
+
+	test('returns single-element array for valid 1-byte block', () => {
+		assert.deepEqual(api._parseHexBlock('FF', 1), ['FF'])
+	})
+})
+
+// ── Polling query counts ─────────────────────────────────────────────────────
+
+describe('getPinpKeyData emits 8 queries', () => {
+	test('four 2-byte PGM+PVW queries and four 1-byte source queries', () => {
+		const cmds = captureRQH(api.getPinpKeyData)
+		assert.equal(cmds.length, 8)
+		assert.ok(cmds.includes('RQH:001B00,000002;'))
+		assert.ok(cmds.includes('RQH:001C00,000002;'))
+		assert.ok(cmds.includes('RQH:001D00,000002;'))
+		assert.ok(cmds.includes('RQH:001E00,000002;'))
+		assert.ok(cmds.includes('RQH:001B02,000001;'))
+		assert.ok(cmds.includes('RQH:001C02,000001;'))
+		assert.ok(cmds.includes('RQH:001D02,000001;'))
+		assert.ok(cmds.includes('RQH:001E02,000001;'))
+	})
+})
+
+describe('getAuxData emits 5 queries', () => {
+	test('aux1 separate, aux2+3 combined', () => {
+		const cmds = captureRQH(api.getAuxData)
+		assert.equal(cmds.length, 5)
+		assert.ok(cmds.includes('RQH:000011,000001;'))
+		assert.ok(cmds.includes('RQH:00002E,000002;'))
+		const twoByteAux = cmds.filter((c) => c.startsWith('RQH:00002E'))
+		assert.equal(twoByteAux.length, 1)
+	})
+})
+
+describe('getOutputData emits 2 queries', () => {
+	test('hdmi1-3+sdi1-3 combined, usb separate', () => {
+		const cmds = captureRQH(api.getOutputData)
+		assert.equal(cmds.length, 2)
+		assert.ok(cmds.includes('RQH:00000A,000006;'))
+		assert.ok(cmds.includes('RQH:000010,000001;'))
+	})
+})
+
+describe('getAuxLinkData emits 2 queries', () => {
+	test('aux link mode separate, aux1-3 link combined', () => {
+		const cmds = captureRQH(api.getAuxLinkData)
+		assert.equal(cmds.length, 2)
+		assert.ok(cmds.includes('RQH:02010D,000001;'))
+		assert.ok(cmds.includes('RQH:020154,000003;'))
+	})
+})
+
+// ── DTH: Aux 2+3 source ──────────────────────────────────────────────────────
+
+describe('DTH aux 2+3 source', () => {
+	test('2-byte block splits into aux2source and aux3source', () => {
+		const data = feedDTH('DTH:00002E,0203')
+		assert.equal(data.aux2source, '02')
+		assert.equal(data.aux3source, '03')
+	})
+
+	test('single-byte response sets only aux2source', () => {
+		const data = feedDTH('DTH:00002E,05')
+		assert.equal(data.aux2source, '05')
+		assert.equal(data.aux3source, undefined)
+	})
+
+	test('single-byte aux3 notification (2F) still sets aux3source', () => {
+		const data = feedDTH('DTH:00002F,07')
+		assert.equal(data.aux3source, '07')
+	})
+
+	test('malformed block (wrong length) falls back to single-byte path', () => {
+		const data = feedDTH('DTH:00002E,ABC')
+		assert.equal(data.aux2source, 'ABC')
+		assert.equal(data.aux3source, undefined)
+	})
+})
+
+// ── DTH: PiP/Key PGM+PVW ────────────────────────────────────────────────────
+
+describe('DTH PiP/Key 1 PGM+PVW (1B00)', () => {
+	test('2-byte block sets data_1B00 and data_1B01', () => {
+		const data = feedDTH('DTH:001B00,0100')
+		assert.equal(data['data_1B00'], '01')
+		assert.equal(data['data_1B01'], '00')
+	})
+
+	test('2-byte block also sets data_001B00 and data_001B01', () => {
+		const data = feedDTH('DTH:001B00,0100')
+		assert.equal(data['data_001B00'], '01')
+		assert.equal(data['data_001B01'], '00')
+	})
+
+	test('single-byte response sets data_1B00 only', () => {
+		const data = feedDTH('DTH:001B00,01')
+		assert.equal(data['data_1B00'], '01')
+		assert.equal(data['data_1B01'], undefined)
+	})
+})
+
+describe('DTH PiP/Key 2 PGM+PVW (1C00)', () => {
+	test('2-byte block sets data_1C00 and data_1C01', () => {
+		const data = feedDTH('DTH:001C00,0101')
+		assert.equal(data['data_1C00'], '01')
+		assert.equal(data['data_1C01'], '01')
+	})
+
+	test('single-byte response sets data_1C00 only', () => {
+		const data = feedDTH('DTH:001C00,00')
+		assert.equal(data['data_1C00'], '00')
+		assert.equal(data['data_1C01'], undefined)
+	})
+})
+
+describe('DTH PiP/Key 3 PGM+PVW (1D00)', () => {
+	test('2-byte block sets data_1D00 and data_1D01', () => {
+		const data = feedDTH('DTH:001D00,0001')
+		assert.equal(data['data_1D00'], '00')
+		assert.equal(data['data_1D01'], '01')
+	})
+})
+
+describe('DTH PiP/Key 4 PGM+PVW (1E00)', () => {
+	test('2-byte block sets data_1E00 and data_1E01', () => {
+		const data = feedDTH('DTH:001E00,0100')
+		assert.equal(data['data_1E00'], '01')
+		assert.equal(data['data_1E01'], '00')
+	})
+})
+
+// ── DTH: HDMI+SDI output assign ──────────────────────────────────────────────
+
+describe('DTH HDMI1-3+SDI1-3 output assign', () => {
+	test('6-byte block sets all six assign fields', () => {
+		const data = feedDTH('DTH:00000A,010203040506')
+		assert.equal(data.hdmi1assign, '01')
+		assert.equal(data.hdmi2assign, '02')
+		assert.equal(data.hdmi3assign, '03')
+		assert.equal(data.sdi1assign, '04')
+		assert.equal(data.sdi2assign, '05')
+		assert.equal(data.sdi3assign, '06')
+	})
+
+	test('single-byte response sets only hdmi1assign', () => {
+		const data = feedDTH('DTH:00000A,03')
+		assert.equal(data.hdmi1assign, '03')
+		assert.equal(data.hdmi2assign, undefined)
+		assert.equal(data.sdi1assign, undefined)
+	})
+
+	test('individual HDMI/SDI notifications still set their fields', () => {
+		const data2 = feedDTH('DTH:00000B,02')
+		assert.equal(data2.hdmi2assign, '02')
+		const data3 = feedDTH('DTH:00000C,03')
+		assert.equal(data3.hdmi3assign, '03')
+		const dataS1 = feedDTH('DTH:00000D,01')
+		assert.equal(dataS1.sdi1assign, '01')
+		const dataS2 = feedDTH('DTH:00000E,01')
+		assert.equal(dataS2.sdi2assign, '01')
+		const dataS3 = feedDTH('DTH:00000F,01')
+		assert.equal(dataS3.sdi3assign, '01')
+	})
+
+	test('USB assign still handled independently', () => {
+		const data = feedDTH('DTH:000010,04')
+		assert.equal(data.usbassign, '04')
+	})
+
+	test('malformed block (5 bytes) falls back to single-byte path', () => {
+		const data = feedDTH('DTH:00000A,0102030405')
+		assert.equal(data.hdmi1assign, '0102030405')
+		assert.equal(data.hdmi2assign, undefined)
+	})
+})
+
+// ── DTH: Aux link ────────────────────────────────────────────────────────────
+
+describe('DTH Aux 1-3 link', () => {
+	test('3-byte block sets aux1link, aux2link, aux3link', () => {
+		const data = feedDTH('DTH:020154,010001')
+		assert.equal(data.aux1link, '01')
+		assert.equal(data.aux2link, '00')
+		assert.equal(data.aux3link, '01')
+	})
+
+	test('single-byte response sets only aux1link', () => {
+		const data = feedDTH('DTH:020154,01')
+		assert.equal(data.aux1link, '01')
+		assert.equal(data.aux2link, undefined)
+		assert.equal(data.aux3link, undefined)
+	})
+
+	test('individual aux2/aux3 link notifications still set their fields', () => {
+		const data2 = feedDTH('DTH:020155,01')
+		assert.equal(data2.aux2link, '01')
+		const data3 = feedDTH('DTH:020156,00')
+		assert.equal(data3.aux3link, '00')
+	})
+
+	test('aux link mode query still handled independently', () => {
+		const data = feedDTH('DTH:02010D,01')
+		assert.equal(data.auxlinkmode, '01')
+	})
+})
+
+// ── No dropped registers ─────────────────────────────────────────────────────
+
+describe('no register dropped or duplicated', () => {
+	test('four consolidated helpers emit 17 unique commands with no duplicates', () => {
+		const cmds = []
+		const collector = { ...makeSelf(), sendRawCommand: (c) => cmds.push(c) }
+
+		// getFreezeData and memory queries are separate; not part of these four helpers.
+		for (const fn of [api.getAuxData, api.getOutputData, api.getPinpKeyData, api.getAuxLinkData]) {
+			fn.call(collector)
+		}
+
+		// 5 (aux) + 2 (output) + 8 (pip) + 2 (aux-link) = 17
+		const unique = new Set(cmds)
+		assert.equal(unique.size, cmds.length, 'no duplicate commands')
+		assert.equal(cmds.length, 17)
+	})
+})

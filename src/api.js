@@ -98,17 +98,23 @@ module.exports = {
 		self.getLastMemoryLoaded()
 	},
 
+	_parseHexBlock: function (value, expectedBytes) {
+		if (value.length !== expectedBytes * 2) return null
+		if (!/^[0-9A-Fa-f]+$/.test(value)) return null
+		const out = []
+		for (let i = 0; i < expectedBytes; i++) {
+			out.push(value.slice(i * 2, i * 2 + 2).toUpperCase())
+		}
+		return out
+	},
+
 	getPinpKeyData: function () {
 		let self = this
 
-		self.sendRawCommand('RQH:001B00,000001;') //PnP/Key 1 on PGM
-		self.sendRawCommand('RQH:001B01,000001;') //PnP/Key 1 on PVW
-		self.sendRawCommand('RQH:001C00,000001;') //PnP/Key 2 on PGM
-		self.sendRawCommand('RQH:001C01,000001;') //PnP/Key 2 on PVW
-		self.sendRawCommand('RQH:001D00,000001;') //PnP/Key 3 on PGM
-		self.sendRawCommand('RQH:001D01,000001;') //PnP/Key 3 on PVW
-		self.sendRawCommand('RQH:001E00,000001;') //PnP/Key 4 on PGM
-		self.sendRawCommand('RQH:001E01,000001;') //PnP/Key 4 on PVW
+		self.sendRawCommand('RQH:001B00,000002;') //PnP/Key 1 PGM + PVW
+		self.sendRawCommand('RQH:001C00,000002;') //PnP/Key 2 PGM + PVW
+		self.sendRawCommand('RQH:001D00,000002;') //PnP/Key 3 PGM + PVW
+		self.sendRawCommand('RQH:001E00,000002;') //PnP/Key 4 PGM + PVW
 
 		//get sources for pnp/keys
 		self.sendRawCommand('RQH:001B02,000001;') //PnP/Key 1 source
@@ -121,8 +127,7 @@ module.exports = {
 		let self = this
 
 		self.sendRawCommand('RQH:000011,000001;') //Aux 1 current source
-		self.sendRawCommand('RQH:00002E,000001;') //Aux 2 current source
-		self.sendRawCommand('RQH:00002F,000001;') //Aux 3 current source
+		self.sendRawCommand('RQH:00002E,000002;') //Aux 2 + 3 current source
 
 		self.sendRawCommand('RQH:012203,000001;') //Aux 1 mute
 		self.sendRawCommand('RQH:012503,000001;') //Aux 2 mute
@@ -138,12 +143,7 @@ module.exports = {
 	getOutputData: function () {
 		let self = this
 
-		self.sendRawCommand('RQH:00000A,000001;') //HDMI 1 output assign
-		self.sendRawCommand('RQH:00000B,000001;') //HDMI 2 output assign
-		self.sendRawCommand('RQH:00000C,000001;') //HDMI 3 output assign
-		self.sendRawCommand('RQH:00000D,000001;') //SDI 1 output assign
-		self.sendRawCommand('RQH:00000E,000001;') //SDI 2 output assign
-		self.sendRawCommand('RQH:00000F,000001;') //SDI 3 output assign
+		self.sendRawCommand('RQH:00000A,000006;') //HDMI 1-3 + SDI 1-3 output assign
 		self.sendRawCommand('RQH:000010,000001;') //USB output assign
 	},
 
@@ -151,9 +151,7 @@ module.exports = {
 		let self = this
 
 		self.sendRawCommand('RQH:02010D,000001;') //Aux Link Mode Off/Auto/Manual
-		self.sendRawCommand('RQH:020154,000001;') //Aux 1 link on/off
-		self.sendRawCommand('RQH:020155,000001;') //Aux 2 link on/off
-		self.sendRawCommand('RQH:020156,000001;') //Aux 3 link on/off
+		self.sendRawCommand('RQH:020154,000003;') //Aux 1-3 link on/off
 	},
 
 	/*getTallyData: function() {
@@ -276,13 +274,72 @@ module.exports = {
 														self.logVerbose('Received Aux 1 Source: ' + value)
 														self.DATA.aux1source = value
 													} else if (param2 == '00' && param3 == '2E') {
-														//aux 2 source
-														self.logVerbose('Received Aux 2 Source: ' + value)
-														self.DATA.aux2source = value
+														//aux 2 source (+ aux 3 when responding to 2-byte block query)
+														const block2E = self._parseHexBlock(value, 2)
+														if (block2E) {
+															self.DATA.aux2source = block2E[0]
+															self.DATA.aux3source = block2E[1]
+															self.logVerbose('Received Aux 2+3 Source: ' + value)
+														} else {
+															self.DATA.aux2source = value
+															self.logVerbose('Received Aux 2 Source: ' + value)
+														}
 													} else if (param2 == '00' && param3 == '2F') {
-														//aux 3 source
+														//aux 3 source (single-byte device notification)
 														self.logVerbose('Received Aux 3 Source: ' + value)
 														self.DATA.aux3source = value
+													} else if (param2 == '1B' && param3 == '00') {
+														//pnp/key 1 PGM + PVW (2-byte block) or single-byte PGM
+														const block1B = self._parseHexBlock(value, 2)
+														if (block1B) {
+															self.DATA['data_1B00'] = block1B[0]
+															self.DATA['data_1B01'] = block1B[1]
+															self.DATA['data_001B00'] = block1B[0]
+															self.DATA['data_001B01'] = block1B[1]
+															self.logVerbose('Received PnP/Key 1 PGM+PVW: ' + value)
+														} else {
+															self.DATA['data_1B00'] = value
+															self.DATA['data_001B00'] = value
+														}
+													} else if (param2 == '1C' && param3 == '00') {
+														//pnp/key 2 PGM + PVW (2-byte block) or single-byte PGM
+														const block1C = self._parseHexBlock(value, 2)
+														if (block1C) {
+															self.DATA['data_1C00'] = block1C[0]
+															self.DATA['data_1C01'] = block1C[1]
+															self.DATA['data_001C00'] = block1C[0]
+															self.DATA['data_001C01'] = block1C[1]
+															self.logVerbose('Received PnP/Key 2 PGM+PVW: ' + value)
+														} else {
+															self.DATA['data_1C00'] = value
+															self.DATA['data_001C00'] = value
+														}
+													} else if (param2 == '1D' && param3 == '00') {
+														//pnp/key 3 PGM + PVW (2-byte block) or single-byte PGM
+														const block1D = self._parseHexBlock(value, 2)
+														if (block1D) {
+															self.DATA['data_1D00'] = block1D[0]
+															self.DATA['data_1D01'] = block1D[1]
+															self.DATA['data_001D00'] = block1D[0]
+															self.DATA['data_001D01'] = block1D[1]
+															self.logVerbose('Received PnP/Key 3 PGM+PVW: ' + value)
+														} else {
+															self.DATA['data_1D00'] = value
+															self.DATA['data_001D00'] = value
+														}
+													} else if (param2 == '1E' && param3 == '00') {
+														//pnp/key 4 PGM + PVW (2-byte block) or single-byte PGM
+														const block1E = self._parseHexBlock(value, 2)
+														if (block1E) {
+															self.DATA['data_1E00'] = block1E[0]
+															self.DATA['data_1E01'] = block1E[1]
+															self.DATA['data_001E00'] = block1E[0]
+															self.DATA['data_001E01'] = block1E[1]
+															self.logVerbose('Received PnP/Key 4 PGM+PVW: ' + value)
+														} else {
+															self.DATA['data_1E00'] = value
+															self.DATA['data_001E00'] = value
+														}
 													} else if (param2 == '1B' && param3 == '02') {
 														//pnp key 1 source
 														let lookup = self.CHOICES_PNPKEY_SOURCES.find((item) => {
@@ -359,9 +416,20 @@ module.exports = {
 												}
 
 												if (param1 == '00' && param2 == '00' && param3 == '0A') {
-													//hdmi 1 output assign
-													self.DATA.hdmi1assign = value
-													self.logVerbose('Received HDMI 1 Output Assign: ' + value)
+													//hdmi 1-3 + sdi 1-3 output assign (6-byte block) or single-byte hdmi 1
+													const blockOA = self._parseHexBlock(value, 6)
+													if (blockOA) {
+														self.DATA.hdmi1assign = blockOA[0]
+														self.DATA.hdmi2assign = blockOA[1]
+														self.DATA.hdmi3assign = blockOA[2]
+														self.DATA.sdi1assign = blockOA[3]
+														self.DATA.sdi2assign = blockOA[4]
+														self.DATA.sdi3assign = blockOA[5]
+														self.logVerbose('Received HDMI1-3+SDI1-3 Output Assign: ' + value)
+													} else {
+														self.DATA.hdmi1assign = value
+														self.logVerbose('Received HDMI 1 Output Assign: ' + value)
+													}
 												}
 
 												if (param1 == '00' && param2 == '00' && param3 == '0B') {
@@ -407,9 +475,17 @@ module.exports = {
 												}
 
 												if (param1 == '02' && param2 == '01' && param3 == '54') {
-													//aux 1 link
-													self.DATA.aux1link = value
-													self.logVerbose('Received Aux 1 Link: ' + value)
+													//aux 1-3 link on/off (3-byte block) or single-byte aux 1
+													const block54 = self._parseHexBlock(value, 3)
+													if (block54) {
+														self.DATA.aux1link = block54[0]
+														self.DATA.aux2link = block54[1]
+														self.DATA.aux3link = block54[2]
+														self.logVerbose('Received Aux 1-3 Link: ' + value)
+													} else {
+														self.DATA.aux1link = value
+														self.logVerbose('Received Aux 1 Link: ' + value)
+													}
 												}
 
 												if (param1 == '02' && param2 == '01' && param3 == '55') {
