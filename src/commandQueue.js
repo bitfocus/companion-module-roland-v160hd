@@ -23,7 +23,7 @@ function CommandQueue(sendFn, opts) {
 	this._low = []
 	this._sendFn = sendFn
 	this._minIntervalMs = minIntervalMs
-	this._lastSentAt = 0
+	this._lastHighSentAt = 0
 	this._timer = null
 }
 
@@ -36,6 +36,12 @@ function CommandQueue(sendFn, opts) {
 CommandQueue.prototype.enqueue = function (cmd, priority) {
 	if (priority === PRIORITY.HIGH) {
 		this._high.push(cmd)
+		// A HIGH command may arrive while a LOW-only timer is pending.  Cancel
+		// it and reschedule so the HIGH rate-limit delay is applied correctly.
+		if (this._timer !== null) {
+			clearTimeout(this._timer)
+			this._timer = null
+		}
 	} else {
 		this._low.push(cmd)
 	}
@@ -60,8 +66,16 @@ CommandQueue.prototype._schedule = function () {
 	if (this._timer !== null) return
 	if (this._high.length === 0 && this._low.length === 0) return
 
-	const elapsed = Date.now() - this._lastSentAt
-	const delay = elapsed >= this._minIntervalMs ? 0 : this._minIntervalMs - elapsed
+	let delay
+	if (this._high.length > 0) {
+		const elapsed = Date.now() - this._lastHighSentAt
+		delay = elapsed >= this._minIntervalMs ? 0 : this._minIntervalMs - elapsed
+	} else {
+		// LOW commands are not subject to the HIGH rate limit, but using a
+		// 1 ms minimum avoids scheduling a timer at the exact current tick
+		// boundary, which can cause multiple LOW drains within one tick() call.
+		delay = 1
+	}
 
 	this._timer = setTimeout(() => {
 		this._timer = null
@@ -70,10 +84,13 @@ CommandQueue.prototype._schedule = function () {
 }
 
 CommandQueue.prototype._flush = function () {
-	const cmd = this._high.length > 0 ? this._high.shift() : this._low.shift()
+	const isHigh = this._high.length > 0
+	const cmd = isHigh ? this._high.shift() : this._low.shift()
 	if (cmd === undefined) return
 
-	this._lastSentAt = Date.now()
+	if (isHigh) {
+		this._lastHighSentAt = Date.now()
+	}
 	this._sendFn(cmd)
 	this._schedule()
 }

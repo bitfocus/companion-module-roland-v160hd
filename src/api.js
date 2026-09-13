@@ -6,6 +6,23 @@ module.exports = {
 	initConnection: function () {
 		let self = this
 
+		// Clear any pending commands from the previous connection before creating
+		// a new queue, so stale commands cannot be sent on the new connection.
+		if (self._queue) {
+			self._queue.clear()
+		}
+		self._queue = new CommandQueue(
+			function (cmd) {
+				if (self.socket !== undefined && self.socket.isConnected) {
+					if (self.config.verbose) self.log('debug', 'Sending: ' + cmd.trimEnd())
+					self.socket.send(cmd)
+				} else {
+					if (self.config.verbose) self.log('warn', 'Unable to send: Socket not connected.')
+				}
+			},
+			{ minIntervalMs: 20 },
+		)
+
 		if (self.socket !== undefined) {
 			self.socket.destroy()
 			delete self.socket
@@ -19,17 +36,6 @@ module.exports = {
 			self.log('info', `Opening connection to ${self.config.host}:${self.config.port}`)
 
 			self.tcpBuffer = ''
-			self._queue = new CommandQueue(
-				function (cmd) {
-					if (self.socket !== undefined && self.socket.isConnected) {
-						if (self.config.verbose) self.log('debug', 'Sending: ' + cmd.trimEnd())
-						self.socket.send(cmd)
-					} else {
-						if (self.config.verbose) self.log('warn', 'Unable to send: Socket not connected.')
-					}
-				},
-				{ minIntervalMs: 20 },
-			)
 
 			self.socket = new TCPHelper(self.config.host, self.config.port, {
 				reconnect: true,
@@ -507,6 +513,8 @@ module.exports = {
 
 	sendRawCommand: function (command) {
 		let self = this
+
+		if (!self._queue) return
 
 		if (!command.indexOf(';')) {
 			command = command + ';'

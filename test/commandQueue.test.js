@@ -10,13 +10,16 @@ const { CommandQueue, PRIORITY } = require('../src/commandQueue')
 // own beforeEach and resets them in afterEach to keep tests independent.
 //
 // When 'Date' is mocked, Date.now() starts at 0 and advances with each
-// tick() call.  The queue's lastSentAt is also 0 initially, so the first
-// drain always computes delay = max(0, 20 - 0) = 20 ms.  Every test that
-// wants to fire the first command must therefore call tick(20).
+// tick() call.  _lastHighSentAt is also 0 initially, so the first HIGH
+// command always has delay = max(0, 20 - 0) = 20 ms.  LOW commands use a
+// 1 ms minimum delay (no 20 ms rate limit) and can be drained with tick(1).
+//
+// Arriving HIGH commands cancel any pending LOW timer and reschedule using
+// the HIGH rate-limit timing, so a user command always jumps the poll queue.
 //
 // mock.timers.tick(N) fires timers whose scheduled time is <= current + N
 // but does NOT recursively fire timers set inside those callbacks — use
-// successive tick(20) calls to drain multiple commands one at a time.
+// successive tick() calls to drain multiple commands one at a time.
 
 describe('Priority ordering', () => {
 	let sent
@@ -171,8 +174,8 @@ describe('Rate limiting', () => {
 		assert.equal(sent.length, 1)
 		assert.equal(sent[0], 'cmd1\n')
 
-		// From the queue's perspective, lastSentAt = 50, elapsed = 0,
-		// delay = 20.  The next command must wait a full 20 ms.
+		// From the queue's perspective, _lastHighSentAt = 50, elapsed = 0,
+		// delay = 20.  The next HIGH command must wait a full 20 ms.
 		q.enqueue('cmd2\n', PRIORITY.HIGH)
 		mock.timers.tick(19) // t=69 — still waiting
 		assert.equal(sent.length, 1)
@@ -180,6 +183,49 @@ describe('Rate limiting', () => {
 		mock.timers.tick(1) // t=70 — fires
 		assert.equal(sent.length, 2)
 		assert.equal(sent[1], 'cmd2\n')
+	})
+
+	test('low-priority commands drain without the HIGH rate-limit delay', () => {
+		// LOW/RQH reads are not subject to the 20 ms DTH interval.
+		// Each LOW command uses only a 1 ms delay, so tick(1) drains one.
+		const q = new CommandQueue((cmd) => sent.push(cmd), { minIntervalMs: 20 })
+
+		q.enqueue('l1\n', PRIORITY.LOW)
+		q.enqueue('l2\n', PRIORITY.LOW)
+
+		mock.timers.tick(1) // l1 sent (delay = 1 ms, far below the 20 ms HIGH limit)
+		assert.equal(sent.length, 1)
+		assert.equal(sent[0], 'l1\n')
+
+		mock.timers.tick(1) // l2 sent — no 20 ms wait required
+		assert.equal(sent.length, 2)
+		assert.equal(sent[1], 'l2\n')
+	})
+
+	test('sending a LOW command does not reset the HIGH rate-limit timestamp', () => {
+		// A LOW/RQH send must not update _lastHighSentAt, so the next HIGH/DTH
+		// command still waits the full interval from the previous HIGH send.
+		const q = new CommandQueue((cmd) => sent.push(cmd), { minIntervalMs: 20 })
+
+		// First HIGH: delay = 20 ms from _lastHighSentAt = 0
+		q.enqueue('h1\n', PRIORITY.HIGH)
+		mock.timers.tick(20) // t=20: h1 sent, _lastHighSentAt = 20
+		assert.equal(sent.length, 1)
+
+		// Interleave a LOW: must not touch _lastHighSentAt
+		q.enqueue('l1\n', PRIORITY.LOW)
+		mock.timers.tick(1) // t=21: l1 sent immediately
+		assert.equal(sent.length, 2)
+		assert.equal(sent[1], 'l1\n')
+
+		// Second HIGH: elapsed since last HIGH = 1 ms, so delay = 19 ms
+		q.enqueue('h2\n', PRIORITY.HIGH)
+		mock.timers.tick(18) // t=39: 19 ms not yet elapsed
+		assert.equal(sent.length, 2, 'h2 must not fire before 20 ms since last HIGH')
+
+		mock.timers.tick(1) // t=40: h2 sent
+		assert.equal(sent.length, 3)
+		assert.equal(sent[2], 'h2\n')
 	})
 })
 
