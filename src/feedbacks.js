@@ -385,12 +385,10 @@ module.exports = {
 			callback: function (feedback, bank) {
 				let opt = feedback.options
 
-				let obj = self.DATA.find((obj) => obj.id == `data_${opt.key}${opt.bus}`)
+				let val = self.DATA[`data_${opt.pinp}${opt.bus}`]
 
-				if (obj) {
-					if (obj.value == opt.onoff) {
-						return true
-					}
+				if (val !== undefined && val == opt.onoff) {
+					return true
 				}
 
 				return false
