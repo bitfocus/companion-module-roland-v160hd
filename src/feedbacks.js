@@ -201,49 +201,49 @@ module.exports = {
 
 				if (opt.output == '00000A') {
 					//hdmi 1 output
-					if (self.DATA.hdmi1source == opt.assign) {
+					if (self.DATA.hdmi1assign == opt.assign) {
 						return true
 					}
 				}
 
 				if (opt.output == '00000B') {
 					//hdmi 2 output
-					if (self.DATA.hdmi2source == opt.assign) {
+					if (self.DATA.hdmi2assign == opt.assign) {
 						return true
 					}
 				}
 
 				if (opt.output == '00000C') {
 					//hdmi 3 output
-					if (self.DATA.hdmi3source == opt.assign) {
+					if (self.DATA.hdmi3assign == opt.assign) {
 						return true
 					}
 				}
 
 				if (opt.output == '00000D') {
 					//sdi 1 output
-					if (self.DATA.sdi1source == opt.assign) {
+					if (self.DATA.sdi1assign == opt.assign) {
 						return true
 					}
 				}
 
 				if (opt.output == '00000E') {
 					//sdi 2 output
-					if (self.DATA.sdi2source == opt.assign) {
+					if (self.DATA.sdi2assign == opt.assign) {
 						return true
 					}
 				}
 
 				if (opt.output == '00000F') {
 					//sdi 3 output
-					if (self.DATA.sdi3source == opt.assign) {
+					if (self.DATA.sdi3assign == opt.assign) {
 						return true
 					}
 				}
 
 				if (opt.output == '000010') {
 					//usb output
-					if (self.DATA.usbsource == opt.assign) {
+					if (self.DATA.usbassign == opt.assign) {
 						return true
 					}
 				}
