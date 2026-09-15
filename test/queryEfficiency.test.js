@@ -125,12 +125,11 @@ describe('getAuxMutes emits 3 queries', () => {
 	})
 })
 
-describe('getOutputData emits 2 queries', () => {
-	test('hdmi1-3+sdi1-3 combined, usb separate', () => {
+describe('getOutputData emits 1 query', () => {
+	test('hdmi1-3+sdi1-3+usb combined in one 7-byte block', () => {
 		const cmds = captureRQH(api.getOutputData)
-		assert.equal(cmds.length, 2)
-		assert.ok(cmds.includes('RQH:00000A,000006;'))
-		assert.ok(cmds.includes('RQH:000010,000001;'))
+		assert.equal(cmds.length, 1)
+		assert.ok(cmds.includes('RQH:00000A,000007;'))
 	})
 })
 
@@ -230,21 +229,23 @@ describe('DTH PiP/Key 4 PGM+PVW (1E00)', () => {
 // ── DTH: HDMI+SDI output assign ──────────────────────────────────────────────
 
 describe('DTH HDMI1-3+SDI1-3 output assign', () => {
-	test('6-byte block sets all six assign fields', () => {
-		const data = feedDTH('DTH:00000A,010203040506')
+	test('7-byte block sets all seven assign fields including USB', () => {
+		const data = feedDTH('DTH:00000A,01020304050607')
 		assert.equal(data.hdmi1assign, '01')
 		assert.equal(data.hdmi2assign, '02')
 		assert.equal(data.hdmi3assign, '03')
 		assert.equal(data.sdi1assign, '04')
 		assert.equal(data.sdi2assign, '05')
 		assert.equal(data.sdi3assign, '06')
+		assert.equal(data.usbassign, '07')
 	})
 
-	test('single-byte response sets only hdmi1assign', () => {
+	test('single-byte notification sets only hdmi1assign', () => {
 		const data = feedDTH('DTH:00000A,03')
 		assert.equal(data.hdmi1assign, '03')
 		assert.equal(data.hdmi2assign, undefined)
 		assert.equal(data.sdi1assign, undefined)
+		assert.equal(data.usbassign, undefined)
 	})
 
 	test('individual HDMI/SDI notifications still set their fields', () => {
@@ -266,9 +267,10 @@ describe('DTH HDMI1-3+SDI1-3 output assign', () => {
 	})
 
 	test('wrong-length value is not stored', () => {
-		const data = feedDTH('DTH:00000A,0102030405')
+		const data = feedDTH('DTH:00000A,010203040506')
 		assert.equal(data.hdmi1assign, undefined)
 		assert.equal(data.hdmi2assign, undefined)
+		assert.equal(data.usbassign, undefined)
 	})
 
 	test('non-hex value is not stored', () => {
@@ -317,7 +319,7 @@ describe('DTH Aux 1-3 link', () => {
 // ── No dropped registers ─────────────────────────────────────────────────────
 
 describe('no register dropped or duplicated', () => {
-	test('six consolidated helpers emit 18 unique commands with no duplicates', () => {
+	test('six consolidated helpers emit 17 unique commands with no duplicates', () => {
 		const cmds = []
 		const collector = { ...makeSelf(), sendRawCommand: (c) => cmds.push(c) }
 
@@ -333,9 +335,9 @@ describe('no register dropped or duplicated', () => {
 			fn.call(collector)
 		}
 
-		// 3 (auxSources) + 3 (auxMutes) + 2 (output) + 4 (pipTally) + 4 (pipSource) + 2 (auxLink) = 18
+		// 3 (auxSources) + 3 (auxMutes) + 1 (output) + 4 (pipTally) + 4 (pipSource) + 2 (auxLink) = 17
 		const unique = new Set(cmds)
 		assert.equal(unique.size, cmds.length, 'no duplicate commands')
-		assert.equal(cmds.length, 18)
+		assert.equal(cmds.length, 17)
 	})
 })

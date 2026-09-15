@@ -273,8 +273,8 @@ module.exports = {
 	getOutputData: function () {
 		let self = this
 
-		self.sendRawCommand('RQH:00000A,000006;') //HDMI 1-3 + SDI 1-3 output assign
-		self.sendRawCommand('RQH:000010,000001;') //USB output assign
+		// HDMI 1–3 + SDI 1–3 + USB are consecutive (00000A–000010): one 7-byte block.
+		self.sendRawCommand('RQH:00000A,000007;')
 	},
 
 	getAuxLinkData: function () {
@@ -651,8 +651,8 @@ module.exports = {
 												}
 
 												if (param1 == '00' && param2 == '00' && param3 == '0A') {
-													//hdmi 1-3 + sdi 1-3 output assign (6-byte block) or single-byte hdmi 1
-													const blockOA = self._parseHexBlock(value, 6)
+													//hdmi 1-3 + sdi 1-3 + usb output assign (7-byte block) or single-byte hdmi 1 notification
+													const blockOA = self._parseHexBlock(value, 7)
 													if (blockOA) {
 														self.DATA.hdmi1assign = blockOA[0]
 														self.DATA.hdmi2assign = blockOA[1]
@@ -660,7 +660,8 @@ module.exports = {
 														self.DATA.sdi1assign = blockOA[3]
 														self.DATA.sdi2assign = blockOA[4]
 														self.DATA.sdi3assign = blockOA[5]
-														self.logVerbose('Received HDMI1-3+SDI1-3 Output Assign: ' + value)
+														self.DATA.usbassign = blockOA[6]
+														self.logVerbose('Received HDMI1-3+SDI1-3+USB Output Assign: ' + value)
 													} else if (self._parseHexBlock(value, 1)) {
 														self.DATA.hdmi1assign = value
 														self.logVerbose('Received HDMI 1 Output Assign: ' + value)
