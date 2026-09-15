@@ -92,27 +92,29 @@ describe('Priority ordering', () => {
 	test('user command arriving while poll queue is pending gets priority', () => {
 		const q = new CommandQueue((cmd) => sent.push(cmd), { minIntervalMs: 20 })
 
-		// Enqueue three poll commands
+		// Enqueue five poll commands (more than BATCH_LOW=4 so one remains after first batch)
 		q.enqueue('poll1\n', PRIORITY.LOW)
 		q.enqueue('poll2\n', PRIORITY.LOW)
 		q.enqueue('poll3\n', PRIORITY.LOW)
+		q.enqueue('poll4\n', PRIORITY.LOW)
+		q.enqueue('poll5\n', PRIORITY.LOW)
 
-		// First drain sends poll1
-		mock.timers.tick(20)
+		// First drain sends one batch of four; schedules the next batch in BATCH_LOW_DELAY=5 ms
+		mock.timers.tick(1)
+		assert.equal(sent.length, 4)
 		assert.equal(sent[0], 'poll1\n')
 
-		// User command arrives while the timer for poll2 is already pending
+		// User command arrives while the 5 ms batch timer for poll5 is pending.
+		// enqueue(HIGH) cancels the batch timer and reschedules using the HIGH rate-limit:
+		// elapsed = Date.now() - _lastHighSentAt = 1 - 0 = 1 ms, delay = 19 ms.
 		q.enqueue('user\n', PRIORITY.HIGH)
 
-		// Next drain should pick the user command, not poll2
-		mock.timers.tick(20)
-		assert.equal(sent[1], 'user\n')
+		mock.timers.tick(19) // HIGH fires at t=20
+		assert.equal(sent[4], 'user\n')
 
-		// Polls then continue in order
-		mock.timers.tick(20)
-		assert.equal(sent[2], 'poll2\n')
-		mock.timers.tick(20)
-		assert.equal(sent[3], 'poll3\n')
+		// Remaining poll drains after HIGH
+		mock.timers.tick(1)
+		assert.equal(sent[5], 'poll5\n')
 	})
 })
 
@@ -187,18 +189,15 @@ describe('Rate limiting', () => {
 
 	test('low-priority commands drain without the HIGH rate-limit delay', () => {
 		// LOW/RQH reads are not subject to the 20 ms DTH interval.
-		// Each LOW command uses only a 1 ms delay, so tick(1) drains one.
+		// With BATCH_LOW=4, all LOW commands with count ≤ 4 drain in a single 1 ms tick.
 		const q = new CommandQueue((cmd) => sent.push(cmd), { minIntervalMs: 20 })
 
 		q.enqueue('l1\n', PRIORITY.LOW)
 		q.enqueue('l2\n', PRIORITY.LOW)
 
-		mock.timers.tick(1) // l1 sent (delay = 1 ms, far below the 20 ms HIGH limit)
-		assert.equal(sent.length, 1)
+		mock.timers.tick(1) // l1 and l2 both drain in one batch (BATCH_LOW=4, far below 20 ms)
+		assert.equal(sent.length, 2, 'both LOW commands drain on the 1 ms delay')
 		assert.equal(sent[0], 'l1\n')
-
-		mock.timers.tick(1) // l2 sent — no 20 ms wait required
-		assert.equal(sent.length, 2)
 		assert.equal(sent[1], 'l2\n')
 	})
 

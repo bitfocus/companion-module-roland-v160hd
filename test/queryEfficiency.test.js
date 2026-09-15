@@ -83,14 +83,21 @@ describe('_parseHexBlock', () => {
 
 // ── Polling query counts ─────────────────────────────────────────────────────
 
-describe('getPinpKeyData emits 8 queries', () => {
-	test('four 2-byte PGM+PVW queries and four 1-byte source queries', () => {
-		const cmds = captureRQH(api.getPinpKeyData)
-		assert.equal(cmds.length, 8)
+describe('getPinpKeyTally emits 4 queries', () => {
+	test('four 2-byte PGM+PVW tally queries', () => {
+		const cmds = captureRQH(api.getPinpKeyTally)
+		assert.equal(cmds.length, 4)
 		assert.ok(cmds.includes('RQH:001B00,000002;'))
 		assert.ok(cmds.includes('RQH:001C00,000002;'))
 		assert.ok(cmds.includes('RQH:001D00,000002;'))
 		assert.ok(cmds.includes('RQH:001E00,000002;'))
+	})
+})
+
+describe('getPinpKeySource emits 4 queries', () => {
+	test('four 1-byte source queries', () => {
+		const cmds = captureRQH(api.getPinpKeySource)
+		assert.equal(cmds.length, 4)
 		assert.ok(cmds.includes('RQH:001B02,000001;'))
 		assert.ok(cmds.includes('RQH:001C02,000001;'))
 		assert.ok(cmds.includes('RQH:001D02,000001;'))
@@ -98,14 +105,23 @@ describe('getPinpKeyData emits 8 queries', () => {
 	})
 })
 
-describe('getAuxData emits 5 queries', () => {
-	test('aux1 separate, aux2+3 combined', () => {
-		const cmds = captureRQH(api.getAuxData)
-		assert.equal(cmds.length, 5)
+describe('getAuxSources emits 3 queries', () => {
+	test('pgm+pvw combined, aux1 separate, aux2+3 combined', () => {
+		const cmds = captureRQH(api.getAuxSources)
+		assert.equal(cmds.length, 3)
+		assert.ok(cmds.includes('RQH:002100,000002;'))
 		assert.ok(cmds.includes('RQH:000011,000001;'))
 		assert.ok(cmds.includes('RQH:00002E,000002;'))
-		const twoByteAux = cmds.filter((c) => c.startsWith('RQH:00002E'))
-		assert.equal(twoByteAux.length, 1)
+	})
+})
+
+describe('getAuxMutes emits 3 queries', () => {
+	test('aux 1, 2, 3 mute queries', () => {
+		const cmds = captureRQH(api.getAuxMutes)
+		assert.equal(cmds.length, 3)
+		assert.ok(cmds.includes('RQH:012203,000001;'))
+		assert.ok(cmds.includes('RQH:012503,000001;'))
+		assert.ok(cmds.includes('RQH:012603,000001;'))
 	})
 })
 
@@ -301,18 +317,25 @@ describe('DTH Aux 1-3 link', () => {
 // ── No dropped registers ─────────────────────────────────────────────────────
 
 describe('no register dropped or duplicated', () => {
-	test('four consolidated helpers emit 17 unique commands with no duplicates', () => {
+	test('six consolidated helpers emit 18 unique commands with no duplicates', () => {
 		const cmds = []
 		const collector = { ...makeSelf(), sendRawCommand: (c) => cmds.push(c) }
 
-		// getFreezeData and memory queries are separate; not part of these four helpers.
-		for (const fn of [api.getAuxData, api.getOutputData, api.getPinpKeyData, api.getAuxLinkData]) {
+		// getFreezeData, transition, monitor, and memory queries are separate.
+		for (const fn of [
+			api.getAuxSources,
+			api.getAuxMutes,
+			api.getOutputData,
+			api.getPinpKeyTally,
+			api.getPinpKeySource,
+			api.getAuxLinkData,
+		]) {
 			fn.call(collector)
 		}
 
-		// 5 (aux) + 2 (output) + 8 (pip) + 2 (aux-link) = 17
+		// 3 (auxSources) + 3 (auxMutes) + 2 (output) + 4 (pipTally) + 4 (pipSource) + 2 (auxLink) = 18
 		const unique = new Set(cmds)
 		assert.equal(unique.size, cmds.length, 'no duplicate commands')
-		assert.equal(cmds.length, 17)
+		assert.equal(cmds.length, 18)
 	})
 })

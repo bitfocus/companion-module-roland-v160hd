@@ -6,8 +6,15 @@ module.exports = {
 	initConnection: function () {
 		let self = this
 
-		// Clear any pending commands from the previous connection before creating
-		// a new queue, so stale commands cannot be sent on the new connection.
+		// Stop polling before teardown — prevents sending to a dead socket.
+		if (self.INTERVAL !== undefined) {
+			clearInterval(self.INTERVAL)
+			self.INTERVAL = undefined
+		}
+
+		// Clear any pending commands from the previous connection before
+		// creating a new queue so stale commands cannot be sent on the new
+		// connection.
 		if (self._queue) {
 			self._queue.clear()
 		}
@@ -35,30 +42,36 @@ module.exports = {
 		if (self.config.host) {
 			self.log('info', `Opening connection to ${self.config.host}:${self.config.port}`)
 
+			// Reset buffer before socket creation so parse state is clean even
+			// if the connect event fires before the old socket's destroy completes.
 			self.tcpBuffer = ''
 
-			self.socket = new TCPHelper(self.config.host, self.config.port, {
+			const socket = new TCPHelper(self.config.host, self.config.port, {
 				reconnect: true,
 				reconnect_interval: 30000,
 			})
+			self.socket = socket
 
-			self.socket.on('error', function (err) {
-				if (self.config.verbose) {
-					self.log('warn', 'Error: ' + err)
-				}
-
+			socket.on('error', function (err) {
+				if (socket !== self.socket) return
+				if (self.config.verbose) self.log('warn', 'Error: ' + err)
 				clearInterval(self.INTERVAL)
-				self.updateStatus(InstanceStatus.ConnectionFailure, 'Connection error')
+				self.INTERVAL = undefined
+				self.handleError(err)
 			})
 
-			self.socket.on('connect', function () {
+			socket.on('connect', function () {
+				if (socket !== self.socket) return
 				self.tcpBuffer = ''
 				self._queue.clear()
-				self.log('info', 'Connected')
-				self.updateStatus(InstanceStatus.Ok)
+				self.memoryNameIndex = 0
+				self._passwordSent = false
+				self.log('info', 'Connected — authenticating')
+				self.updateStatus(InstanceStatus.Connecting, 'Authenticating')
 			})
 
-			self.socket.on('data', function (buffer) {
+			socket.on('data', function (buffer) {
+				if (socket !== self.socket) return
 				self.tcpBuffer += buffer.toString('utf8')
 				const { messages, remaining } = extractMessages(self.tcpBuffer)
 				self.tcpBuffer = remaining
@@ -66,36 +79,136 @@ module.exports = {
 					self.updateData(msg)
 				}
 			})
+
+			socket.on('end', function () {
+				if (socket !== self.socket) return
+				clearInterval(self.INTERVAL)
+				self.INTERVAL = undefined
+				self.log('warn', 'Connection closed by device — TCPHelper will reconnect in 30 s')
+				self.updateStatus(InstanceStatus.ConnectionFailure, 'Connection Closed')
+			})
 		}
+	},
+
+	handleError: function (err) {
+		let self = this
+
+		try {
+			let error = err.toString()
+			let printedError = false
+
+			Object.keys(err).forEach(function (key) {
+				if (key === 'code') {
+					if (err[key] === 'ECONNREFUSED') {
+						error =
+							'Unable to communicate with Device. Connection refused. Is this the right IP address? Is it still online?'
+						self.log('error', error)
+						self.updateStatus(InstanceStatus.ConnectionFailure, 'Connection Refused')
+						printedError = true
+						if (self.socket !== undefined) {
+							self.socket.destroy()
+						}
+						self.startReconnectInterval()
+					} else if (err[key] === 'ETIMEDOUT') {
+						error =
+							'Unable to communicate with Device. Connection timed out. Is this the right IP address? Is it still online?'
+						self.log('error', error)
+						self.updateStatus(InstanceStatus.ConnectionFailure, 'Connection Timed Out')
+						printedError = true
+						if (self.socket !== undefined) {
+							self.socket.destroy()
+						}
+						self.startReconnectInterval()
+					} else if (err[key] === 'ECONNRESET') {
+						error = 'The connection was reset. Check the log for more error information.'
+						self.log('error', error)
+						self.updateStatus(InstanceStatus.ConnectionFailure, 'Connection Reset')
+						printedError = true
+						if (self.socket !== undefined) {
+							self.socket.destroy()
+						}
+						self.startReconnectInterval()
+					}
+				}
+			})
+
+			if (!printedError) {
+				self.log('error', `Error: ${error}`)
+			}
+		} catch (error) {
+			self.log('error', 'Error handling error: ' + error)
+			self.log('error', 'Error: ' + String(err))
+		}
+	},
+
+	startReconnectInterval: function () {
+		let self = this
+
+		self.updateStatus(InstanceStatus.ConnectionFailure, 'Reconnecting')
+
+		if (self.RECONNECT_INTERVAL !== undefined) {
+			clearInterval(self.RECONNECT_INTERVAL)
+			self.RECONNECT_INTERVAL = undefined
+		}
+
+		self.log('info', 'Attempting to reconnect in 30 seconds...')
+
+		self.RECONNECT_INTERVAL = setTimeout(self.initConnection.bind(this), 30000)
 	},
 
 	startInterval: function () {
 		let self = this
 
 		if (self.config.polling) {
-			self.log('info', `Starting Update Interval: Fetching new data from Device every ${self.config.pollingrate}ms.`)
-			if (self.config.pollingrate === undefined) {
-				self.config.pollingrate = 1000
+			const MIN_RATE = 300
+			const MAX_RATE = 30000
+			const DEFAULT_RATE = 500
+			const raw = String(self.config.pollingrate ?? '').trim()
+			const parsed = /^\d+$/.test(raw) ? Number(raw) : NaN
+			let rate = Number.isFinite(parsed) ? Math.min(MAX_RATE, Math.max(MIN_RATE, parsed)) : DEFAULT_RATE
+			if (Number.isFinite(parsed) && (parsed < MIN_RATE || parsed > MAX_RATE)) {
+				self.log(
+					'warn',
+					`Polling rate ${parsed} ms is out of range — clamped to ${rate} ms (valid: ${MIN_RATE}–${MAX_RATE} ms)`,
+				)
 			}
 
-			self.INTERVAL = setInterval(self.getData.bind(this), parseInt(self.config.pollingrate))
+			self._pollRate = rate
+			self._pollTick = 0
+
+			self.log('info', `Polling active: ${rate} ms base rate (medium ${rate * 2} ms, background ${rate * 10} ms)`)
+			self._doPoll(true)
+			self.INTERVAL = setInterval(() => self._doPoll(false), rate)
 		} else {
 			self.log('info', 'Polling is disabled. Module will not request new data at a regular rate.')
 		}
 	},
 
-	getData: function () {
+	_doPoll: function (immediate) {
 		let self = this
 
-		//self.getTallyData();
-		self.getPinpKeyData()
-		self.getAuxData()
-		self.getFreezeData()
-		self.getOutputData()
-		self.getAuxLinkData()
+		self._pollTick = (self._pollTick || 0) + 1
 
-		self.getMemoryNames()
-		self.getLastMemoryLoaded()
+		// Fast tier (every tick)
+		self.getPinpKeyTally()
+		self.getAuxSources()
+
+		// Medium tier (every 2nd tick, ~2× base rate)
+		if (immediate || self._pollTick % 2 === 0) {
+			self.getAuxMutes()
+			self.getNextMemoryName()
+		}
+
+		// Background tier (every 10th tick, ~10× base rate)
+		if (immediate || self._pollTick % 10 === 0) {
+			self.getPinpKeySource()
+			self.getFreezeData()
+			self.getOutputData()
+			self.getAuxLinkData()
+			self.getTransitionData()
+			self.getMonitorData()
+			self.getLastMemoryLoaded()
+		}
 	},
 
 	_parseHexBlock: function (value, expectedBytes) {
@@ -108,26 +221,42 @@ module.exports = {
 		return out
 	},
 
-	getPinpKeyData: function () {
+	getPinpKeyTally: function () {
 		let self = this
 
 		self.sendRawCommand('RQH:001B00,000002;') //PnP/Key 1 PGM + PVW
 		self.sendRawCommand('RQH:001C00,000002;') //PnP/Key 2 PGM + PVW
 		self.sendRawCommand('RQH:001D00,000002;') //PnP/Key 3 PGM + PVW
 		self.sendRawCommand('RQH:001E00,000002;') //PnP/Key 4 PGM + PVW
+	},
 
-		//get sources for pnp/keys
+	getPinpKeySource: function () {
+		let self = this
+
 		self.sendRawCommand('RQH:001B02,000001;') //PnP/Key 1 source
 		self.sendRawCommand('RQH:001C02,000001;') //PnP/Key 2 source
 		self.sendRawCommand('RQH:001D02,000001;') //PnP/Key 3 source
 		self.sendRawCommand('RQH:001E02,000001;') //PnP/Key 4 source
 	},
 
-	getAuxData: function () {
+	getAuxSources: function () {
 		let self = this
 
+		// Debounce: tally-triggered re-polls and action-triggered re-polls can
+		// arrive within milliseconds of each other. Skip if queried within 250 ms.
+		const now = Date.now()
+		if (now - (self._lastAuxSourceQuery || 0) < 250) return
+		self._lastAuxSourceQuery = now
+
+		// PGM + PVW are consecutive: 002100–002101 (2 bytes).
+		self.sendRawCommand('RQH:002100,000002;')
 		self.sendRawCommand('RQH:000011,000001;') //Aux 1 current source
-		self.sendRawCommand('RQH:00002E,000002;') //Aux 2 + 3 current source
+		// Aux 2 + Aux 3 source are consecutive: 00002E–00002F (2 bytes).
+		self.sendRawCommand('RQH:00002E,000002;')
+	},
+
+	getAuxMutes: function () {
+		let self = this
 
 		self.sendRawCommand('RQH:012203,000001;') //Aux 1 mute
 		self.sendRawCommand('RQH:012503,000001;') //Aux 2 mute
@@ -137,7 +266,8 @@ module.exports = {
 	getFreezeData: function () {
 		let self = this
 
-		self.sendRawCommand('RQH:020500,000001;') //Freeze on/off
+		// Freeze SW (020500) through SDI IN 8 select (020511): 18 consecutive bytes.
+		self.sendRawCommand('RQH:020500,000012;')
 	},
 
 	getOutputData: function () {
@@ -154,28 +284,28 @@ module.exports = {
 		self.sendRawCommand('RQH:020154,000003;') //Aux 1-3 link on/off
 	},
 
-	/*getTallyData: function() {
-		let self = this;
-
-		for (let i = 0; i < 16; i++) {
-			let hex = i.toString(16).padStart(2, '0').toUpperCase();
-			let command = '0C' + '00' + hex + ',000001;';
-
-			self.sendRawCommand('RQH:' + command);
-		}
-	},*/
-
-	getMemoryNames: function () {
+	getNextMemoryName: function () {
 		let self = this
 
-		for (let i = 0; i < 30; i++) {
-			let hexMemory = i.toString(16).padStart(2, '0').toUpperCase()
-			for (let j = 0; j < 8; j++) {
-				let hex = j.toString(16).padStart(2, '0').toUpperCase()
-				let command = '60' + hexMemory + hex + ',000001;'
-				self.sendRawCommand('RQH:' + command)
-			}
-		}
+		const i = self.memoryNameIndex || 0
+		const hexMemory = i.toString(16).padStart(2, '0').toUpperCase()
+		// Read all 8 name bytes for slot i in one query.
+		self.sendRawCommand('RQH:60' + hexMemory + '00,000008;')
+		self.memoryNameIndex = (i + 1) % 30
+	},
+
+	getTransitionData: function () {
+		let self = this
+
+		// Transition type, mix type, wipe type, wipe direction: 001800–001803 (4 bytes).
+		self.sendRawCommand('RQH:001800,000004;')
+	},
+
+	getMonitorData: function () {
+		let self = this
+
+		// Monitor SW 1–4 Assign: 020116–020119 (4 bytes).
+		self.sendRawCommand('RQH:020116,000004;')
 	},
 
 	getLastMemoryLoaded: function () {
@@ -198,21 +328,23 @@ module.exports = {
 		}
 
 		if (data.trim() == 'Enter password:') {
-			self.updateStatus(InstanceStatus.Connecting, 'Authenticating')
-			self.log('info', 'Sending passcode')
-			self.socket.send(self.config.password + '\n')
+			if (!self._passwordSent) {
+				self._passwordSent = true
+				self.log('info', 'Sending passcode: ' + self.config.password)
+				self.socket.send(self.config.password + '\n')
+			}
 		} else if (data.trim() == 'Welcome to V-160HD.') {
 			self.updateStatus(InstanceStatus.Ok)
 			self.log('info', 'Authenticated.')
 			self.sendRawCommand('VER') //request version info
 			self.startInterval() //request some states
 			self.subscribeToTally() //request tally changes
-		} else if (data.trim() == 'ERR:0') {
+		} else if (data.trim() == 'ERR:0;') {
 			//an error with something that it received
 		} else {
 			//do stuff with the data
 			try {
-				if (data.trim() !== '') {
+				if (data.indexOf(';')) {
 					let dataGroups = data.trim().split(';')
 
 					for (let j = 0; j < dataGroups.length; j++) {
@@ -382,17 +514,122 @@ module.exports = {
 															self.DATA.pnpkey4sourcename = lookup.label
 															self.logVerbose('PnP/Key 4 Source Name: ' + lookup.label)
 														}
+													} else if (param2 == '21') {
+														if (param3 == '00') {
+															//pgm+pvw 2-byte block response or pgm source notification
+															const block = self._parseHexBlock(value, 2)
+															if (block) {
+																self.DATA.pgmsource = block[0]
+																self.DATA.pvwsource = block[1]
+																self.logVerbose('Received PGM source: ' + block[0] + ', PVW source: ' + block[1])
+															} else if (self._parseHexBlock(value, 1)) {
+																self.DATA.pgmsource = value.toUpperCase()
+																self.logVerbose('Received PGM source: ' + value)
+															} else {
+																self.log('warn', 'Unexpected value for PGM/PVW source block: ' + value)
+															}
+														} else if (param3 == '01') {
+															//pvw source notification
+															if (self._parseHexBlock(value, 1)) {
+																self.DATA.pvwsource = value.toUpperCase()
+																self.logVerbose('Received PVW source: ' + value)
+															} else {
+																self.log('warn', 'Unexpected value for PVW source: ' + value)
+															}
+														}
+													} else if (param2 == '18') {
+														if (param3 == '00') {
+															//transition type+mix+wipe+direction 4-byte block, or single-byte type notification
+															const block = self._parseHexBlock(value, 4)
+															if (block) {
+																self.DATA.transitiontype = parseInt(block[0], 16)
+																self.DATA.mixtype = parseInt(block[1], 16)
+																self.DATA.wipetype = parseInt(block[2], 16)
+																self.DATA.wipedirection = parseInt(block[3], 16)
+																self.logVerbose(
+																	'Received transition block: type=' +
+																		self.DATA.transitiontype +
+																		' mix=' +
+																		self.DATA.mixtype +
+																		' wipe=' +
+																		self.DATA.wipetype +
+																		' dir=' +
+																		self.DATA.wipedirection,
+																)
+															} else if (self._parseHexBlock(value, 1)) {
+																self.DATA.transitiontype = parseInt(value, 16)
+																self.logVerbose('Received Transition Type: ' + value)
+															} else {
+																self.log('warn', 'Unexpected value for transition data block: ' + value)
+															}
+														} else if (param3 == '01') {
+															//mix type notification
+															if (self._parseHexBlock(value, 1)) {
+																self.DATA.mixtype = parseInt(value, 16)
+																self.logVerbose('Received Mix Type: ' + value)
+															} else {
+																self.log('warn', 'Unexpected value for mix type: ' + value)
+															}
+														} else if (param3 == '02') {
+															//wipe type notification
+															if (self._parseHexBlock(value, 1)) {
+																self.DATA.wipetype = parseInt(value, 16)
+																self.logVerbose('Received Wipe Type: ' + value)
+															} else {
+																self.log('warn', 'Unexpected value for wipe type: ' + value)
+															}
+														} else if (param3 == '03') {
+															//wipe direction notification
+															if (self._parseHexBlock(value, 1)) {
+																self.DATA.wipedirection = parseInt(value, 16)
+																self.logVerbose('Received Wipe Direction: ' + value)
+															} else {
+																self.log('warn', 'Unexpected value for wipe direction: ' + value)
+															}
+														}
 													} else {
 														//other data
-														self.DATA[`data_${param1}${param2}${param3}`] = value //this should take care of all requested data
-														self.DATA[`data_${param2}${param3}`] = value //this should take care of all requested data
+														self.DATA[`data_${param1}${param2}${param3}`] = value
+														self.DATA[`data_${param2}${param3}`] = value
 													}
 												}
 
-												if (param1 == '02' && param2 == '05' && param3 == '00') {
-													//freeze state
-													self.DATA.freeze = value
-													self.logVerbose('Received Freeze State: ' + value)
+												if (param1 == '02' && param2 == '05') {
+													if (param3 == '00') {
+														// 18-byte block response or single-byte freeze on/off notification
+														const block = self._parseHexBlock(value, 18)
+														if (block) {
+															self.DATA.freeze = block[0]
+															self.DATA.freeze_type = block[1]
+															for (let i = 2; i < block.length; i++) {
+																const addrHex = i.toString(16).padStart(2, '0').toUpperCase()
+																self.DATA[`freeze_select_${addrHex}`] = block[i]
+															}
+															self.logVerbose('Received freeze block: ' + value)
+														} else if (self._parseHexBlock(value, 1)) {
+															self.DATA.freeze = value
+															self.logVerbose('Received Freeze State: ' + value)
+														} else {
+															self.log('warn', 'Unexpected value for freeze state: ' + value)
+														}
+													} else if (param3 == '01') {
+														if (self._parseHexBlock(value, 1)) {
+															self.DATA.freeze_type = value
+															self.logVerbose('Received Freeze Type: ' + value)
+														} else {
+															self.log('warn', 'Unexpected value for freeze type: ' + value)
+														}
+													} else {
+														const p3 = parseInt(param3, 16)
+														if (p3 >= 2 && p3 <= 0x11) {
+															if (self._parseHexBlock(value, 1)) {
+																self.DATA[`freeze_select_${param3.toUpperCase()}`] = value
+																self.logVerbose('Received Freeze Select ' + param3 + ': ' + value)
+															} else {
+																self.log('warn', 'Unexpected value for freeze select ' + param3 + ': ' + value)
+															}
+														}
+													}
 												}
 
 												if (param1 == '01' && param2 == '22' && param3 == '03') {
@@ -502,28 +739,79 @@ module.exports = {
 													self.logVerbose('Received Aux 3 Link: ' + value)
 												}
 
-												if (param1 == '60') {
-													//memory names
-													let memoryNumber = parseInt(param2, 16)
-													let memoryCharIndex = parseInt(param3, 16)
-
-													//there are 8 characters in each memory name and they will all come in as individual messages
-													//and not necessarily in order
-													let memoryName = self.DATA[`memory${memoryNumber}`]
-													if (memoryName === undefined) {
-														memoryName = ''
+												if (param1 == '02' && param2 == '01' && param3 == '16') {
+													//monitor assign block (020116–020119) or single monitor 1 notification
+													const block = self._parseHexBlock(value, 4)
+													if (block) {
+														self.DATA.monitor1assign = block[0]
+														self.DATA.monitor2assign = block[1]
+														self.DATA.monitor3assign = block[2]
+														self.DATA.monitor4assign = block[3]
+														self.logVerbose('Received monitor assign block: ' + value)
+													} else if (self._parseHexBlock(value, 1)) {
+														self.DATA.monitor1assign = value.toUpperCase()
+														self.logVerbose('Received Monitor 1 Assign: ' + value)
+													} else {
+														self.log('warn', 'Unexpected value for monitor assign block: ' + value)
 													}
+												}
 
-													//value is the character, put it in the correct spot in the memory name based on the memoryCharIndex
-													memoryName =
-														memoryName.substring(0, memoryCharIndex * 2) +
-														value +
-														memoryName.substring(memoryCharIndex * 2 + 1) //replace the character at the index
+												if (param1 == '02' && param2 == '01' && param3 == '17') {
+													//monitor 2 assign notification
+													if (self._parseHexBlock(value, 1)) {
+														self.DATA.monitor2assign = value.toUpperCase()
+														self.logVerbose('Received Monitor 2 Assign: ' + value)
+													} else {
+														self.log('warn', 'Unexpected value for monitor 2 assign: ' + value)
+													}
+												}
 
-													self.DATA[`memory${memoryNumber}`] = memoryName
-													let variableObj = {}
-													variableObj[`memoryname_${memoryNumber + 1}`] = memoryName
-													self.setVariableValues(variableObj)
+												if (param1 == '02' && param2 == '01' && param3 == '18') {
+													//monitor 3 assign notification
+													if (self._parseHexBlock(value, 1)) {
+														self.DATA.monitor3assign = value.toUpperCase()
+														self.logVerbose('Received Monitor 3 Assign: ' + value)
+													} else {
+														self.log('warn', 'Unexpected value for monitor 3 assign: ' + value)
+													}
+												}
+
+												if (param1 == '02' && param2 == '01' && param3 == '19') {
+													//monitor 4 assign notification
+													if (self._parseHexBlock(value, 1)) {
+														self.DATA.monitor4assign = value.toUpperCase()
+														self.logVerbose('Received Monitor 4 Assign: ' + value)
+													} else {
+														self.log('warn', 'Unexpected value for monitor 4 assign: ' + value)
+													}
+												}
+
+												if (param1 == '60') {
+													const memoryNumber = parseInt(param2, 16)
+													const block8 = self._parseHexBlock(value, 8)
+													if (param3 == '00' && block8) {
+														// 8-byte block response from getNextMemoryName()
+														const hexName = value.toUpperCase()
+														self.DATA[`memory${memoryNumber}`] = hexName
+														const variableObj = {}
+														variableObj[`memoryname_${memoryNumber + 1}`] = hexName
+														self.setVariableValues(variableObj)
+													} else {
+														// Individual character response (compatibility path)
+														const memoryCharIndex = parseInt(param3, 16)
+														let memoryName = self.DATA[`memory${memoryNumber}`]
+														if (memoryName === undefined) {
+															memoryName = ''
+														}
+														memoryName =
+															memoryName.substring(0, memoryCharIndex * 2) +
+															value +
+															memoryName.substring(memoryCharIndex * 2 + 1)
+														self.DATA[`memory${memoryNumber}`] = memoryName
+														const variableObj = {}
+														variableObj[`memoryname_${memoryNumber + 1}`] = memoryName
+														self.setVariableValues(variableObj)
+													}
 												}
 
 												if (param1 == '0A') {
@@ -544,17 +832,22 @@ module.exports = {
 												}
 											}
 										}
+									} else {
+										//likely just ERR:0;
 									}
-								} else {
-									//likely just ERR:0;
 								}
 							}
 						}
 					}
 
-					//now update feedbacks and variables
-					self.checkFeedbacks()
-					self.checkVariables()
+					// Coalesce feedback + variable updates from a single poll burst
+					// into one Companion update call to reduce UI redraw thrashing.
+					if (self._feedbackDebounce !== undefined) clearTimeout(self._feedbackDebounce)
+					self._feedbackDebounce = setTimeout(function () {
+						self._feedbackDebounce = undefined
+						self.checkFeedbacks()
+						self.checkVariables()
+					}, 40)
 				}
 			} catch (error) {
 				self.log('error', 'Error parsing incoming data: ' + error)
