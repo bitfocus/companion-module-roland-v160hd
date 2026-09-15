@@ -316,6 +316,36 @@ describe('DTH Aux 1-3 link', () => {
 	})
 })
 
+// ── AUX tally feedback regression ────────────────────────────────────────────
+// Regression: debounce in updateData deferred checkFeedbacks by 40ms and was
+// continuously reset by ACK messages, so AUX tally feedbacks never updated.
+// Verify that a DTH message triggers checkFeedbacks synchronously.
+
+function feedDTHWithSpy(dth) {
+	let feedbackCalls = 0
+	const self = {
+		...makeSelf(),
+		checkFeedbacks: () => { feedbackCalls++ },
+	}
+	api.updateData.call(self, dth + ';')
+	return { data: self.DATA, feedbackCalls }
+}
+
+describe('AUX tally feedback regression', () => {
+	test('DTH:000011,21 updates aux1source and invokes checkFeedbacks synchronously', () => {
+		const { data, feedbackCalls } = feedDTHWithSpy('DTH:000011,21')
+		assert.equal(data.aux1source, '21')
+		assert.equal(feedbackCalls, 1)
+	})
+
+	test('DTH:00002E,0320 (2-byte) updates aux2+3source and invokes checkFeedbacks synchronously', () => {
+		const { data, feedbackCalls } = feedDTHWithSpy('DTH:00002E,0320')
+		assert.equal(data.aux2source, '03')
+		assert.equal(data.aux3source, '20')
+		assert.equal(feedbackCalls, 1)
+	})
+})
+
 // ── No dropped registers ─────────────────────────────────────────────────────
 
 describe('no register dropped or duplicated', () => {

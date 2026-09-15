@@ -841,14 +841,9 @@ module.exports = {
 						}
 					}
 
-					// Coalesce feedback + variable updates from a single poll burst
-					// into one Companion update call to reduce UI redraw thrashing.
-					if (self._feedbackDebounce !== undefined) clearTimeout(self._feedbackDebounce)
-					self._feedbackDebounce = setTimeout(function () {
-						self._feedbackDebounce = undefined
-						self.checkFeedbacks()
-						self.checkVariables()
-					}, 40)
+					//now update feedbacks and variables
+					self.checkFeedbacks()
+					self.checkVariables()
 				}
 			} catch (error) {
 				self.log('error', 'Error parsing incoming data: ' + error)
