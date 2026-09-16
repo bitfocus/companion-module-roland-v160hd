@@ -195,17 +195,49 @@ describe('actions — selectedCamera fallback is CHOICES_CAMERAS[0].id (41)', ()
 	})
 })
 
-// ── index.js — selectedCamera initialization ──────────────────────────────────
+// ── index.js — selectedCamera initialization (runtime) ───────────────────────
 
 describe('index.js — selectedCamera initial value', () => {
-	test('initializes to 41 (Camera 1 Roland protocol address), matching CHOICES_CAMERAS[0].id', () => {
-		const fs = require('fs')
-		const path = require('path')
-		const src = fs.readFileSync(path.join(__dirname, '../index.js'), 'utf8')
-		assert.ok(
-			src.includes("this.selectedCamera = '41'"),
-			'index.js must initialize selectedCamera to 41 to match CHOICES_CAMERAS[0].id'
-		)
-		assert.equal(constants.CHOICES_CAMERAS[0].id, '41')
+	test('constructor initializes selectedCamera to "41" (Camera 1 Roland protocol address)', () => {
+		const Module = require('module')
+		const FAKE_KEY = '__test_companion_base_idx__'
+		let capturedClass = null
+
+		require.cache[FAKE_KEY] = {
+			id: FAKE_KEY,
+			filename: FAKE_KEY,
+			loaded: true,
+			exports: {
+				InstanceBase: class InstanceBase { constructor() {} },
+				InstanceStatus: { Ok: 'ok', Connecting: 'connecting', Disconnected: 'disconnected', Error: 'error' },
+				TCPHelper: class {},
+				combineRgb: () => 0,
+				Regex: { IP: null },
+				runEntrypoint: (cls) => { capturedClass = cls },
+			},
+		}
+
+		const origResolve = Module._resolveFilename.bind(Module)
+		Module._resolveFilename = function (request, ...rest) {
+			if (request === '@companion-module/base') return FAKE_KEY
+			return origResolve(request, ...rest)
+		}
+
+		const indexPath = require.resolve('../index.js')
+		delete require.cache[indexPath]
+
+		try {
+			require('../index.js')
+		} finally {
+			Module._resolveFilename = origResolve
+			delete require.cache[FAKE_KEY]
+			delete require.cache[indexPath]
+		}
+
+		assert.ok(capturedClass !== null, 'runEntrypoint must be called with the module class')
+		const instance = new capturedClass({})
+		assert.equal(instance.selectedCamera, '41', 'selectedCamera must initialize to "41"')
+		assert.equal(instance.selectedCamera, constants.CHOICES_CAMERAS[0].id,
+			'selectedCamera must match CHOICES_CAMERAS[0].id')
 	})
 })
