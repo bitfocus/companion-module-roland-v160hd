@@ -23,6 +23,7 @@ if (baseResolved) {
 }
 
 const api = require('../src/api')
+const { extractMessages } = require('../src/tcpParser')
 
 function makeSelf() {
 	return {
@@ -319,7 +320,38 @@ describe('DTH Aux 1-3 link', () => {
 // ── AUX tally feedback regression ────────────────────────────────────────────
 // Regression: debounce in updateData deferred checkFeedbacks by 40ms and was
 // continuously reset by ACK messages, so AUX tally feedbacks never updated.
-// Verify that a DTH message triggers checkFeedbacks synchronously.
+// Verify that a DTH message triggers checkFeedbacks synchronously on both the
+// production parser path (extractMessages → updateData) and the direct path.
+
+// Drive updateData through the real parser (production-realistic path).
+function feedDTHViaParser(rawTcp) {
+	let feedbackCalls = 0
+	const self = {
+		...makeSelf(),
+		checkFeedbacks: () => {
+			feedbackCalls++
+		},
+	}
+	const { messages } = extractMessages(rawTcp)
+	assert.equal(messages.length, 1, 'expected exactly one message from parser')
+	api.updateData.call(self, messages[0])
+	return { data: self.DATA, feedbackCalls }
+}
+
+describe('AUX tally feedback regression — production parser path', () => {
+	test('DTH:000011,21; via parser updates aux1source and invokes checkFeedbacks', () => {
+		const { data, feedbackCalls } = feedDTHViaParser('DTH:000011,21;')
+		assert.equal(data.aux1source, '21')
+		assert.equal(feedbackCalls, 1)
+	})
+
+	test('DTH:00002E,2122; via parser updates aux2+aux3source and invokes checkFeedbacks once', () => {
+		const { data, feedbackCalls } = feedDTHViaParser('DTH:00002E,2122;')
+		assert.equal(data.aux2source, '21')
+		assert.equal(data.aux3source, '22')
+		assert.equal(feedbackCalls, 1)
+	})
+})
 
 function feedDTHWithSpy(dth) {
 	let feedbackCalls = 0
