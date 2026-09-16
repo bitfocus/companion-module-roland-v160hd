@@ -64,33 +64,33 @@ function makeFeedbacksSelf() {
 
 describe('sendRawCommand — terminator guard', () => {
 	function makeApiSelf() {
-		const sent = []
+		const enqueued = []
 		const self = Object.assign(Object.create(api), {
 			config: { verbose: false },
-			socket: { isConnected: true, send: (cmd) => sent.push(cmd) },
 			log: () => {},
+			_queue: { enqueue: (cmd) => enqueued.push(cmd) },
 		})
-		return { self, sent }
+		return { self, enqueued }
 	}
 
 	test('command without semicolon gets one appended', () => {
-		const { self, sent } = makeApiSelf()
+		const { self, enqueued } = makeApiSelf()
 		self.sendRawCommand('VER')
-		assert.equal(sent.length, 1)
-		assert.equal(sent[0], 'VER;\n')
+		assert.equal(enqueued.length, 1)
+		assert.equal(enqueued[0], 'VER;\n')
 	})
 
 	test('command that already has semicolon is sent unchanged', () => {
-		const { self, sent } = makeApiSelf()
+		const { self, enqueued } = makeApiSelf()
 		self.sendRawCommand('RQH:000011,000001;')
-		assert.equal(sent.length, 1)
-		assert.equal(sent[0], 'RQH:000011,000001;\n')
+		assert.equal(enqueued.length, 1)
+		assert.equal(enqueued[0], 'RQH:000011,000001;\n')
 	})
 
 	test('DTH command with semicolon does not get a double semicolon', () => {
-		const { self, sent } = makeApiSelf()
+		const { self, enqueued } = makeApiSelf()
 		self.sendRawCommand('DTH:000011,05;')
-		assert.ok(!sent[0].includes(';;'), `double semicolon in: ${JSON.stringify(sent[0])}`)
+		assert.ok(!enqueued[0].includes(';;'), `double semicolon in: ${JSON.stringify(enqueued[0])}`)
 	})
 })
 
@@ -192,5 +192,20 @@ describe('actions — selectedCamera fallback is CHOICES_CAMERAS[0].id (41)', ()
 		self.selectedCamera = undefined
 		actions.cameraCurrentPreset.callback({ options: { useSelected: true, preset: 1 } }, {})
 		assert.equal(self.selectedCamera, constants.CHOICES_CAMERAS[0].id)
+	})
+})
+
+// ── index.js — selectedCamera initialization ──────────────────────────────────
+
+describe('index.js — selectedCamera initial value', () => {
+	test('initializes to 41 (Camera 1 Roland protocol address), matching CHOICES_CAMERAS[0].id', () => {
+		const fs = require('fs')
+		const path = require('path')
+		const src = fs.readFileSync(path.join(__dirname, '../index.js'), 'utf8')
+		assert.ok(
+			src.includes("this.selectedCamera = '41'"),
+			'index.js must initialize selectedCamera to 41 to match CHOICES_CAMERAS[0].id'
+		)
+		assert.equal(constants.CHOICES_CAMERAS[0].id, '41')
 	})
 })
