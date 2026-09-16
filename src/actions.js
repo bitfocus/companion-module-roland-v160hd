@@ -420,8 +420,7 @@ module.exports = {
 
 				let bytes = self.calculateBytes(options.position, 10)
 
-				self.sendCommand(address + '04', bytes[0])
-				self.sendCommand(address + '05', bytes[1])
+				self.sendCommand(address + '04', self.formatBytes(bytes))
 			},
 		}
 
@@ -459,8 +458,7 @@ module.exports = {
 
 				let bytes = self.calculateBytes(options.position, 10)
 
-				self.sendCommand(address + '06', bytes[0])
-				self.sendCommand(address + '07', bytes[1])
+				self.sendCommand(address + '06', self.formatBytes(bytes))
 			},
 		}
 
@@ -483,8 +481,8 @@ module.exports = {
 					type: 'number',
 					label: 'Size',
 					id: 'size',
-					tooltip: '(10.0 - 100.0)',
-					min: 10.0,
+					tooltip: '(0.0 - 100.0)',
+					min: 0.0,
 					max: 100.0,
 					default: 50.0,
 					step: 0.1,
@@ -498,8 +496,7 @@ module.exports = {
 
 				let bytes = self.calculateBytes(options.size, 10)
 
-				self.sendCommand(address + '08', bytes[0])
-				self.sendCommand(address + '09', bytes[1])
+				self.sendCommand(address + '08', self.formatBytes(bytes))
 			},
 		}
 
@@ -537,8 +534,7 @@ module.exports = {
 
 				let bytes = self.calculateBytes(options.cropping, 10)
 
-				self.sendCommand(address + '0A', bytes[0])
-				self.sendCommand(address + '0B', bytes[1])
+				self.sendCommand(address + '0A', self.formatBytes(bytes))
 			},
 		}
 
@@ -576,8 +572,7 @@ module.exports = {
 
 				let bytes = self.calculateBytes(options.cropping, 10)
 
-				self.sendCommand(address + '0C', bytes[0])
-				self.sendCommand(address + '0D', bytes[1])
+				self.sendCommand(address + '0C', self.formatBytes(bytes))
 			},
 		}
 
@@ -729,8 +724,7 @@ module.exports = {
 
 				let bytes = self.calculateBytes(options.position, 10)
 
-				self.sendCommand(address + '11', bytes[0])
-				self.sendCommand(address + '12', bytes[1])
+				self.sendCommand(address + '11', self.formatBytes(bytes))
 			},
 		}
 
@@ -768,8 +762,7 @@ module.exports = {
 
 				let bytes = self.calculateBytes(options.position, 10)
 
-				self.sendCommand(address + '13', bytes[0])
-				self.sendCommand(address + '14', bytes[1])
+				self.sendCommand(address + '13', self.formatBytes(bytes))
 			},
 		}
 
@@ -807,8 +800,7 @@ module.exports = {
 
 				let bytes = self.calculateBytes(options.zoom, 1)
 
-				self.sendCommand(address + '15', bytes[0])
-				self.sendCommand(address + '16', bytes[1])
+				self.sendCommand(address + '15', self.formatBytes(bytes))
 			},
 		}
 
@@ -846,8 +838,7 @@ module.exports = {
 
 				let bytes = self.calculateBytes(options.level, 1)
 
-				self.sendCommand(address + '17', bytes[0])
-				self.sendCommand(address + '18', bytes[1])
+				self.sendCommand(address + '17', self.formatBytes(bytes))
 			},
 		}
 
@@ -885,8 +876,7 @@ module.exports = {
 
 				let bytes = self.calculateBytes(options.gain, 1)
 
-				self.sendCommand(address + '19', bytes[0])
-				self.sendCommand(address + '1A', bytes[1])
+				self.sendCommand(address + '19', self.formatBytes(bytes))
 			},
 		}
 
@@ -924,8 +914,7 @@ module.exports = {
 
 				let bytes = self.calculateBytes(options.level, 1)
 
-				self.sendCommand(address + '1B', bytes[0])
-				self.sendCommand(address + '1C', bytes[1])
+				self.sendCommand(address + '1B', self.formatBytes(bytes))
 			},
 		}
 
@@ -1033,8 +1022,7 @@ module.exports = {
 
 				let bytes = self.calculateBytes(options.fine, 1)
 
-				self.sendCommand(address + '1F', bytes[0])
-				self.sendCommand(address + '20', bytes[1])
+				self.sendCommand(address + '1F', self.formatBytes(bytes))
 			},
 		}
 
@@ -1072,8 +1060,7 @@ module.exports = {
 
 				let bytes = self.calculateBytes(options.width, 1)
 
-				self.sendCommand(address + '21', bytes[0])
-				self.sendCommand(address + '22', bytes[1])
+				self.sendCommand(address + '21', self.formatBytes(bytes))
 			},
 		}
 
@@ -1111,8 +1098,7 @@ module.exports = {
 
 				let bytes = self.calculateBytes(options.fine, 1)
 
-				self.sendCommand(address + '23', bytes[0])
-				self.sendCommand(address + '24', bytes[1])
+				self.sendCommand(address + '23', self.formatBytes(bytes))
 			},
 		}
 
@@ -1150,8 +1136,7 @@ module.exports = {
 
 				let bytes = self.calculateBytes(options.red, 1)
 
-				self.sendCommand(address + '25', bytes[0])
-				self.sendCommand(address + '26', bytes[1])
+				self.sendCommand(address + '25', self.formatBytes(bytes))
 			},
 		}
 
@@ -1189,8 +1174,7 @@ module.exports = {
 
 				let bytes = self.calculateBytes(options.green, 1)
 
-				self.sendCommand(address + '27', bytes[0])
-				self.sendCommand(address + '28', bytes[1])
+				self.sendCommand(address + '27', self.formatBytes(bytes))
 			},
 		}
 
@@ -1228,8 +1212,7 @@ module.exports = {
 
 				let bytes = self.calculateBytes(options.blue, 1)
 
-				self.sendCommand(address + '29', bytes[0])
-				self.sendCommand(address + '2A', bytes[1])
+				self.sendCommand(address + '29', self.formatBytes(bytes))
 			},
 		}
 
