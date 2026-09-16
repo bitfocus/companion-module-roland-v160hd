@@ -378,6 +378,67 @@ describe('AUX tally feedback regression', () => {
 	})
 })
 
+// ── ERR:0 / extractMessages compatibility ────────────────────────────────────
+// The Roland V-160HD sends "ERR:0;" over TCP.  extractMessages() strips the
+// trailing ';' delimiter before handing messages to updateData(), so updateData
+// must compare against "ERR:0" (no semicolon), not "ERR:0;".
+//
+// These tests pin the correct behaviour at both layers so any future regression
+// (e.g. reconstructing the api.js block from the development branch) is caught
+// immediately.  The fall-through tests use spies on checkFeedbacks/checkVariables
+// to prove that ERR:0 is handled by its own branch and does not enter normal
+// data processing.
+
+describe('ERR:0 / extractMessages layer', () => {
+	test('extractMessages("ERR:0;") returns exactly one message: "ERR:0"', () => {
+		const { messages, remaining } = extractMessages('ERR:0;')
+		assert.equal(messages.length, 1)
+		assert.equal(messages[0], 'ERR:0')
+		assert.equal(remaining, '')
+	})
+
+	test('extractMessages handles ERR:0; embedded in a larger buffer', () => {
+		const { messages } = extractMessages('ACK;ERR:0;VER:1.00;')
+		assert.ok(messages.includes('ERR:0'), '"ERR:0" must appear in parsed messages')
+	})
+})
+
+describe('ERR:0 updateData — does not fall through to normal processing', () => {
+	function makeSpySelf() {
+		const calls = { checkFeedbacks: 0, checkVariables: 0 }
+		return {
+			self: {
+				...makeSelf(),
+				checkFeedbacks: () => { calls.checkFeedbacks++ },
+				checkVariables: () => { calls.checkVariables++ },
+			},
+			calls,
+		}
+	}
+
+	test('updateData("ERR:0") does not invoke checkFeedbacks or checkVariables', () => {
+		const { self, calls } = makeSpySelf()
+		api.updateData.call(self, 'ERR:0')
+		assert.equal(calls.checkFeedbacks, 0, 'checkFeedbacks must not be called for ERR:0')
+		assert.equal(calls.checkVariables, 0, 'checkVariables must not be called for ERR:0')
+	})
+
+	test('ERR:0 via parser does not invoke checkFeedbacks or checkVariables', () => {
+		const { self, calls } = makeSpySelf()
+		const { messages } = extractMessages('ERR:0;')
+		assert.equal(messages.length, 1)
+		api.updateData.call(self, messages[0])
+		assert.equal(calls.checkFeedbacks, 0, 'checkFeedbacks must not be called for ERR:0 (parser path)')
+		assert.equal(calls.checkVariables, 0, 'checkVariables must not be called for ERR:0 (parser path)')
+	})
+
+	test('a normal DTH message DOES invoke checkFeedbacks — spy is working', () => {
+		const { self, calls } = makeSpySelf()
+		api.updateData.call(self, 'DTH:000011,21;')
+		assert.equal(calls.checkFeedbacks, 1, 'checkFeedbacks must be called for a normal DTH')
+	})
+})
+
 // ── No dropped registers ─────────────────────────────────────────────────────
 
 describe('no register dropped or duplicated', () => {

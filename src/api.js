@@ -339,12 +339,12 @@ module.exports = {
 			self.sendRawCommand('VER') //request version info
 			self.startInterval() //request some states
 			self.subscribeToTally() //request tally changes
-		} else if (data.trim() == 'ERR:0;') {
+		} else if (data.trim() == 'ERR:0') {
 			//an error with something that it received
 		} else {
 			//do stuff with the data
 			try {
-				if (data.indexOf(';')) {
+				if (data.trim() !== '') {
 					let dataGroups = data.trim().split(';')
 
 					for (let j = 0; j < dataGroups.length; j++) {
