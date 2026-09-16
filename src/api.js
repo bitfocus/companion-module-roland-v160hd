@@ -93,6 +93,7 @@ module.exports = {
 		self.getFreezeData()
 		self.getOutputData()
 		self.getAuxLinkData()
+		self.getVideoAssign()
 
 		self.getMemoryNames()
 		self.getLastMemoryLoaded()
@@ -154,6 +155,36 @@ module.exports = {
 		self.sendRawCommand('RQH:020154,000001;') //Aux 1 link on/off
 		self.sendRawCommand('RQH:020155,000001;') //Aux 2 link on/off
 		self.sendRawCommand('RQH:020156,000001;') //Aux 3 link on/off
+	},
+
+	getVideoAssign: function () {
+		let self = this
+
+		// INPUT 1–10 video assign: registers 000000–000009 (10 bytes).
+		self.sendRawCommand('RQH:000000,00000A;')
+		// INPUT 11–20 video assign: registers 000024–00002D (10 bytes).
+		self.sendRawCommand('RQH:000024,00000A;')
+	},
+
+	_resolveInputToPhysical: function (rawId) {
+		// If rawId is a logical INPUT source (0x20–0x33), return the physical source
+		// currently assigned to that input. Falls back to rawId if not yet known.
+		const code = parseInt(rawId, 16)
+		if (code >= 0x20 && code <= 0x33 && Array.isArray(this.DATA.inputAssign)) {
+			const physical = this.DATA.inputAssign[code - 0x20]
+			if (physical !== undefined) return physical
+		}
+		return rawId.toUpperCase()
+	},
+
+	_parseHexBlock: function (value, expectedBytes) {
+		if (value.length !== expectedBytes * 2) return null
+		if (!/^[0-9A-Fa-f]+$/.test(value)) return null
+		const out = []
+		for (let i = 0; i < expectedBytes; i++) {
+			out.push(value.slice(i * 2, i * 2 + 2).toUpperCase())
+		}
+		return out
 	},
 
 	/*getTallyData: function() {
@@ -326,6 +357,63 @@ module.exports = {
 														if (lookup) {
 															self.DATA.pnpkey4sourcename = lookup.label
 															self.logVerbose('PnP/Key 4 Source Name: ' + lookup.label)
+														}
+													} else if (param2 == '00') {
+														const p3va = parseInt(param3, 16)
+														if (p3va >= 0x00 && p3va <= 0x09) {
+															// INPUT 1–10 video assign: 10-byte block at 000000 or individual notifications
+															if (p3va === 0x00) {
+																const blockVA1 = self._parseHexBlock(value, 10)
+																if (blockVA1) {
+																	if (!Array.isArray(self.DATA.inputAssign)) self.DATA.inputAssign = new Array(20).fill(undefined)
+																	for (let i = 0; i < 10; i++) self.DATA.inputAssign[i] = blockVA1[i]
+																	self.logVerbose('Received INPUT 1–10 Video Assign: ' + value)
+																} else if (self._parseHexBlock(value, 1)) {
+																	if (!Array.isArray(self.DATA.inputAssign)) self.DATA.inputAssign = new Array(20).fill(undefined)
+																	self.DATA.inputAssign[0] = value.toUpperCase()
+																	self.logVerbose('Received INPUT 1 Video Assign: ' + value)
+																} else {
+																	self.log('warn', 'Unexpected DTH value at 000000: ' + value)
+																}
+															} else {
+																// INPUT 2–10 individual notifications
+																if (self._parseHexBlock(value, 1)) {
+																	if (!Array.isArray(self.DATA.inputAssign)) self.DATA.inputAssign = new Array(20).fill(undefined)
+																	self.DATA.inputAssign[p3va] = value.toUpperCase()
+																	self.logVerbose('Received INPUT ' + (p3va + 1) + ' Video Assign: ' + value)
+																} else {
+																	self.log('warn', 'Unexpected DTH value at 0000' + param3.toUpperCase() + ': ' + value)
+																}
+															}
+														} else if (p3va >= 0x24 && p3va <= 0x2D) {
+															// INPUT 11–20 video assign: 10-byte block at 000024 or individual notifications
+															const slot = p3va - 0x24
+															if (p3va === 0x24) {
+																const blockVA2 = self._parseHexBlock(value, 10)
+																if (blockVA2) {
+																	if (!Array.isArray(self.DATA.inputAssign)) self.DATA.inputAssign = new Array(20).fill(undefined)
+																	for (let i = 0; i < 10; i++) self.DATA.inputAssign[10 + i] = blockVA2[i]
+																	self.logVerbose('Received INPUT 11–20 Video Assign: ' + value)
+																} else if (self._parseHexBlock(value, 1)) {
+																	if (!Array.isArray(self.DATA.inputAssign)) self.DATA.inputAssign = new Array(20).fill(undefined)
+																	self.DATA.inputAssign[10] = value.toUpperCase()
+																	self.logVerbose('Received INPUT 11 Video Assign: ' + value)
+																} else {
+																	self.log('warn', 'Unexpected DTH value at 000024: ' + value)
+																}
+															} else {
+																// INPUT 12–20 individual notifications
+																if (self._parseHexBlock(value, 1)) {
+																	if (!Array.isArray(self.DATA.inputAssign)) self.DATA.inputAssign = new Array(20).fill(undefined)
+																	self.DATA.inputAssign[10 + slot] = value.toUpperCase()
+																	self.logVerbose('Received INPUT ' + (11 + slot) + ' Video Assign: ' + value)
+																} else {
+																	self.log('warn', 'Unexpected DTH value at 0000' + param3.toUpperCase() + ': ' + value)
+																}
+															}
+														} else {
+															self.DATA[`data_${param1}${param2}${param3}`] = value
+															self.DATA[`data_${param2}${param3}`] = value
 														}
 													} else {
 														//other data

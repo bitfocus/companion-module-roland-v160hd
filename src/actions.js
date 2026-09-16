@@ -50,9 +50,16 @@ module.exports = {
 			],
 			callback: function (action, bank) {
 				let options = action.options
-				let address = '00' + '00' + options.input.toString(16).padStart(2, '0').toUpperCase()
-				let value = options.assign.toString(16).padStart(2, '0').toUpperCase()
+				const inputIdx = options.input
+				const address = '00' + '00' + inputIdx.toString(16).padStart(2, '0').toUpperCase()
+				const value = options.assign.toString(16).padStart(2, '0').toUpperCase()
+				// Optimistic cache update so auxTally feedback reflects the change immediately.
+				if (!Array.isArray(self.DATA.inputAssign)) self.DATA.inputAssign = new Array(20).fill(undefined)
+				self.DATA.inputAssign[inputIdx] = value
 				self.sendCommand(address, value)
+				self.checkFeedbacks()
+				// Readback to reconcile with authoritative hardware state.
+				self.sendRawCommand('RQH:' + address + ',000001;')
 			},
 		}
 
