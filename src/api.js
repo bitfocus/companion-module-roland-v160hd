@@ -330,7 +330,7 @@ module.exports = {
 		if (data.trim() == 'Enter password:') {
 			if (!self._passwordSent) {
 				self._passwordSent = true
-				self.log('info', 'Sending passcode: ' + self.config.password)
+				self.log('info', 'Sending passcode')
 				self.socket.send(self.config.password + '\n')
 			}
 		} else if (data.trim() == 'Welcome to V-160HD.') {
