@@ -89,18 +89,29 @@ function makeClock() {
 // setKeepAlive, setNoDelay, connect, write(msg, cb), destroy, plus the
 // 'error'/'ready'/'end'/'data'/'drain' events TCPHelper itself listens for
 // (fired explicitly by tests, never automatically).
+//
+// connect() records each call (with the virtual-clock time it happened at,
+// via _nowFn — wired up in createEnvironment) rather than auto-succeeding.
+// This makes "did production code actually attempt a reconnect, and when"
+// an observable, assertable fact instead of something a test can only
+// assume by firing 'ready' unconditionally — a real reconnect-ownership
+// regression (e.g. `reconnect: false`) would otherwise still let every
+// lifecycle test pass, since nothing was checking that a retry was really
+// requested. simulateReady/simulateError in this file only act on the
+// *latest* connectAttempts entry, so firing them without a preceding
+// attempt is itself something a test can detect and fail on.
 class FakeNetSocket extends EventEmitter {
 	constructor() {
 		super()
 		this.destroyed = false
 		this.sent = []
+		this.connectAttempts = []
+		this._nowFn = () => undefined
 	}
 	setKeepAlive() {}
 	setNoDelay() {}
 	connect() {
-		// No auto-connect: tests drive the outcome by emitting 'ready' or
-		// 'error' explicitly, matching how a real socket's async connect
-		// resolves later relative to the synchronous connect() call.
+		this.connectAttempts.push(this._nowFn())
 	}
 	write(message, cb) {
 		if (this.destroyed) {
@@ -156,6 +167,7 @@ function createEnvironment(overrides) {
 		Socket: class extends FakeNetSocket {
 			constructor() {
 				super()
+				this._nowFn = () => clock.now
 				sockets.push(this)
 			}
 		},
@@ -236,8 +248,17 @@ function createEnvironment(overrides) {
 	}
 }
 
-/** Simulate a successful TCP-level connect for the given TCPHelper instance. */
+/**
+ * Simulate a successful TCP-level connect for the given TCPHelper instance.
+ * Throws if production code never actually called connect() on this
+ * socket — i.e. refuses to simulate success for an attempt that was never
+ * really made, which is exactly what let a disabled-reconnect regression
+ * go unnoticed before this check existed.
+ */
 function simulateReady(helper) {
+	if (helper._socket.connectAttempts.length === 0) {
+		throw new Error('simulateReady: no connect() attempt was recorded on this socket — nothing to simulate succeeding')
+	}
 	helper._socket.emit('ready')
 }
 

@@ -28,23 +28,43 @@ const {
 // Proven to fail against the unmodified baseline: a stale reconnect timeout
 // destroyed the healthy replacement connection ~20 s after it was created.
 
+// Every assertion in this block checks `._socket.connectAttempts` (real
+// recorded connect() calls, with the virtual-clock time each happened at —
+// see test-support/lifecycleHarness.js), not just outcomes after manually
+// firing 'ready'/'error'. Checking outcomes alone was found, on independent
+// review, to pass unchanged even with `reconnect: true` mutated to `false`
+// in initConnection — i.e. it didn't actually prove a retry was attempted.
+// Confirmed (via an isolated copy, not by editing checked-in source): with
+// that mutation, `helpers[0]._socket.connectAttempts.length` stays at 1
+// forever past the 30s mark, where the assertions below require 2.
 describe('reconnect ownership — a stale retry cannot destroy a healthy replacement', () => {
 	test('ECONNREFUSED -> config save 10s later opens a healthy replacement that survives past the original 30s deadline', () => {
 		const env = createEnvironment()
 		env.self.initConnection()
 		env.advance()
 		assert.equal(env.helpers.length, 1, 'first connection attempt creates exactly one TCPHelper')
+		assert.equal(
+			env.helpers[0]._socket.connectAttempts.length,
+			1,
+			'exactly one connect() call for the initial connection',
+		)
 
 		simulateError(env.helpers[0], 'ECONNREFUSED')
 		assert.equal(env.helpers[0].isDestroyed, false, 'the errored helper is not manually destroyed (fix #1)')
 
 		env.advance(10000) // 10s into the 30s retry window
 		assert.equal(env.helpers.length, 1, 'no reconnect attempt yet at 10s')
+		assert.equal(
+			env.helpers[0]._socket.connectAttempts.length,
+			1,
+			"TCPHelper's own retry has not fired yet — still just the original connect() call",
+		)
 
 		// Simulates configUpdated() -> initConnection() from a user config save.
 		env.self.initConnection()
 		env.advance()
 		assert.equal(env.helpers.length, 2, 'the config-save path opens exactly one replacement connection')
+		assert.equal(env.helpers[1]._socket.connectAttempts.length, 1, 'the replacement makes exactly one connect() call')
 		assert.equal(env.helpers[0].isDestroyed, true, 'the old helper is destroyed when replaced')
 
 		authenticate(env)
@@ -55,10 +75,21 @@ describe('reconnect ownership — a stale retry cannot destroy a healthy replace
 		const socketsBefore = env.sockets.length
 		const helpersBefore = env.helpers.length
 		const healthyReplacement = env.helpers[1]
+		const replacementAttemptsBefore = healthyReplacement._socket.connectAttempts.length
 
 		env.advance(20000) // 10s (already elapsed) + 20s = 30s past the ORIGINAL error
 		assert.equal(env.helpers.length, helpersBefore, 'no extra TCPHelper appears at the original deadline')
 		assert.equal(env.sockets.length, socketsBefore, 'no extra underlying socket appears at the original deadline')
+		assert.equal(
+			env.helpers[0]._socket.connectAttempts.length,
+			1,
+			"the OLD helper's own retry — cancelled by destroy() on replacement — never actually fires: still just its one original attempt",
+		)
+		assert.equal(
+			healthyReplacement._socket.connectAttempts.length,
+			replacementAttemptsBefore,
+			'the healthy replacement makes no further connect() call either — it is already connected',
+		)
 		assert.equal(healthyReplacement.isDestroyed, false, 'the healthy replacement survives past the stale deadline')
 		assert.equal(env.self.socket, healthyReplacement, 'the module is still using the healthy replacement')
 	})
@@ -71,7 +102,16 @@ describe('reconnect ownership — a stale retry cannot destroy a healthy replace
 
 		await env.self.destroy()
 		env.advance(60000)
-		assert.equal(env.helpers.length, 1, 'destroy() during the retry window prevents any further connection attempt')
+		assert.equal(
+			env.helpers.length,
+			1,
+			'destroy() during the retry window prevents any further TCPHelper from being created',
+		)
+		assert.equal(
+			env.helpers[0]._socket.connectAttempts.length,
+			1,
+			"destroy() cancels TCPHelper's own pending retry timer — connect() is never called again",
+		)
 	})
 })
 
@@ -141,14 +181,26 @@ describe('every active-connection socket error moves status out of OK', () => {
 		authenticate(env)
 		env.advance(50)
 		assert.equal(env.statuses.at(-1).status, 'ok')
+		const attemptsAtOk = env.helpers[0]._socket.connectAttempts.length
 
 		simulateEnd(env.helpers[0])
 
 		assert.equal(env.statuses.at(-1).status, 'connection_failure')
 		assert.equal(env.self.INTERVAL, undefined, 'polling stops on end')
 
-		env.advance(30000) // TCPHelper's own reconnect_interval
+		env.advance(29999)
+		assert.equal(
+			env.helpers[0]._socket.connectAttempts.length,
+			attemptsAtOk,
+			'no reconnect attempt yet, 1ms before the 30s deadline',
+		)
+		env.advance(2)
 		assert.equal(env.helpers.length, 1, 'the same instance reconnects — no replacement needed for end')
+		assert.equal(
+			env.helpers[0]._socket.connectAttempts.length,
+			attemptsAtOk + 1,
+			"exactly one new connect() call right at TCPHelper's own reconnect_interval",
+		)
 		authenticate(env)
 		env.advance(50)
 		assert.equal(env.statuses.at(-1).status, 'ok')
@@ -160,12 +212,24 @@ describe('every active-connection socket error moves status out of OK', () => {
 		env.advance()
 		authenticate(env)
 		env.advance(50)
+		const attemptsAtOk = env.helpers[0]._socket.connectAttempts.length
 
 		simulateError(env.helpers[0], 'ECONNRESET')
 		assert.equal(env.statuses.at(-1).status, 'connection_failure')
 
-		env.advance(30000) // TCPHelper's own reconnect_interval
+		env.advance(29999)
+		assert.equal(
+			env.helpers[0]._socket.connectAttempts.length,
+			attemptsAtOk,
+			'no reconnect attempt yet, 1ms before the 30s deadline',
+		)
+		env.advance(2)
 		assert.equal(env.helpers.length, 1, 'the SAME TCPHelper instance retries — no replacement created')
+		assert.equal(
+			env.helpers[0]._socket.connectAttempts.length,
+			attemptsAtOk + 1,
+			"exactly one new connect() call right at TCPHelper's own reconnect_interval",
+		)
 		authenticate(env)
 		env.advance(50)
 		assert.equal(env.statuses.at(-1).status, 'ok', 'status returns to ok through the normal auth handshake')
@@ -306,6 +370,19 @@ describe('send() rejections are always handled', () => {
 		// across a reconnect — object identity alone cannot distinguish the
 		// pre-reconnect session from the post-reconnect one. This is the
 		// _sessionGeneration guard's reason to exist.
+		//
+		// The rejection here must genuinely arrive AFTER the reconnect
+		// completes, not merely be issued before it: an earlier version of
+		// this test forced the rejection immediately (via a destroyed
+		// underlying socket) and only then triggered the reconnect, so the
+		// rejection was already fully handled — with the generation guard
+		// trivially matching, since the reconnect hadn't happened yet —
+		// before the scenario this test claims to cover ever occurred.
+		// Independent review confirmed that version stayed green even with
+		// the _sessionGeneration check deleted. Fixed here by holding back
+		// the fake socket's write() callback by hand and only resolving it
+		// once the new session is already up, so the .catch() in _safeSend
+		// runs with a real, elapsed generation mismatch.
 		const env = createEnvironment()
 		const rejections = []
 		const onUnhandled = (err) => rejections.push(err)
@@ -319,33 +396,44 @@ describe('send() rejections are always handled', () => {
 			const helper = env.self.socket
 			const staleGeneration = helper._sessionGeneration
 
-			helper._socket.destroyed = true
-			const stalePromise = env.self._safeSend(helper, 'DTH:LATE,01;\n')
-			helper._socket.destroyed = false
+			let capturedCallback
+			const realWrite = helper._socket.write.bind(helper._socket)
+			helper._socket.write = (message, cb) => {
+				capturedCallback = cb
+				return true
+			}
+			env.self.sendCommand('002100', '01') // queued -> _safeSend -> send() -> write() captured, left pending
+			env.advance(50)
+			assert.ok(
+				typeof capturedCallback === 'function',
+				'the write callback was captured — the send is genuinely pending',
+			)
+			helper._socket.write = realWrite // restore normal behaviour for the reconnect's own sends below
 
 			simulateError(helper, 'ECONNRESET')
-			env.advance(50)
-			await new Promise((resolve) => setImmediate(resolve))
-			const statusesBeforeReconnect = env.statuses.length
-
 			env.advance(30000) // TCPHelper's own built-in reconnect
 			assert.equal(env.self.socket, helper, 'the SAME TCPHelper instance is reused (no replacement created)')
 			simulateReady(helper)
 			env.self.updateData('Enter password:')
 			env.self.updateData('Welcome to V-160HD.')
 			env.advance(50)
-			await new Promise((resolve) => setImmediate(resolve))
-			await stalePromise
-
 			assert.notEqual(helper._sessionGeneration, staleGeneration, 'the reconnect bumped the session generation')
+			const statusesAfterReconnect = env.statuses.length
+			assert.equal(env.statuses.at(-1).status, 'ok', 'the new session reaches ok cleanly before the stale send settles')
+
+			// Only now does the long-pending original write fail — genuinely
+			// after the session boundary, not before it.
+			capturedCallback(new Error('write after stale'))
+			await new Promise((resolve) => setImmediate(resolve))
+
 			assert.deepEqual(rejections, [], 'no unhandledRejection escapes')
-			const newStatuses = env.statuses.slice(statusesBeforeReconnect)
-			assert.ok(
-				!newStatuses.some((s) => s.status === 'connection_failure'),
-				'the stale send from the old session does not appear as a failure in the new session: ' +
+			const newStatuses = env.statuses.slice(statusesAfterReconnect)
+			assert.deepEqual(
+				newStatuses,
+				[],
+				'the stale send settling after the reconnect produces no further status change at all: ' +
 					JSON.stringify(newStatuses),
 			)
-			assert.equal(env.statuses.at(-1).status, 'ok', 'the new session reaches ok cleanly')
 		} finally {
 			process.removeListener('unhandledRejection', onUnhandled)
 		}
@@ -433,13 +521,53 @@ describe('successful recovery and existing guarantees remain intact', () => {
 		env.advance(50)
 
 		assert.notEqual(env.self.INTERVAL, undefined)
-		const intervalId = env.self.INTERVAL
-
-		// A second Welcome (defensive: should not happen in practice, but must
-		// not stack a second polling loop if it does).
-		env.self.updateData('Welcome to V-160HD.')
-		assert.notEqual(env.self.INTERVAL, undefined)
+		const tickAtWelcome = env.self._pollTick
+		env.advance(5000) // 10 ticks at the 500ms default rate for a single loop
+		assert.equal(
+			env.self._pollTick - tickAtWelcome,
+			10,
+			'exactly one polling loop is running — a second, stacked loop would double this',
+		)
 	})
+
+	test('a full error -> reconnect -> Welcome cycle still leaves exactly one polling loop running', () => {
+		// Distinct from a bare double-Welcome (see the note below): the
+		// socket's own 'error' handler already clears self.INTERVAL before
+		// handleError runs, so a normal disconnect/reconnect cycle does not
+		// risk stacking a second interval — verified here with real tick
+		// counts, not just "INTERVAL is defined".
+		const env = createEnvironment({ polling: true })
+		env.self.initConnection()
+		env.advance()
+		authenticate(env)
+		env.advance(50)
+
+		simulateError(env.helpers[0], 'ECONNRESET')
+		assert.equal(env.self.INTERVAL, undefined, 'polling stops on error')
+
+		env.advance(30000) // TCPHelper's own built-in reconnect
+		simulateReady(env.helpers[0])
+		env.self.updateData('Enter password:')
+		env.self.updateData('Welcome to V-160HD.')
+		env.advance(50)
+
+		const tickAtWelcome = env.self._pollTick
+		env.advance(5000)
+		assert.equal(
+			env.self._pollTick - tickAtWelcome,
+			10,
+			'still exactly one polling loop after a full error/reconnect/Welcome cycle',
+		)
+	})
+
+	// NOT covered or claimed fixed by this task: two Welcome messages back to
+	// back, with no error/end/interval-clear in between, DO start a second,
+	// concurrent polling loop on the unmodified upstream code — confirmed
+	// independently (_pollTick advanced ~2x the single-loop rate). This is
+	// pre-existing behaviour, present before and after this fix, and out of
+	// scope for a connection-lifecycle fix: it is a startInterval()/Welcome-
+	// handler idempotency question, not a reconnect-ownership, status, or
+	// teardown one. Recorded here rather than silently asserted away.
 
 	test('Welcome starts no polling loop when polling is disabled', () => {
 		const env = createEnvironment()
