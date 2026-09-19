@@ -91,23 +91,24 @@ module.exports = {
 			],
 			callback: function (feedback, bank) {
 				let opt = feedback.options
+				const target = opt.assign
+				const auxMap = { aux1: 'aux1source', aux2: 'aux2source', aux3: 'aux3source' }
+				const key = auxMap[opt.aux]
+				if (!key) return false
 
-				//implement
-				if (opt.aux == 'aux1') {
-					if (self.DATA.aux1source == opt.assign) {
-						return true
-					}
-				}
+				const raw = self.DATA[key]
+				if (raw === undefined) return false
 
-				if (opt.aux == 'aux2') {
-					if (self.DATA.aux2source == opt.assign) {
-						return true
-					}
-				}
+				if (raw === target) return true
 
-				if (opt.aux == 'aux3') {
-					if (self.DATA.aux3source == opt.assign) {
-						return true
+				// If the target is a physical source (00–1F) and the AUX is showing
+				// a logical INPUT source (20–33), resolve INPUT→physical for comparison.
+				const targetCode = parseInt(target, 16)
+				if (targetCode <= 0x1f) {
+					const srcCode = parseInt(raw, 16)
+					if (srcCode >= 0x20 && srcCode <= 0x33) {
+						const physical = self._resolveInputToPhysical(raw)
+						if (physical !== raw && physical.toUpperCase() === target) return true
 					}
 				}
 
