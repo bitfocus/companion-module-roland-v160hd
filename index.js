@@ -32,7 +32,9 @@ class v160Instance extends InstanceBase {
 		})
 
 		this.INTERVAL = null //used for polling device for feedbacks
-		this.RECONNECT_INTERVAL = 30000 //used for reconnecting to device
+		// Reconnection is owned entirely by TCPHelper's own reconnect/
+		// reconnect_interval option (see src/api.js initConnection) — no
+		// separate module-owned reconnect timer/field is needed.
 
 		this.MODEL = 'V-160HD'
 		this.VERSION = ''
@@ -57,12 +59,20 @@ class v160Instance extends InstanceBase {
 	// When module gets deleted
 	async destroy() {
 		try {
-			if (this.socket !== undefined) {
-				this.socket.destroy()
+			clearInterval(this.INTERVAL)
+			this.INTERVAL = undefined
+
+			// Discard queued commands and cancel the queue's own drain timer
+			// before tearing down the socket, so nothing still pending tries
+			// to send through the socket being destroyed below.
+			if (this._queue) {
+				this._queue.clear()
 			}
 
-			clearInterval(this.INTERVAL)
-			clearInterval(this.RECONNECT_INTERVAL)
+			if (this.socket !== undefined) {
+				this.socket.destroy()
+				delete this.socket
+			}
 
 			this.log('debug', 'destroy')
 		} catch (error) {
