@@ -243,13 +243,9 @@ module.exports = {
 
 				if (opt.output == '000110' || opt.output == '000010') {
 					// usb output. CHOICES_OUTPUTS' own id for USB is '000110';
-					// '000010' is kept as a compatibility alias for buttons
-					// saved before this fix and for the pre-existing test suite.
-					// Both read the same DATA.usbassign field. This does not
-					// change CHOICES_OUTPUTS or the output_assign action's own
-					// write address, which uses the same shared choices list —
-					// the write-side protocol address for USB is a separate,
-					// still-unresolved question (see CLAUDE-SMALL-CORRECTNESS-READY.md).
+					// '000010' is accepted as a compatibility alias so buttons
+					// saved before this fix keep working. Both read the same
+					// DATA.usbassign field.
 					if (self.DATA.usbassign == opt.assign) {
 						return true
 					}

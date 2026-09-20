@@ -172,3 +172,75 @@ describe('outputAssign feedback — wrong output code returns false', () => {
 		assert.equal(checkOutputAssign({ hdmi1assign: '01' }, 'FFFFFF', '01'), false)
 	})
 })
+
+// ── real parser response → DATA → outputAssign feedback, all 7 outputs ──────
+// Drives a real DTH:00000A,...; 7-byte block response through the real
+// updateData()/_parseHexBlock() parser (not hand-fed DATA), then checks the
+// real outputAssign feedback for every output using the real CHOICES_OUTPUTS/
+// CHOICES_OUTPUTSASSIGN choice lists.
+
+describe('outputAssign feedback — full parser-to-feedback path, all 7 outputs', () => {
+	const api = require('../src/api')
+
+	// hdmi1=Program(00), hdmi2=Sub Program(01), hdmi3=Preview(02),
+	// sdi1=Aux 1(03), sdi2=Aux 2(04), sdi3=Aux 3(05), usb=DSK 1 Source(06) —
+	// all real CHOICES_OUTPUTSASSIGN ids, one 7-byte block DTH response.
+	const OUTPUTS = [
+		{ output: '00000A', field: 'hdmi1assign', assign: '00', label: 'HDMI 1' },
+		{ output: '00000B', field: 'hdmi2assign', assign: '01', label: 'HDMI 2' },
+		{ output: '00000C', field: 'hdmi3assign', assign: '02', label: 'HDMI 3' },
+		{ output: '00000D', field: 'sdi1assign', assign: '03', label: 'SDI 1' },
+		{ output: '00000E', field: 'sdi2assign', assign: '04', label: 'SDI 2' },
+		{ output: '00000F', field: 'sdi3assign', assign: '05', label: 'SDI 3' },
+		{
+			output: constants.CHOICES_OUTPUTS.find((o) => o.label.toLowerCase().includes('usb')).id,
+			field: 'usbassign',
+			assign: '06',
+			label: 'USB (real dropdown id)',
+		},
+	]
+
+	function runRealBlockResponse() {
+		const self = makeSelf({})
+		Object.assign(self, api) // add the real updateData/_parseHexBlock onto the same self
+		self.config = { verbose: false }
+		self.log = () => {}
+		self.logVerbose = () => {}
+		// 7 bytes, one hex pair per output, in DATA-parser order:
+		// hdmi1, hdmi2, hdmi3, sdi1, sdi2, sdi3, usb.
+		self.updateData('DTH:00000A,00010203040506;')
+		return self
+	}
+
+	test('one real 7-byte block response sets all seven DATA.*assign fields', () => {
+		const self = runRealBlockResponse()
+		assert.equal(self.DATA.hdmi1assign, '00')
+		assert.equal(self.DATA.hdmi2assign, '01')
+		assert.equal(self.DATA.hdmi3assign, '02')
+		assert.equal(self.DATA.sdi1assign, '03')
+		assert.equal(self.DATA.sdi2assign, '04')
+		assert.equal(self.DATA.sdi3assign, '05')
+		assert.equal(self.DATA.usbassign, '06')
+	})
+
+	for (const { output, field, assign, label } of OUTPUTS) {
+		test(`${label}: real parser response → outputAssign feedback returns true for the matching assign`, () => {
+			const self = runRealBlockResponse()
+			const fb = self._capturedFeedbacks.outputAssign
+			assert.equal(fb.callback({ options: { output, assign } }, {}), true)
+		})
+
+		test(`${label}: real parser response → outputAssign feedback returns false for a non-matching assign`, () => {
+			const self = runRealBlockResponse()
+			const fb = self._capturedFeedbacks.outputAssign
+			const wrongAssign = assign === '00' ? '01' : '00'
+			assert.equal(fb.callback({ options: { output, assign: wrongAssign } }, {}), false)
+		})
+	}
+
+	test('the legacy "000010" USB alias also matches the real parsed value', () => {
+		const self = runRealBlockResponse()
+		const fb = self._capturedFeedbacks.outputAssign
+		assert.equal(fb.callback({ options: { output: '000010', assign: '06' } }, {}), true)
+	})
+})

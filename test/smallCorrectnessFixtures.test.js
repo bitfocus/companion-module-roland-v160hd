@@ -30,6 +30,7 @@ const variables = require('../src/variables')
 const feedbacks = require('../src/feedbacks')
 const actions = require('../src/actions')
 const constants = require('../src/constants')
+const { extractMessages } = require('../src/tcpParser')
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -47,14 +48,22 @@ function makeActionsSelf() {
 		actionsDefs = a
 	}
 	self.initActions()
-	return { self, sent, get actions() { return actionsDefs } }
+	return {
+		self,
+		sent,
+		get actions() {
+			return actionsDefs
+		},
+	}
 }
 
 function makeFeedbacksSelf() {
 	let defs = null
 	const self = Object.assign(Object.create(feedbacks), Object.assign({}, constants), {
 		DATA: {},
-		setFeedbackDefinitions: (f) => { defs = f },
+		setFeedbackDefinitions: (f) => {
+			defs = f
+		},
 	})
 	self.initFeedbacks()
 	return defs
@@ -110,6 +119,61 @@ describe('variables — freeze variableId', () => {
 	})
 })
 
+// ── freeze — real extractMessages → updateData → checkVariables → ────────────
+// ── setVariableValues pipeline (not hand-fed DATA) ───────────────────────────
+
+describe('freeze — real device-response pipeline updates the registered variable', () => {
+	function makeFreezePipelineSelf() {
+		const setValuesCalls = []
+		// api provides updateData; variables provides the REAL checkVariables
+		// (not stubbed — that is the function under test). checkFeedbacks is
+		// stubbed because feedbacks are not what this test is checking.
+		const self = Object.assign(Object.create(api), Object.assign({}, variables), Object.assign({}, constants), {
+			config: { verbose: false },
+			DATA: {},
+			tcpBuffer: '',
+			log: () => {},
+			logVerbose: () => {},
+			checkFeedbacks: () => {},
+			setVariableValues: (obj) => setValuesCalls.push(obj),
+		})
+		return { self, setValuesCalls }
+	}
+
+	// Drives the exact same chain the real socket 'data' handler uses:
+	// extractMessages(buffer) -> updateData(msg) per message.
+	function feedRawDeviceData(self, rawBuffer) {
+		const { messages, remaining } = extractMessages(rawBuffer)
+		assert.equal(remaining, '', 'test fixture must send only complete messages')
+		for (const msg of messages) self.updateData(msg)
+	}
+
+	test('DTH:020500,01; (Freeze On) — real pipeline sets the registered "freeze" variable to "On"', () => {
+		const { self, setValuesCalls } = makeFreezePipelineSelf()
+		feedRawDeviceData(self, 'DTH:020500,01;')
+		assert.equal(self.DATA.freeze, '01', 'parser must have written DATA.freeze from the real DTH response')
+		assert.ok(setValuesCalls.length >= 1, 'checkVariables must call the real setVariableValues')
+		const last = setValuesCalls[setValuesCalls.length - 1]
+		assert.equal(last.freeze, 'On')
+	})
+
+	test('DTH:020500,00; (Freeze Off) — real pipeline sets the registered "freeze" variable to "Off"', () => {
+		const { self, setValuesCalls } = makeFreezePipelineSelf()
+		feedRawDeviceData(self, 'DTH:020500,00;')
+		assert.equal(self.DATA.freeze, '00')
+		const last = setValuesCalls[setValuesCalls.length - 1]
+		assert.equal(last.freeze, 'Off')
+	})
+
+	test('On then Off in separate messages — the variable tracks the latest real response', () => {
+		const { self, setValuesCalls } = makeFreezePipelineSelf()
+		feedRawDeviceData(self, 'DTH:020500,01;')
+		feedRawDeviceData(self, 'DTH:020500,00;')
+		const last = setValuesCalls[setValuesCalls.length - 1]
+		assert.equal(last.freeze, 'Off')
+	})
+})
+
 // ── feedbacks.js — aux feedback defaults ─────────────────────────────────────
 
 describe('feedbacks — auxTally default is valid choice id', () => {
@@ -149,25 +213,24 @@ describe('feedbacks — pnpKeySource default is valid choice id', () => {
 // ── actions.js — set_wipe_direction uses options.direction ────────────────────
 
 describe('actions — set_wipe_direction sends options.direction', () => {
-	test('direction value 0 sends "00"', () => {
-		const { sent, actions } = makeActionsSelf()
-		actions.set_wipe_direction.callback({ options: { direction: 0 } }, {})
-		assert.equal(sent.length, 1)
-		assert.equal(sent[0].val, '00')
+	// Real CHOICES_WIPE_DIRECTIONS values only (0, 1, 2) — 15 was never a
+	// menu choice and doesn't exercise anything the real dropdown can send.
+	test('CHOICES_WIPE_DIRECTIONS only contains 0, 1, 2', () => {
+		assert.deepEqual(
+			constants.CHOICES_WIPE_DIRECTIONS.map((c) => c.id),
+			[0, 1, 2],
+		)
 	})
 
-	test('direction value 1 sends "01"', () => {
-		const { sent, actions } = makeActionsSelf()
-		actions.set_wipe_direction.callback({ options: { direction: 1 } }, {})
-		assert.equal(sent.length, 1)
-		assert.equal(sent[0].val, '01')
-	})
-
-	test('direction value 15 sends "0F"', () => {
-		const { sent, actions } = makeActionsSelf()
-		actions.set_wipe_direction.callback({ options: { direction: 15 } }, {})
-		assert.equal(sent[0].val, '0F')
-	})
+	for (const direction of [0, 1, 2]) {
+		test(`direction ${direction}: address is "001803" and value is "${direction.toString(16).padStart(2, '0').toUpperCase()}"`, () => {
+			const { sent, actions } = makeActionsSelf()
+			actions.set_wipe_direction.callback({ options: { direction } }, {})
+			assert.equal(sent.length, 1)
+			assert.equal(sent[0].addr, '001803', 'must write to the wipe-direction register, not a neighboring one')
+			assert.equal(sent[0].val, direction.toString(16).padStart(2, '0').toUpperCase())
+		})
+	}
 })
 
 // ── actions.js — selectedCamera fallback is '41' ──────────────────────────────
@@ -195,6 +258,80 @@ describe('actions — selectedCamera fallback is CHOICES_CAMERAS[0].id (41)', ()
 	})
 })
 
+// ── actions.js — all 18 camera actions send the camera id in the address ─────
+//
+// Every one of these callbacks computes its Roland address as
+// `02${options.camera}<suffix>` and sends it via a single self.sendCommand
+// call — confirmed by reading each definition directly. Driving each real
+// action through both the "use selected, none chosen yet" path (must fall
+// back to CHOICES_CAMERAS[0].id = '41', not the old invalid '01') and the
+// "explicit camera" path (must use exactly that camera, ignoring the
+// fallback) catches a regression in either the fallback value itself or in
+// any individual action's own address computation.
+
+const CAMERA_ACTION_NAMES = [
+	'cameraCurrentPreset',
+	'cameraPanLeft',
+	'cameraPanRight',
+	'cameraPanStop',
+	'cameraTiltUp',
+	'cameraTiltDown',
+	'cameraTiltStop',
+	'cameraPTSpeed',
+	'cameraZoomInFast',
+	'cameraZoomInSlow',
+	'cameraZoomOutFast',
+	'cameraZoomOutSlow',
+	'cameraZoomStop',
+	'focus',
+	'autoFocusOn',
+	'autoFocusOff',
+	'cameraExposure',
+	'cameraSetTallyChannel',
+]
+
+// Options each action needs beyond useSelected/camera, so every callback
+// runs to completion and reaches its own self.sendCommand call.
+const EXTRA_OPTIONS = {
+	cameraCurrentPreset: { preset: '00' },
+	cameraPTSpeed: { speed: 10 },
+	focus: { focus: '7F' },
+	cameraExposure: { exposure: '00' },
+	cameraSetTallyChannel: { channel: '00' },
+}
+
+describe('actions — all 18 camera actions embed the real camera id in the sent address', () => {
+	test('exactly 18 actions use the useSelected/camera fallback pattern', () => {
+		assert.equal(CAMERA_ACTION_NAMES.length, 18)
+	})
+
+	for (const name of CAMERA_ACTION_NAMES) {
+		test(`${name}: useSelected with no prior selection sends address containing "41", not "01"`, () => {
+			const { self, sent, actions } = makeActionsSelf()
+			self.selectedCamera = undefined
+			actions[name].callback({ options: Object.assign({ useSelected: true }, EXTRA_OPTIONS[name]) }, {})
+			assert.equal(sent.length, 1, `${name} must send exactly one command`)
+			assert.equal(
+				sent[0].addr.slice(2, 4),
+				'41',
+				`${name} sent address ${sent[0].addr}, expected camera id "41" at position 2-4`,
+			)
+		})
+
+		test(`${name}: explicit camera selection sends that exact camera id, unaffected by the fallback`, () => {
+			const { self, sent, actions } = makeActionsSelf()
+			self.selectedCamera = undefined
+			actions[name].callback({ options: Object.assign({ useSelected: false, camera: '45' }, EXTRA_OPTIONS[name]) }, {})
+			assert.equal(sent.length, 1, `${name} must send exactly one command`)
+			assert.equal(
+				sent[0].addr.slice(2, 4),
+				'45',
+				`${name} sent address ${sent[0].addr}, expected the explicitly chosen camera "45"`,
+			)
+		})
+	}
+})
+
 // ── index.js — selectedCamera initialization (runtime) ───────────────────────
 
 describe('index.js — selectedCamera initial value', () => {
@@ -208,12 +345,16 @@ describe('index.js — selectedCamera initial value', () => {
 			filename: FAKE_KEY,
 			loaded: true,
 			exports: {
-				InstanceBase: class InstanceBase { constructor() {} },
+				InstanceBase: class InstanceBase {
+					constructor() {}
+				},
 				InstanceStatus: { Ok: 'ok', Connecting: 'connecting', Disconnected: 'disconnected', Error: 'error' },
 				TCPHelper: class {},
 				combineRgb: () => 0,
 				Regex: { IP: null },
-				runEntrypoint: (cls) => { capturedClass = cls },
+				runEntrypoint: (cls) => {
+					capturedClass = cls
+				},
 			},
 		}
 
@@ -237,7 +378,10 @@ describe('index.js — selectedCamera initial value', () => {
 		assert.ok(capturedClass !== null, 'runEntrypoint must be called with the module class')
 		const instance = new capturedClass({})
 		assert.equal(instance.selectedCamera, '41', 'selectedCamera must initialize to "41"')
-		assert.equal(instance.selectedCamera, constants.CHOICES_CAMERAS[0].id,
-			'selectedCamera must match CHOICES_CAMERAS[0].id')
+		assert.equal(
+			instance.selectedCamera,
+			constants.CHOICES_CAMERAS[0].id,
+			'selectedCamera must match CHOICES_CAMERAS[0].id',
+		)
 	})
 })
