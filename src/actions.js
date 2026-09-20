@@ -1384,7 +1384,7 @@ module.exports = {
 				let options = action.options
 				let address = '00' + '18' + '03'
 
-				let value = options.type.toString(16).padStart(2, '0').toUpperCase()
+				let value = options.direction.toString(16).padStart(2, '0').toUpperCase()
 				self.sendCommand(address, value)
 			},
 		}
@@ -1817,7 +1817,7 @@ module.exports = {
 
 				if (options.useSelected === true) {
 					if (self.selectedCamera === undefined) {
-						self.selectedCamera = '01'
+						self.selectedCamera = '41'
 					}
 
 					options.camera = self.selectedCamera
@@ -1853,7 +1853,7 @@ module.exports = {
 
 				if (options.useSelected === true) {
 					if (self.selectedCamera === undefined) {
-						self.selectedCamera = '01'
+						self.selectedCamera = '41'
 					}
 
 					options.camera = self.selectedCamera
@@ -1888,7 +1888,7 @@ module.exports = {
 
 				if (options.useSelected === true) {
 					if (self.selectedCamera === undefined) {
-						self.selectedCamera = '01'
+						self.selectedCamera = '41'
 					}
 
 					options.camera = self.selectedCamera
@@ -1923,7 +1923,7 @@ module.exports = {
 
 				if (options.useSelected === true) {
 					if (self.selectedCamera === undefined) {
-						self.selectedCamera = '01'
+						self.selectedCamera = '41'
 					}
 
 					options.camera = self.selectedCamera
@@ -1958,7 +1958,7 @@ module.exports = {
 
 				if (options.useSelected === true) {
 					if (self.selectedCamera === undefined) {
-						self.selectedCamera = '01'
+						self.selectedCamera = '41'
 					}
 
 					options.camera = self.selectedCamera
@@ -1993,7 +1993,7 @@ module.exports = {
 
 				if (options.useSelected === true) {
 					if (self.selectedCamera === undefined) {
-						self.selectedCamera = '01'
+						self.selectedCamera = '41'
 					}
 
 					options.camera = self.selectedCamera
@@ -2028,7 +2028,7 @@ module.exports = {
 
 				if (options.useSelected === true) {
 					if (self.selectedCamera === undefined) {
-						self.selectedCamera = '01'
+						self.selectedCamera = '41'
 					}
 
 					options.camera = self.selectedCamera
@@ -2075,7 +2075,7 @@ module.exports = {
 
 				if (options.useSelected === true) {
 					if (self.selectedCamera === undefined) {
-						self.selectedCamera = '01'
+						self.selectedCamera = '41'
 					}
 
 					options.camera = self.selectedCamera
@@ -2111,7 +2111,7 @@ module.exports = {
 
 				if (options.useSelected === true) {
 					if (self.selectedCamera === undefined) {
-						self.selectedCamera = '01'
+						self.selectedCamera = '41'
 					}
 
 					options.camera = self.selectedCamera
@@ -2146,7 +2146,7 @@ module.exports = {
 
 				if (options.useSelected === true) {
 					if (self.selectedCamera === undefined) {
-						self.selectedCamera = '01'
+						self.selectedCamera = '41'
 					}
 
 					options.camera = self.selectedCamera
@@ -2181,7 +2181,7 @@ module.exports = {
 
 				if (options.useSelected === true) {
 					if (self.selectedCamera === undefined) {
-						self.selectedCamera = '01'
+						self.selectedCamera = '41'
 					}
 
 					options.camera = self.selectedCamera
@@ -2216,7 +2216,7 @@ module.exports = {
 
 				if (options.useSelected === true) {
 					if (self.selectedCamera === undefined) {
-						self.selectedCamera = '01'
+						self.selectedCamera = '41'
 					}
 
 					options.camera = self.selectedCamera
@@ -2251,7 +2251,7 @@ module.exports = {
 
 				if (options.useSelected === true) {
 					if (self.selectedCamera === undefined) {
-						self.selectedCamera = '01'
+						self.selectedCamera = '41'
 					}
 
 					options.camera = self.selectedCamera
@@ -2297,7 +2297,7 @@ module.exports = {
 
 				if (options.useSelected === true) {
 					if (self.selectedCamera === undefined) {
-						self.selectedCamera = '01'
+						self.selectedCamera = '41'
 					}
 
 					options.camera = self.selectedCamera
@@ -2333,7 +2333,7 @@ module.exports = {
 
 				if (options.useSelected === true) {
 					if (self.selectedCamera === undefined) {
-						self.selectedCamera = '01'
+						self.selectedCamera = '41'
 					}
 
 					options.camera = self.selectedCamera
@@ -2368,7 +2368,7 @@ module.exports = {
 
 				if (options.useSelected === true) {
 					if (self.selectedCamera === undefined) {
-						self.selectedCamera = '01'
+						self.selectedCamera = '41'
 					}
 
 					options.camera = self.selectedCamera
@@ -2413,7 +2413,7 @@ module.exports = {
 
 				if (options.useSelected === true) {
 					if (self.selectedCamera === undefined) {
-						self.selectedCamera = '01'
+						self.selectedCamera = '41'
 					}
 
 					options.camera = self.selectedCamera
@@ -2474,7 +2474,7 @@ module.exports = {
 
 				if (options.useSelected === true) {
 					if (self.selectedCamera === undefined) {
-						self.selectedCamera = '01'
+						self.selectedCamera = '41'
 					}
 
 					options.camera = self.selectedCamera
