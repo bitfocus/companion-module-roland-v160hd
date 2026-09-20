@@ -37,6 +37,20 @@ module.exports = {
 			{ minIntervalMs: 20 },
 		)
 
+		// A locally-pending Freeze value belongs to the connection being torn
+		// down here, not to whatever connection (if any) replaces it — clear
+		// it unconditionally now, rather than waiting only for a new
+		// connection's own 'connect' event below. That event may never fire
+		// (unreachable host, or no host configured at all below), which
+		// would otherwise leave a stale pending value/timer live indefinitely
+		// on top of a destroyed socket. The 'connect' handler below also
+		// clears it again for whatever new session does get established —
+		// harmless, and covers a pending value set after this point but
+		// before that new session exists.
+		self._clearAllFreezePending()
+		self.checkFeedbacks('freeze')
+		self.checkVariables()
+
 		if (self.socket !== undefined) {
 			self.socket.destroy()
 			delete self.socket

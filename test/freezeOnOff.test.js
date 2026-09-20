@@ -4,22 +4,41 @@
 // (local pending-value overlay with bounded expiry and a dual-defense
 // timer-identity guard) and CLAUDE-FREEZE-ONOFF-IMPLEMENT.md for this
 // slice's exact scope (absolute On/Off actions, the 'freeze' field only).
+// Revised per FREEZE-ONOFF-INDEPENDENT-REVIEW.md (2026-09-20): see the
+// `withCapturedTimers`/`makeFreezeChainSelf` helpers and the two new
+// describe blocks below for what changed and why.
 //
-// Four describe blocks, each against REAL, unmodified-by-this-file
-// production code:
+// Describe blocks, each against REAL, unmodified-by-this-file production
+// code:
 //   1. src/actions.js  — freezeSwitchOn/Off (direct require, house
 //      require.cache-stub pattern from test/smallCorrectnessFixtures.test.js)
 //   2. src/feedbacks.js + src/variables.js — read the pending overlay
-//   3. src/api.js — the pending-overlay primitives themselves, using
-//      node:test's mock.timers for deterministic expiry (same pattern as
-//      test/commandQueue.test.js)
-//   4. src/api.js — the REAL parser (extractMessages -> updateData), proving
+//   3. src/api.js — the pending-overlay primitives themselves
+//   4. src/api.js — the dual timer-defense safeguards, tested separately
+//   5. src/api.js — the REAL parser (extractMessages -> updateData), proving
 //      it clears the overlay exactly when a real response arrives
-//   5. Full connection lifecycle (test-support/lifecycleHarness.js) — the
-//      'connect' handler, destroy(), and the polling-on/off initial read,
-//      against the REAL TCPHelper and a virtual clock.
+//   6. Full chain — real action -> real pending overlay -> real, registered
+//      feedback callback and variable computation -> real expiry, all
+//      wired together the way index.js itself wires them
+//   7. Full connection lifecycle (test-support/lifecycleHarness.js) — the
+//      'connect' handler, initConnection() itself, destroy(), and the
+//      polling-on/off initial read, against the REAL TCPHelper and a
+//      virtual clock.
+//
+// None of blocks 3, 4, 5 or 6 use node:test's mock.timers (absent on Node
+// 18.17.0 — see FREEZE-ONOFF-INDEPENDENT-REVIEW.md finding 4). Instead,
+// `withCapturedTimers` below temporarily replaces the real global
+// setTimeout/clearTimeout with a capturing stub: setTimeout records the
+// callback (and, where asserted, the requested delay) and returns a fake
+// id instead of scheduling anything for real, so no test ever waits on a
+// real 2000ms timer or leaves one dangling. It also lets a test invoke a
+// captured callback directly and deliberately, whenever it wants —
+// necessary for the dual-defense tests, which must run a stale callback
+// at a moment of the test's choosing, not the clock's. Block 7 already
+// used a real virtual clock (test-support/lifecycleHarness.js) and needed
+// no change for Node 18 compatibility.
 
-const { test, describe, beforeEach, afterEach, mock } = require('node:test')
+const { test, describe } = require('node:test')
 const assert = require('node:assert/strict')
 const { createEnvironment, authenticate, simulateReady } = require('../test-support/lifecycleHarness')
 
@@ -230,7 +249,7 @@ describe('variables — freeze variable reads the pending overlay via _freezeVal
 	})
 })
 
-// ── 3. api.js — pending-overlay primitives (deterministic virtual time) ────
+// ── 3. api.js — pending-overlay primitives ──────────────────────────────────
 
 function makeApiSelf() {
 	return Object.assign(Object.create(api), {
@@ -239,14 +258,57 @@ function makeApiSelf() {
 	})
 }
 
-describe('api.js — freeze pending overlay primitives', () => {
-	beforeEach(() => {
-		mock.timers.enable(['setTimeout'])
-	})
-	afterEach(() => {
-		mock.timers.reset()
-	})
+// Node 18.17.0-safe timer control (node:test's mock.timers is unavailable
+// there — see the file header). Temporarily replaces the real global
+// setTimeout/clearTimeout with a capturing stub for the duration of `fn`:
+// setTimeout records the callback and requested delay and returns a fake
+// id instead of scheduling anything for real; clearTimeout normally
+// forgets that id, unless `bypassNextClear()` was called, in which case
+// the NEXT clearTimeout call is a deliberate no-op (simulating a code path
+// that misses cancellation) and the callback stays invocable. Restores the
+// real globals in a `finally`, so a throwing test never leaks the stub.
+function withCapturedTimers(fn) {
+	const realSetTimeout = global.setTimeout
+	const realClearTimeout = global.clearTimeout
+	const callbacks = new Map()
+	const delays = new Map()
+	const clearedIds = new Set()
+	let nextId = 0
+	let bypassNextClear = false
+	global.setTimeout = (cb, delay) => {
+		const id = ++nextId
+		callbacks.set(id, cb)
+		delays.set(id, delay)
+		return id
+	}
+	global.clearTimeout = (id) => {
+		if (bypassNextClear) {
+			bypassNextClear = false
+			return
+		}
+		callbacks.delete(id)
+		clearedIds.add(id)
+	}
+	try {
+		return fn({
+			invoke: (id) => {
+				const cb = callbacks.get(id)
+				assert.ok(cb, `no live captured callback for timer id ${id} — it was already cleared or never scheduled`)
+				cb()
+			},
+			delayOf: (id) => delays.get(id),
+			wasCleared: (id) => clearedIds.has(id),
+			bypassNextClear: () => {
+				bypassNextClear = true
+			},
+		})
+	} finally {
+		global.setTimeout = realSetTimeout
+		global.clearTimeout = realClearTimeout
+	}
+}
 
+describe('api.js — freeze pending overlay primitives', () => {
 	test('_freezeValue falls back to DATA[field] when nothing is pending', () => {
 		const self = makeApiSelf()
 		self.DATA = { freeze: '00' }
@@ -254,37 +316,56 @@ describe('api.js — freeze pending overlay primitives', () => {
 	})
 
 	test('_freezeValue returns the pending value when one is set, ignoring DATA[field]', () => {
-		const self = makeApiSelf()
-		self.DATA = { freeze: '00' }
-		self._setFreezePending('freeze', '01', () => {})
-		assert.equal(self._freezeValue('freeze'), '01')
+		withCapturedTimers(() => {
+			const self = makeApiSelf()
+			self.DATA = { freeze: '00' }
+			self._setFreezePending('freeze', '01', () => {})
+			assert.equal(self._freezeValue('freeze'), '01')
+		})
 	})
 
-	test('a pending value expires after FREEZE_PENDING_TIMEOUT_MS (2000ms), calling onExpire exactly once and falling back to DATA', () => {
-		const self = makeApiSelf()
-		self.DATA = { freeze: '00' }
-		let expireCount = 0
-		self._setFreezePending('freeze', '01', () => expireCount++)
-
-		mock.timers.tick(1999)
-		assert.equal(self._freezeValue('freeze'), '01', 'still pending 1ms before the deadline')
-		assert.equal(expireCount, 0)
-
-		mock.timers.tick(1)
-		assert.equal(expireCount, 1, 'onExpire fires exactly once at the deadline')
-		assert.equal(self._freezeValue('freeze'), '00', 'falls back to DATA once expired')
+	test('_setFreezePending schedules its expiry at exactly FREEZE_PENDING_TIMEOUT_MS (2000ms)', () => {
+		withCapturedTimers((timers) => {
+			const self = makeApiSelf()
+			self._setFreezePending('freeze', '01', () => {})
+			const id = self._freezePending.freeze.timer
+			assert.equal(timers.delayOf(id), 2000)
+		})
 	})
 
-	test('_clearFreezePending cancels the timer and removes the record — no onExpire, no later state change', () => {
-		const self = makeApiSelf()
-		self.DATA = { freeze: '00' }
-		let expireCount = 0
-		self._setFreezePending('freeze', '01', () => expireCount++)
-		self._clearFreezePending('freeze')
-		assert.equal(self._freezeValue('freeze'), '00')
+	test('the expiry callback removes the record, calls onExpire exactly once, and falls back to DATA — invoking it again afterward is a safe no-op', () => {
+		withCapturedTimers((timers) => {
+			const self = makeApiSelf()
+			self.DATA = { freeze: '00' }
+			let expireCount = 0
+			self._setFreezePending('freeze', '01', () => expireCount++)
+			const id = self._freezePending.freeze.timer
+			assert.equal(self._freezeValue('freeze'), '01', 'pending before expiry')
 
-		mock.timers.tick(5000)
-		assert.equal(expireCount, 0, 'the cancelled timer never fires')
+			timers.invoke(id)
+			assert.equal(expireCount, 1, 'onExpire fires exactly once when its own timer callback runs')
+			assert.equal(self._freezeValue('freeze'), '00', 'falls back to DATA once expired')
+
+			timers.invoke(id) // the very same already-consumed callback, invoked again
+			assert.equal(expireCount, 1, 'a second run of the same callback does not fire onExpire again')
+		})
+	})
+
+	test('_clearFreezePending cancels the real timer and removes the record — no onExpire, no later state change', () => {
+		withCapturedTimers((timers) => {
+			const self = makeApiSelf()
+			self.DATA = { freeze: '00' }
+			let expireCount = 0
+			self._setFreezePending('freeze', '01', () => expireCount++)
+			const id = self._freezePending.freeze.timer
+
+			self._clearFreezePending('freeze')
+
+			assert.ok(timers.wasCleared(id), 'clearTimeout was actually called for this exact timer id')
+			assert.equal(self._freezePending.freeze, undefined)
+			assert.equal(self._freezeValue('freeze'), '00')
+			assert.equal(expireCount, 0)
+		})
 	})
 
 	test('_clearFreezePending on a field with nothing pending is a safe no-op', () => {
@@ -293,20 +374,24 @@ describe('api.js — freeze pending overlay primitives', () => {
 		assert.doesNotThrow(() => self._clearFreezePending('freeze'))
 	})
 
-	test("_clearAllFreezePending cancels every field's timer", () => {
-		const self = makeApiSelf()
-		self.DATA = {}
-		let aExpire = 0
-		let bExpire = 0
-		self._setFreezePending('freeze', '01', () => aExpire++)
-		self._setFreezePending('freeze_type', '00', () => bExpire++)
+	test("_clearAllFreezePending cancels every field's real timer", () => {
+		withCapturedTimers((timers) => {
+			const self = makeApiSelf()
+			self.DATA = {}
+			let aExpire = 0
+			let bExpire = 0
+			self._setFreezePending('freeze', '01', () => aExpire++)
+			const idA = self._freezePending.freeze.timer
+			self._setFreezePending('freeze_type', '00', () => bExpire++)
+			const idB = self._freezePending.freeze_type.timer
 
-		self._clearAllFreezePending()
-		mock.timers.tick(5000)
+			self._clearAllFreezePending()
 
-		assert.equal(aExpire, 0)
-		assert.equal(bExpire, 0)
-		assert.deepEqual(self._freezePending, {})
+			assert.ok(timers.wasCleared(idA) && timers.wasCleared(idB), 'both real timers were actually cancelled')
+			assert.equal(aExpire, 0)
+			assert.equal(bExpire, 0)
+			assert.deepEqual(self._freezePending, {})
+		})
 	})
 
 	test('_clearAllFreezePending on an instance with nothing pending is a safe no-op', () => {
@@ -314,84 +399,136 @@ describe('api.js — freeze pending overlay primitives', () => {
 		assert.doesNotThrow(() => self._clearAllFreezePending())
 	})
 
-	test('On -> Off before the first response arrives: only the newest pending value survives, and the oldest timer does not wrongly clear it at its original deadline', () => {
-		const self = makeApiSelf()
-		self.DATA = { freeze: '00' }
-		const expireCalls = []
-		self._setFreezePending('freeze', '01', () => expireCalls.push('first-onExpire'))
+	test("On -> Off before any response arrives: the superseded first record is properly cancelled (defense #1), and only the second record's own timer remains live", () => {
+		withCapturedTimers((timers) => {
+			const self = makeApiSelf()
+			self.DATA = { freeze: 'FALLBACK' }
+			const expireCalls = []
+			self._setFreezePending('freeze', '01', () => expireCalls.push('first'))
+			const firstId = self._freezePending.freeze.timer
 
-		mock.timers.tick(1000) // t=1000; the first record's own deadline is t=2000
-		self._setFreezePending('freeze', '00', () => expireCalls.push('second-onExpire'))
+			self._setFreezePending('freeze', '00', () => expireCalls.push('second'))
+			const secondId = self._freezePending.freeze.timer
 
-		mock.timers.tick(1000) // t=2000 — the FIRST record's original deadline
-		assert.equal(
-			self._freezeValue('freeze'),
-			'00',
-			"the second (newer) pending value must survive the first record's deadline",
-		)
-		assert.deepEqual(expireCalls, [], "the first record's timer was cancelled — its onExpire must not fire")
+			assert.ok(timers.wasCleared(firstId), "the superseded first record's timer is explicitly cancelled (defense #1)")
+			assert.notEqual(firstId, secondId)
+			assert.equal(self._freezeValue('freeze'), '00', 'only the second (newer) value is shown')
 
-		mock.timers.tick(1000) // t=3000 — the SECOND record's own 2000ms deadline
-		assert.equal(self._freezeValue('freeze'), '00', 'expired back to DATA')
-		assert.deepEqual(expireCalls, ['second-onExpire'], 'only the second record ever expires')
-	})
-
-	test('defense #2 (record-identity check) alone prevents a wrong deletion, even when clearTimeout is bypassed for the superseding write', () => {
-		// Simulates "a future code path misses a cancellation": temporarily
-		// stubs out global clearTimeout so the FIRST write's timer is never
-		// actually cancelled when the second write supersedes it a moment
-		// later — proving the timeout callback's own closure-captured
-		// record-identity check (`self._freezePending[field] !== record`) is
-		// what stops the wrong deletion here, independent of clearTimeout
-		// (which this test disables for that one call).
-		const self = makeApiSelf()
-		self.DATA = { freeze: 'FALLBACK' }
-		const expireCalls = []
-		self._setFreezePending('freeze', '01', () => expireCalls.push('first-onExpire'))
-
-		const realClearTimeout = global.clearTimeout
-		global.clearTimeout = () => {} // the first record's timer is now NOT cancelled below
-		self._setFreezePending('freeze', '00', () => expireCalls.push('second-onExpire'))
-		global.clearTimeout = realClearTimeout
-
-		assert.equal(
-			self._freezeValue('freeze'),
-			'00',
-			'the second (newer) pending value is what is shown right after the write',
-		)
-
-		mock.timers.tick(1999)
-		assert.deepEqual(expireCalls, [], 'neither timer has reached its deadline yet')
-
-		// Both the (never-cancelled) first timer and the second timer share
-		// the same 2000ms deadline, since no time passed between the two
-		// _setFreezePending calls above. The first one's callback runs, sees
-		// its own record no longer matches self._freezePending.freeze, and
-		// returns early.
-		mock.timers.tick(1)
-		assert.deepEqual(
-			expireCalls,
-			['second-onExpire'],
-			'only the second record actually expires — the first is rejected by the identity check alone',
-		)
-		assert.equal(
-			self._freezeValue('freeze'),
-			'FALLBACK',
-			'falls back to DATA once the second (real) pending record expires',
-		)
+			timers.invoke(secondId)
+			assert.deepEqual(expireCalls, ['second'], 'only the second record ever expires')
+			assert.equal(self._freezeValue('freeze'), 'FALLBACK')
+		})
 	})
 })
 
-// ── 4. api.js — the REAL parser clears the pending overlay ─────────────────
+// ── 4. api.js — the two timer-defense safeguards, tested SEPARATELY ────────
+//
+// Per FREEZE-ONOFF-INDEPENDENT-REVIEW.md finding 3: the block above already
+// proves defense #1 (explicit clearTimeout on supersession). These tests
+// prove defense #2 — the timeout callback's own record-identity check —
+// holds independently of defense #1, by deliberately bypassing
+// clearTimeout and then running the stale callback by hand. Critically,
+// each test uses the SAME value for both the superseded and the
+// superseding write: a value-based comparison (e.g.
+// `self._freezePending[field]?.value !== record.value`) would wrongly
+// treat the stale callback as "still matching" here, since the values are
+// equal — only a true object-identity comparison tells the two records
+// apart. This is exactly the mutation the independent review used to
+// prove the prior version of this file couldn't tell the difference.
+
+describe('api.js — dual timer-defense safeguards, tested separately', () => {
+	test('defense #2 alone (same value, cancellation bypassed): the identity check — not a value comparison — rejects the stale callback', () => {
+		withCapturedTimers((timers) => {
+			const self = makeApiSelf()
+			self.DATA = { freeze: 'FALLBACK' }
+			const expireCalls = []
+
+			self._setFreezePending('freeze', '01', () => expireCalls.push('first'))
+			const firstId = self._freezePending.freeze.timer
+			const firstRecord = self._freezePending.freeze
+
+			timers.bypassNextClear()
+			self._setFreezePending('freeze', '01', () => expireCalls.push('second')) // SAME value as the first write
+			const secondRecord = self._freezePending.freeze
+			assert.notEqual(firstRecord, secondRecord, 'two distinct record objects, despite carrying the same value')
+
+			timers.invoke(firstId) // the stale, never-really-cancelled first callback, run deliberately
+			assert.deepEqual(
+				expireCalls,
+				[],
+				"the identity check rejects the stale callback even though its value equals the current record's value",
+			)
+			assert.equal(self._freezePending.freeze, secondRecord, 'the second record is untouched')
+			assert.equal(self._freezeValue('freeze'), '01', 'still showing the (second, current) pending value')
+		})
+	})
+
+	test('defense #2 alone, after a reconnect installs a new same-valued pending record: the stale pre-reconnect callback is still rejected', () => {
+		withCapturedTimers((timers) => {
+			const self = makeApiSelf()
+			self.DATA = { freeze: 'FALLBACK' }
+			const expireCalls = []
+
+			self._setFreezePending('freeze', '01', () => expireCalls.push('pre-reconnect'))
+			const staleId = self._freezePending.freeze.timer
+
+			// What the 'connect' handler and initConnection()'s own teardown
+			// both call — its clearTimeout for this one timer is bypassed,
+			// simulating a path that misses cancellation.
+			timers.bypassNextClear()
+			self._clearAllFreezePending()
+			assert.equal(
+				self._freezePending.freeze,
+				undefined,
+				'the record itself is removed regardless of whether its own clearTimeout call was bypassed',
+			)
+
+			// The new session sets its own pending record for the same
+			// field, coincidentally the same value as the stale one.
+			self._setFreezePending('freeze', '01', () => expireCalls.push('post-reconnect'))
+			const newRecord = self._freezePending.freeze
+
+			timers.invoke(staleId)
+			assert.deepEqual(
+				expireCalls,
+				[],
+				"the stale pre-reconnect callback must not delete the new session's pending record",
+			)
+			assert.equal(self._freezePending.freeze, newRecord, "the new session's pending record is untouched")
+		})
+	})
+
+	test('defense #2 alone, after destroy() has cleared everything: the stale callback is rejected and triggers no consumer update', () => {
+		withCapturedTimers((timers) => {
+			const self = makeApiSelf()
+			self.DATA = { freeze: 'FALLBACK' }
+			const expireCalls = []
+
+			self._setFreezePending('freeze', '01', () => expireCalls.push('pre-destroy'))
+			const staleId = self._freezePending.freeze.timer
+
+			timers.bypassNextClear()
+			self._clearAllFreezePending() // what destroy() calls
+			assert.equal(self._freezePending.freeze, undefined)
+
+			timers.invoke(staleId)
+			assert.deepEqual(
+				expireCalls,
+				[],
+				'no onExpire after destroy — nothing should react to a stale timer on a torn-down instance',
+			)
+			assert.equal(
+				self._freezePending.freeze,
+				undefined,
+				'still nothing pending — the stale callback did not resurrect a record',
+			)
+		})
+	})
+})
+
+// ── 5. api.js — the REAL parser clears the pending overlay ─────────────────
 
 describe('src/api.js — real parser path clears the freeze pending overlay', () => {
-	beforeEach(() => {
-		mock.timers.enable(['setTimeout'])
-	})
-	afterEach(() => {
-		mock.timers.reset()
-	})
-
 	function makeFreezePipelineSelf() {
 		return Object.assign(Object.create(api), {
 			config: { verbose: false },
@@ -414,58 +551,215 @@ describe('src/api.js — real parser path clears the freeze pending overlay', ()
 	}
 
 	test('single-byte DTH:020500,01; (matching the pending value) clears the pending overlay', () => {
-		const self = makeFreezePipelineSelf()
-		self._setFreezePending('freeze', '01', () => {})
-		feedRawDeviceData(self, 'DTH:020500,01;')
-		assert.equal(self._freezePending.freeze, undefined, 'pending overlay cleared')
-		assert.equal(self.DATA.freeze, '01')
+		withCapturedTimers(() => {
+			const self = makeFreezePipelineSelf()
+			self._setFreezePending('freeze', '01', () => {})
+			feedRawDeviceData(self, 'DTH:020500,01;')
+			assert.equal(self._freezePending.freeze, undefined, 'pending overlay cleared')
+			assert.equal(self.DATA.freeze, '01')
+		})
 	})
 
 	test('single-byte DTH:020500,00; (NOT matching the pending "01" value) still clears the pending overlay — any real response supersedes a pending write', () => {
-		const self = makeFreezePipelineSelf()
-		self._setFreezePending('freeze', '01', () => {})
-		feedRawDeviceData(self, 'DTH:020500,00;')
-		assert.equal(
-			self._freezePending.freeze,
-			undefined,
-			'pending overlay cleared even though the device reported the OTHER value',
-		)
-		assert.equal(self.DATA.freeze, '00')
+		withCapturedTimers(() => {
+			const self = makeFreezePipelineSelf()
+			self._setFreezePending('freeze', '01', () => {})
+			feedRawDeviceData(self, 'DTH:020500,00;')
+			assert.equal(
+				self._freezePending.freeze,
+				undefined,
+				'pending overlay cleared even though the device reported the OTHER value',
+			)
+			assert.equal(self.DATA.freeze, '00')
+		})
 	})
 
 	test('the 18-byte block readback response also clears the pending overlay', () => {
-		const self = makeFreezePipelineSelf()
-		self._setFreezePending('freeze', '01', () => {})
-		// 18 bytes: freeze on/off (01), freeze_type (00), 16x freeze_select bytes.
-		const block = '01' + '00' + '00'.repeat(16)
-		feedRawDeviceData(self, `DTH:020500,${block};`)
-		assert.equal(self._freezePending.freeze, undefined)
-		assert.equal(self.DATA.freeze, '01')
+		withCapturedTimers(() => {
+			const self = makeFreezePipelineSelf()
+			self._setFreezePending('freeze', '01', () => {})
+			// 18 bytes: freeze on/off (01), freeze_type (00), 16x freeze_select bytes.
+			const block = '01' + '00' + '00'.repeat(16)
+			feedRawDeviceData(self, `DTH:020500,${block};`)
+			assert.equal(self._freezePending.freeze, undefined)
+			assert.equal(self.DATA.freeze, '01')
+		})
 	})
 
 	test('a malformed (non-hex) freeze value does NOT clear the pending overlay', () => {
-		const self = makeFreezePipelineSelf()
-		self._setFreezePending('freeze', '01', () => {})
-		// Neither a valid 1-byte nor 18-byte hex value: falls into the
-		// "Unexpected value" warn branch, which must not touch the pending
-		// overlay — a garbled response is not a real confirmation.
-		feedRawDeviceData(self, 'DTH:020500,ZZ;')
-		assert.equal(self._freezePending.freeze.value, '01', 'pending overlay is untouched by a malformed response')
+		withCapturedTimers(() => {
+			const self = makeFreezePipelineSelf()
+			self._setFreezePending('freeze', '01', () => {})
+			// Neither a valid 1-byte nor 18-byte hex value: falls into the
+			// "Unexpected value" warn branch, which must not touch the
+			// pending overlay — a garbled response is not a real confirmation.
+			feedRawDeviceData(self, 'DTH:020500,ZZ;')
+			assert.equal(self._freezePending.freeze.value, '01', 'pending overlay is untouched by a malformed response')
+		})
 	})
 
 	test('a neighboring freeze_type response does not clear the "freeze" field\'s own pending overlay', () => {
-		const self = makeFreezePipelineSelf()
-		self._setFreezePending('freeze', '01', () => {})
-		feedRawDeviceData(self, 'DTH:020501,00;') // freeze_type, not freeze itself
-		assert.equal(
-			self._freezePending.freeze.value,
-			'01',
-			"unrelated field response must not clear freeze's pending overlay",
-		)
+		withCapturedTimers(() => {
+			const self = makeFreezePipelineSelf()
+			self._setFreezePending('freeze', '01', () => {})
+			feedRawDeviceData(self, 'DTH:020501,00;') // freeze_type, not freeze itself
+			assert.equal(
+				self._freezePending.freeze.value,
+				'01',
+				"unrelated field response must not clear freeze's pending overlay",
+			)
+		})
 	})
 })
 
-// ── 5. Connection lifecycle — freeze pending overlay integration ───────────
+// ── 6. Full chain — real action -> pending -> real feedback/variable -> ────
+// ── real expiry, wired together the way index.js itself wires them ────────
+//
+// Per FREEZE-ONOFF-INDEPENDENT-REVIEW.md finding 2: the blocks above each
+// call real production functions, but in isolation — action tests stub
+// _setFreezePending, feedback/variable tests stub _freezeValue, and the
+// parser tests stub the consumers entirely. None of them, individually,
+// proves the full path a button press actually takes. This block wires
+// actions.js + feedbacks.js + variables.js + api.js + constants.js onto
+// one `self`, exactly as index.js's own `Object.assign(this, {...actions,
+// ...feedbacks, ...variables, ...api, ...constants})` does, and only stubs
+// the genuine Companion-SDK boundary calls (setFeedbackDefinitions,
+// setVariableDefinitions, setVariableValues, sendCommand/sendRawCommand,
+// log). checkFeedbacks is stubbed too — the real SDK provides it, not
+// feedbacks.js — but the stub immediately re-evaluates the real,
+// registered `freeze` feedback callback and records the result, mirroring
+// what Companion does the moment a feedback is marked dirty. checkVariables
+// is the REAL one from variables.js; only its own terminal
+// setVariableValues call is stubbed. This is what lets a test observe the
+// value actually published to Companion at each update call, not just
+// read some internal field once at the end.
+
+function makeFreezeChainSelf(connected) {
+	const sent = []
+	const rawSent = []
+	const feedbackEvents = [] // { types, freezeValue } — one per checkFeedbacks call
+	const variablePublishes = [] // each real setVariableValues call's object
+
+	let feedbackDefs = null
+	let actionDefs = null
+
+	const self = Object.assign({}, actions, feedbacks, variables, api, constants, {
+		DATA: {},
+		_freezePending: {}, // matches index.js's own constructor initialization
+		config: { verbose: false },
+		socket: connected ? { isConnected: true } : undefined,
+		sendCommand: (addr, val) => sent.push({ addr, val }),
+		sendRawCommand: (cmd) => rawSent.push(cmd),
+		log: () => {},
+		logVerbose: () => {},
+		setFeedbackDefinitions: (f) => {
+			feedbackDefs = f
+		},
+		setVariableDefinitions: () => {},
+		setActionDefinitions: (a) => {
+			actionDefs = a
+		},
+		setVariableValues: (obj) => variablePublishes.push(obj),
+		checkFeedbacks: function (...types) {
+			feedbackEvents.push({ types, freezeValue: feedbackDefs.freeze.callback({ options: {} }, {}) })
+		},
+	})
+	self.initFeedbacks()
+	self.initVariables()
+	self.initActions()
+
+	// initActions()/initFeedbacks() only ever hand their definitions to
+	// setActionDefinitions/setFeedbackDefinitions (the real Companion SDK
+	// call) — they are never assigned onto `self` itself. Tests must call
+	// through `actions.freezeSwitchOn.callback(...)`, not
+	// `self.freezeSwitchOn.callback(...)`.
+	return { self, actionDefs, sent, rawSent, feedbackEvents, variablePublishes }
+}
+
+describe('full chain — real action -> real pending overlay -> real feedback/variable publish -> real expiry', () => {
+	test('freezeSwitchOn: DATA stays unchanged before any response, but the real registered feedback and the real published "freeze" variable already show On', () => {
+		const { self, actionDefs, feedbackEvents, variablePublishes } = makeFreezeChainSelf(true)
+		self.DATA.freeze = '00'
+
+		withCapturedTimers(() => {
+			actionDefs.freezeSwitchOn.callback({ options: {} }, {})
+		})
+
+		assert.equal(self.DATA.freeze, '00', 'DATA is written only by the parser, never by the action')
+		assert.ok(feedbackEvents.length >= 1, 'checkFeedbacks was actually called')
+		assert.equal(
+			feedbackEvents.at(-1).freezeValue,
+			true,
+			'the real feedback callback, evaluated at the real checkFeedbacks call, already reports On',
+		)
+		assert.ok(variablePublishes.length >= 1, 'checkVariables (the real one) actually published something')
+		assert.equal(variablePublishes.at(-1).freeze, 'On', 'the real published "freeze" variable value already reads On')
+	})
+
+	test('freezeSwitchOff: symmetric — the real feedback/variable already show Off before any response', () => {
+		const { self, actionDefs, feedbackEvents, variablePublishes } = makeFreezeChainSelf(true)
+		self.DATA.freeze = '01'
+
+		withCapturedTimers(() => {
+			actionDefs.freezeSwitchOff.callback({ options: {} }, {})
+		})
+
+		assert.equal(self.DATA.freeze, '01')
+		assert.equal(feedbackEvents.at(-1).freezeValue, false)
+		assert.equal(variablePublishes.at(-1).freeze, 'Off')
+	})
+
+	test('expiry (the real onExpire from actions.js) republishes the real feedback and variable back to DATA — exactly what a mutation removing those calls would break', () => {
+		withCapturedTimers((timers) => {
+			const { self, actionDefs, feedbackEvents, variablePublishes } = makeFreezeChainSelf(true)
+			self.DATA.freeze = '00'
+
+			actionDefs.freezeSwitchOn.callback({ options: {} }, {})
+			const id = self._freezePending.freeze.timer
+			const eventsBeforeExpiry = feedbackEvents.length
+			const publishesBeforeExpiry = variablePublishes.length
+			assert.equal(feedbackEvents.at(-1).freezeValue, true, 'On is published before expiry')
+
+			timers.invoke(id) // the real onExpire from actions.js's freezeSwitchOn runs here
+
+			assert.ok(feedbackEvents.length > eventsBeforeExpiry, 'expiry must trigger a further checkFeedbacks call')
+			assert.equal(feedbackEvents.at(-1).freezeValue, false, 'the real feedback now reports Off — back to DATA')
+			assert.ok(variablePublishes.length > publishesBeforeExpiry, 'expiry must trigger a further checkVariables call')
+			assert.equal(variablePublishes.at(-1).freeze, 'Off', "the real published variable is back to DATA's Off")
+		})
+	})
+
+	test('the real single-byte parser response clears the pending overlay, and the real feedback/variable end up backed by real DATA, not a guess', () => {
+		const { self, actionDefs, feedbackEvents } = makeFreezeChainSelf(true)
+		self.DATA.freeze = '00'
+
+		withCapturedTimers(() => {
+			actionDefs.freezeSwitchOn.callback({ options: {} }, {})
+		})
+		assert.equal(feedbackEvents.at(-1).freezeValue, true, 'pending On shown before the device confirms')
+
+		const { messages } = extractMessages('DTH:020500,01;')
+		for (const msg of messages) self.updateData(msg)
+
+		assert.equal(self.DATA.freeze, '01', 'the real parser wrote DATA')
+		assert.equal(self._freezePending.freeze, undefined, 'pending cleared by the real parser')
+		assert.equal(feedbackEvents.at(-1).freezeValue, true, 'still On — now backed by real DATA, not a pending guess')
+	})
+
+	test('disconnected: freezeSwitchOn still sends the command, but never touches the pending overlay or the real feedback/variable', () => {
+		const { self, actionDefs, sent, feedbackEvents, variablePublishes } = makeFreezeChainSelf(false)
+		self.DATA.freeze = '00'
+
+		actionDefs.freezeSwitchOn.callback({ options: {} }, {})
+
+		assert.deepEqual(sent, [{ addr: '020500', val: '01' }])
+		assert.equal(self._freezePending.freeze, undefined)
+		assert.deepEqual(feedbackEvents, [])
+		assert.deepEqual(variablePublishes, [])
+	})
+})
+
+// ── 7. Connection lifecycle — freeze pending overlay integration ───────────
 
 describe('connection lifecycle — freeze pending overlay integration', () => {
 	test('a fresh connect clears any pending freeze overlay left from before this session and refreshes feedback + variable', () => {
@@ -501,6 +795,48 @@ describe('connection lifecycle — freeze pending overlay integration', () => {
 			"the 'connect' handler refreshes the freeze feedback",
 		)
 		assert.ok(variableCalls.length > 0, "the 'connect' handler refreshes variables")
+	})
+
+	test('a connection REPLACEMENT clears any pending freeze overlay immediately inside initConnection() itself, even if the new connection never reaches "connect" (e.g. an emptied/unreachable host)', () => {
+		// Regression test for FREEZE-ONOFF-INDEPENDENT-REVIEW.md finding 1:
+		// the prior version of this fix only cleared the pending overlay
+		// inside the NEW socket's own 'connect' handler, so a config change
+		// to an unreachable or empty host left the OLD connection's pending
+		// value and timer alive indefinitely on top of an already-destroyed
+		// socket — reproduced here by emptying config.host, which means
+		// initConnection() tears down the old socket but never even creates
+		// a new TCPHelper, so 'connect' can never fire for this call.
+		const env = createEnvironment()
+		env.self.initConnection()
+		env.advance()
+		authenticate(env)
+		env.advance(50)
+
+		const feedbackCalls = []
+		const variableCalls = []
+		env.self.checkFeedbacks = (...types) => feedbackCalls.push(types)
+		env.self.checkVariables = () => variableCalls.push(true)
+
+		env.self._setFreezePending('freeze', '01', () => {})
+		assert.notEqual(env.self._freezePending.freeze, undefined, 'pending overlay is set before the host is emptied')
+
+		env.self.config.host = '' // simulates a config save to an unreachable/empty host
+		env.self.initConnection()
+		// Deliberately no env.advance()/simulateReady() afterward — proving
+		// the clear happens synchronously inside initConnection() itself, on
+		// teardown, not only from a 'connect' handler that in this scenario
+		// is never even wired up.
+
+		assert.equal(
+			env.self._freezePending.freeze,
+			undefined,
+			'initConnection() itself clears the pending overlay on teardown, before any new connection is attempted',
+		)
+		assert.ok(
+			feedbackCalls.some((types) => types.includes('freeze')),
+			'initConnection() refreshes the freeze feedback so a stale pending value cannot stay shown on the button',
+		)
+		assert.ok(variableCalls.length > 0, 'initConnection() refreshes variables for the same reason')
 	})
 
 	test('destroy() cancels a live pending-value timer — it never fires, and no feedback/variable refresh happens afterward', async () => {
