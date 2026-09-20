@@ -410,7 +410,10 @@ module.exports = {
 			callback: function (feedback, bank) {
 				let opt = feedback.options
 
-				if (self.DATA.freeze == '01') {
+				// Reads the effective value: a locally-pending, not-yet-
+				// confirmed value if one exists, otherwise the last real
+				// device-confirmed DATA.freeze. See src/api.js's _freezeValue.
+				if (self._freezeValue('freeze') == '01') {
 					return true
 				}
 

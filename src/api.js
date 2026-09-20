@@ -2,6 +2,13 @@ const { InstanceStatus, TCPHelper } = require('@companion-module/base')
 const { extractMessages } = require('./tcpParser')
 const { CommandQueue, PRIORITY } = require('./commandQueue')
 
+// How long a Freeze field's local pending value (set optimistically by a
+// write action, before the device has confirmed it) is shown before falling
+// back to the last real DATA value if nothing has confirmed or superseded
+// it. A UI-responsiveness design choice, not a measured device round-trip
+// time — see CLAUDE-FREEZE-PLAN.md §2.
+const FREEZE_PENDING_TIMEOUT_MS = 2000
+
 module.exports = {
 	initConnection: function () {
 		let self = this
@@ -72,6 +79,16 @@ module.exports = {
 				self._queue.clear()
 				self.memoryNameIndex = 0
 				self._passwordSent = false
+				// A locally-pending Freeze value from before this connection
+				// attempt must not survive into a new session — the device's
+				// real state may have changed while disconnected. DATA itself
+				// is intentionally left untouched (see CLAUDE-FREEZE-PLAN.md
+				// §2); only the pending overlay is cleared here. Refresh the
+				// existing feedback/variable in case removing a stale pending
+				// value changes what they display.
+				self._clearAllFreezePending()
+				self.checkFeedbacks('freeze')
+				self.checkVariables()
 				self.log('info', 'Connected — authenticating')
 				self.updateStatus(InstanceStatus.Connecting, 'Authenticating')
 			})
@@ -316,6 +333,71 @@ module.exports = {
 		return rawId.toUpperCase()
 	},
 
+	// ── Freeze: local pending-value overlay ──────────────────────────────────
+	// A write action sets a field's pending value optimistically, before the
+	// device has confirmed it, so the existing feedback/variable can show it
+	// immediately. DATA itself is written only by the parser (below), never
+	// by an action. The pending value is cleared by whichever happens first:
+	// a real DTH response for that field (_clearFreezePending, called from
+	// the parser), or FREEZE_PENDING_TIMEOUT_MS elapsing with nothing to
+	// confirm it. A response cannot be correlated to a specific request (the
+	// protocol carries no request id), so a stale response can in principle
+	// still clear a newer pending value early — this is a named, accepted,
+	// bounded limitation, not eliminated. See CLAUDE-FREEZE-PLAN.md §2.
+	_freezeValue: function (field) {
+		const pending = this._freezePending && this._freezePending[field]
+		return pending !== undefined ? pending.value : this.DATA[field]
+	},
+
+	// Sets field's pending value and schedules its bounded expiry. Two
+	// independent safeguards against a stale timer wrongly clearing a
+	// *newer* pending record for the same field (e.g. On -> Off -> On before
+	// any response arrives): (1) the previous record's own timer is
+	// cancelled here, explicitly, before the new one is scheduled; (2) the
+	// timeout callback also captures and compares its own record's identity
+	// (not the value — two different writes can legitimately share the same
+	// value) before acting, so even a future code path that misses a
+	// cancellation cannot cause a wrong deletion.
+	_setFreezePending: function (field, value, onExpire) {
+		let self = this
+		if (!self._freezePending) self._freezePending = {}
+		if (self._freezePending[field]) {
+			clearTimeout(self._freezePending[field].timer)
+		}
+		const record = { value: value, timer: null }
+		record.timer = setTimeout(function () {
+			if (self._freezePending[field] !== record) return
+			delete self._freezePending[field]
+			if (onExpire) onExpire()
+		}, FREEZE_PENDING_TIMEOUT_MS)
+		self._freezePending[field] = record
+	},
+
+	// Cancels field's pending timer (if any) and removes its record. Called
+	// from the parser the moment a real response for that field is accepted
+	// — does not itself call checkFeedbacks/checkVariables; the parser's own
+	// existing end-of-message update already does that.
+	_clearFreezePending: function (field) {
+		if (this._freezePending && this._freezePending[field]) {
+			clearTimeout(this._freezePending[field].timer)
+			delete this._freezePending[field]
+		}
+	},
+
+	// Cancels every live Freeze pending timer and clears all records. Does
+	// not itself call checkFeedbacks/checkVariables — callers that need the
+	// display refreshed (e.g. the 'connect' handler) do so explicitly;
+	// destroy() deliberately does not, since it must not trigger a new
+	// update after teardown.
+	_clearAllFreezePending: function () {
+		let self = this
+		if (!self._freezePending) return
+		for (const field in self._freezePending) {
+			clearTimeout(self._freezePending[field].timer)
+		}
+		self._freezePending = {}
+	},
+
 	getNextMemoryName: function () {
 		let self = this
 
@@ -370,6 +452,14 @@ module.exports = {
 			self.log('info', 'Authenticated.')
 			self.sendRawCommand('VER') //request version info
 			self.startInterval() //request some states
+			// Freeze state must be readable right after auth even with
+			// polling off (the default). When polling is on, startInterval()
+			// above already reads it via _doPoll(true)'s immediate background
+			// tier — asking again here would be a redundant duplicate query,
+			// so this only fires when polling is off.
+			if (!self.config.polling) {
+				self.getFreezeData()
+			}
 			self.subscribeToTally() //request tally changes
 		} else if (data.trim() == 'ERR:0') {
 			//an error with something that it received
@@ -689,6 +779,7 @@ module.exports = {
 														const block = self._parseHexBlock(value, 18)
 														if (block) {
 															self.DATA.freeze = block[0]
+															self._clearFreezePending('freeze')
 															self.DATA.freeze_type = block[1]
 															for (let i = 2; i < block.length; i++) {
 																const addrHex = i.toString(16).padStart(2, '0').toUpperCase()
@@ -697,6 +788,7 @@ module.exports = {
 															self.logVerbose('Received freeze block: ' + value)
 														} else if (self._parseHexBlock(value, 1)) {
 															self.DATA.freeze = value
+															self._clearFreezePending('freeze')
 															self.logVerbose('Received Freeze State: ' + value)
 														} else {
 															self.log('warn', 'Unexpected value for freeze state: ' + value)
