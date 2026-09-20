@@ -24,24 +24,29 @@ if (baseResolved) {
 }
 
 const feedbacksModule = require('../src/feedbacks')
+const constants = require('../src/constants')
 
-// Build a minimal self suitable for calling initFeedbacks.
+// Build a minimal self suitable for calling initFeedbacks. Uses the REAL
+// CHOICES_OUTPUTS/CHOICES_OUTPUTSASSIGN from src/constants.js (not a
+// hand-picked fake list) so tests that read an id from this list — e.g. the
+// USB alias tests below — exercise the actual dropdown a user would see.
 function makeSelf(dataOverrides) {
-	const self = {
-		config: { verbose: false },
-		DATA: Object.assign({}, dataOverrides),
-		log: () => {},
-		logVerbose: () => {},
-		TALLYDATA: [{ id: '01', label: 'Input 1' }],
-		CHOICES_PGMPVW_SELECT: [{ id: '00', label: 'PGM' }],
-		CHOICES_OUTPUTS: [{ id: '00000A', label: 'HDMI 1' }],
-		CHOICES_OUTPUTSASSIGN: [{ id: '01', label: 'PGM' }],
-		CHOICES_PNPKEY_SOURCES: [{ id: '00', label: 'Off' }],
-		_capturedFeedbacks: null,
-		setFeedbackDefinitions(fb) {
-			this._capturedFeedbacks = fb
+	const self = Object.assign(
+		{
+			config: { verbose: false },
+			DATA: Object.assign({}, dataOverrides),
+			log: () => {},
+			logVerbose: () => {},
+			TALLYDATA: [{ id: '01', label: 'Input 1' }],
+			CHOICES_PGMPVW_SELECT: [{ id: '00', label: 'PGM' }],
+			CHOICES_PNPKEY_SOURCES: [{ id: '00', label: 'Off' }],
+			_capturedFeedbacks: null,
+			setFeedbackDefinitions(fb) {
+				this._capturedFeedbacks = fb
+			},
 		},
-	}
+		{ CHOICES_OUTPUTS: constants.CHOICES_OUTPUTS, CHOICES_OUTPUTSASSIGN: constants.CHOICES_OUTPUTSASSIGN },
+	)
 	feedbacksModule.initFeedbacks.call(self)
 	return self
 }
@@ -116,16 +121,49 @@ describe('outputAssign feedback — SDI outputs', () => {
 })
 
 describe('outputAssign feedback — USB output', () => {
-	test('USB returns true when usbassign matches', () => {
+	// The dropdown a user actually sees comes from CHOICES_OUTPUTS in
+	// src/constants.js, whose USB entry's id is '000110' — NOT '000010'.
+	// Before the alias fix, selecting USB from the real dropdown and
+	// matching options.assign against actual DATA.usbassign always
+	// returned false, regardless of device state.
+	const realUsbId = constants.CHOICES_OUTPUTS.find((o) => o.label.toLowerCase().includes('usb')).id
+
+	test('the real CHOICES_OUTPUTS dropdown id for USB is "000110"', () => {
+		assert.equal(realUsbId, '000110')
+	})
+
+	test('USB returns true when usbassign matches, using the REAL dropdown id', () => {
+		assert.equal(checkOutputAssign({ usbassign: '04' }, realUsbId, '04'), true)
+	})
+
+	test('USB returns false when usbassign does not match, using the REAL dropdown id', () => {
+		assert.equal(checkOutputAssign({ usbassign: '01' }, realUsbId, '04'), false)
+	})
+
+	test('USB returns false when usbassign is undefined, using the REAL dropdown id', () => {
+		assert.equal(checkOutputAssign({}, realUsbId, '04'), false)
+	})
+
+	test('the pre-existing "000010" value keeps working as a compatibility alias', () => {
 		assert.equal(checkOutputAssign({ usbassign: '04' }, '000010', '04'), true)
 	})
 
-	test('USB returns false when usbassign does not match', () => {
+	test('"000010" and the real dropdown id "000110" agree for the same DATA state', () => {
+		const data = { usbassign: '07' }
+		assert.equal(checkOutputAssign(data, '000010', '07'), checkOutputAssign(data, realUsbId, '07'))
+	})
+
+	test('USB returns false when usbassign does not match, legacy "000010" alias', () => {
 		assert.equal(checkOutputAssign({ usbassign: '01' }, '000010', '04'), false)
 	})
 
-	test('USB returns false when usbassign is undefined', () => {
+	test('USB returns false when usbassign is undefined, legacy "000010" alias', () => {
 		assert.equal(checkOutputAssign({}, '000010', '04'), false)
+	})
+
+	test('the USB alias fix does not change CHOICES_OUTPUTS itself (shared with the output_assign action)', () => {
+		assert.equal(constants.CHOICES_OUTPUTS.find((o) => o.label.toLowerCase().includes('usb')).id, '000110')
+		assert.equal(constants.CHOICES_OUTPUTS.length, 7, 'no entries added or removed')
 	})
 })
 
