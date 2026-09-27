@@ -22,7 +22,7 @@ module.exports = {
 			function (cmd) {
 				if (self.socket !== undefined && self.socket.isConnected) {
 					if (self.config.verbose) self.log('debug', 'Sending: ' + cmd.trimEnd())
-					self.socket.send(cmd)
+					self._safeSend(self.socket, cmd)
 				} else {
 					if (self.config.verbose) self.log('warn', 'Unable to send: Socket not connected.')
 				}
@@ -50,6 +50,11 @@ module.exports = {
 				reconnect: true,
 				reconnect_interval: 30000,
 			})
+			// Bumped on every 'connect' below. TCPHelper's own reconnect_interval
+			// option reuses this same instance across a reconnect, so socket
+			// identity alone cannot tell a pre-reconnect session from a
+			// post-reconnect one — _safeSend uses this to detect that too.
+			socket._sessionGeneration = 0
 			self.socket = socket
 
 			socket.on('error', function (err) {
@@ -62,6 +67,7 @@ module.exports = {
 
 			socket.on('connect', function () {
 				if (socket !== self.socket) return
+				socket._sessionGeneration = (socket._sessionGeneration || 0) + 1
 				self.tcpBuffer = ''
 				self._queue.clear()
 				self.memoryNameIndex = 0
@@ -90,70 +96,75 @@ module.exports = {
 		}
 	},
 
+	// Every active-connection socket error must move status out of OK and
+	// stop polling. TCPHelper is constructed with reconnect:true and
+	// reconnect_interval:30000 (see initConnection) and already schedules
+	// its own retry internally the moment the underlying socket errors —
+	// before this handler even runs. This module previously duplicated that
+	// with its own destroy()+startReconnectInterval() for three named error
+	// codes, which raced a second, module-owned 30 s timer against
+	// TCPHelper's built-in one: a config-driven initConnection() during the
+	// wait replaced the connection but never cancelled the stale module
+	// timer, so it later fired and destroyed the healthy replacement. Since
+	// the 'end' path already relies solely on TCPHelper's built-in reconnect
+	// (below, unchanged) with no such bug, the fix here is to stop
+	// duplicating it for errors too, rather than add more cancellation
+	// bookkeeping: report status/diagnostics only, and let the
+	// already-configured reconnect option own retries for every error path alike.
+	// destroy() (see below) still safely tears down and cancels TCPHelper's
+	// own retry when a *replacement* connection is created.
 	handleError: function (err) {
 		let self = this
 
 		try {
-			let error = err.toString()
-			let printedError = false
+			const code = err && typeof err === 'object' ? err.code : undefined
+			let message
 
-			Object.keys(err).forEach(function (key) {
-				if (key === 'code') {
-					if (err[key] === 'ECONNREFUSED') {
-						error =
-							'Unable to communicate with Device. Connection refused. Is this the right IP address? Is it still online?'
-						self.log('error', error)
-						self.updateStatus(InstanceStatus.ConnectionFailure, 'Connection Refused')
-						printedError = true
-						if (self.socket !== undefined) {
-							self.socket.destroy()
-						}
-						self.startReconnectInterval()
-					} else if (err[key] === 'ETIMEDOUT') {
-						error =
-							'Unable to communicate with Device. Connection timed out. Is this the right IP address? Is it still online?'
-						self.log('error', error)
-						self.updateStatus(InstanceStatus.ConnectionFailure, 'Connection Timed Out')
-						printedError = true
-						if (self.socket !== undefined) {
-							self.socket.destroy()
-						}
-						self.startReconnectInterval()
-					} else if (err[key] === 'ECONNRESET') {
-						error = 'The connection was reset. Check the log for more error information.'
-						self.log('error', error)
-						self.updateStatus(InstanceStatus.ConnectionFailure, 'Connection Reset')
-						printedError = true
-						if (self.socket !== undefined) {
-							self.socket.destroy()
-						}
-						self.startReconnectInterval()
-					}
-				}
-			})
-
-			if (!printedError) {
-				self.log('error', `Error: ${error}`)
+			if (code === 'ECONNREFUSED') {
+				message =
+					'Unable to communicate with Device. Connection refused. Is this the right IP address? Is it still online?'
+				self.updateStatus(InstanceStatus.ConnectionFailure, 'Connection Refused')
+			} else if (code === 'ETIMEDOUT') {
+				message =
+					'Unable to communicate with Device. Connection timed out. Is this the right IP address? Is it still online?'
+				self.updateStatus(InstanceStatus.ConnectionFailure, 'Connection Timed Out')
+			} else if (code === 'ECONNRESET') {
+				message = 'The connection was reset. Check the log for more error information.'
+				self.updateStatus(InstanceStatus.ConnectionFailure, 'Connection Reset')
+			} else {
+				message = 'Error: ' + (err && err.message ? err.message : String(err))
+				self.updateStatus(InstanceStatus.ConnectionFailure, 'Connection Error')
 			}
+
+			self.log('error', message)
 		} catch (error) {
 			self.log('error', 'Error handling error: ' + error)
 			self.log('error', 'Error: ' + String(err))
+			self.updateStatus(InstanceStatus.ConnectionFailure, 'Connection Error')
 		}
 	},
 
-	startReconnectInterval: function () {
+	// Fire-and-forget wrapper around TCPHelper#send() that guarantees the
+	// returned promise's rejection is observed (preventing an
+	// unhandledRejection) without letting a late result from a socket that
+	// is no longer current affect module state. `socket` must be the exact
+	// TCPHelper instance the caller resolved as "current" at call time; a
+	// later rejection is discarded, not just logged differently, when either
+	// a newer TCPHelper has since replaced self.socket, or this same
+	// TCPHelper instance has since reconnected in place (see
+	// _sessionGeneration above — object identity alone misses that case).
+	_safeSend: function (socket, cmd) {
 		let self = this
+		const generation = socket._sessionGeneration
 
-		self.updateStatus(InstanceStatus.ConnectionFailure, 'Reconnecting')
+		Promise.resolve(socket.send(cmd)).catch(function (error) {
+			if (socket !== self.socket) return
+			if (socket._sessionGeneration !== generation) return
 
-		if (self.RECONNECT_INTERVAL !== undefined) {
-			clearInterval(self.RECONNECT_INTERVAL)
-			self.RECONNECT_INTERVAL = undefined
-		}
-
-		self.log('info', 'Attempting to reconnect in 30 seconds...')
-
-		self.RECONNECT_INTERVAL = setTimeout(self.initConnection.bind(this), 30000)
+			const reason = error && error.message ? error.message : String(error)
+			if (self.config.verbose) self.log('warn', 'Send failed: ' + reason)
+			self.updateStatus(InstanceStatus.ConnectionFailure, 'Send failed')
+		})
 	},
 
 	startInterval: function () {
@@ -352,7 +363,7 @@ module.exports = {
 			if (!self._passwordSent) {
 				self._passwordSent = true
 				self.log('info', 'Sending passcode')
-				self.socket.send(self.config.password + '\n')
+				self._safeSend(self.socket, self.config.password + '\n')
 			}
 		} else if (data.trim() == 'Welcome to V-160HD.') {
 			self.updateStatus(InstanceStatus.Ok)
