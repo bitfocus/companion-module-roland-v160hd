@@ -74,7 +74,7 @@ module.exports = {
 					type: 'dropdown',
 					label: 'Aux',
 					id: 'aux',
-					default: '11',
+					default: 'aux1',
 					choices: [
 						{ id: 'aux1', label: 'Aux 1' },
 						{ id: 'aux2', label: 'Aux 2' },
@@ -129,7 +129,7 @@ module.exports = {
 					type: 'dropdown',
 					label: 'Aux',
 					id: 'aux',
-					default: '11',
+					default: 'aux1',
 					choices: [
 						{ id: 'aux1', label: 'Aux 1' },
 						{ id: 'aux2', label: 'Aux 2' },
@@ -201,49 +201,52 @@ module.exports = {
 
 				if (opt.output == '00000A') {
 					//hdmi 1 output
-					if (self.DATA.hdmi1source == opt.assign) {
+					if (self.DATA.hdmi1assign == opt.assign) {
 						return true
 					}
 				}
 
 				if (opt.output == '00000B') {
 					//hdmi 2 output
-					if (self.DATA.hdmi2source == opt.assign) {
+					if (self.DATA.hdmi2assign == opt.assign) {
 						return true
 					}
 				}
 
 				if (opt.output == '00000C') {
 					//hdmi 3 output
-					if (self.DATA.hdmi3source == opt.assign) {
+					if (self.DATA.hdmi3assign == opt.assign) {
 						return true
 					}
 				}
 
 				if (opt.output == '00000D') {
 					//sdi 1 output
-					if (self.DATA.sdi1source == opt.assign) {
+					if (self.DATA.sdi1assign == opt.assign) {
 						return true
 					}
 				}
 
 				if (opt.output == '00000E') {
 					//sdi 2 output
-					if (self.DATA.sdi2source == opt.assign) {
+					if (self.DATA.sdi2assign == opt.assign) {
 						return true
 					}
 				}
 
 				if (opt.output == '00000F') {
 					//sdi 3 output
-					if (self.DATA.sdi3source == opt.assign) {
+					if (self.DATA.sdi3assign == opt.assign) {
 						return true
 					}
 				}
 
-				if (opt.output == '000010') {
-					//usb output
-					if (self.DATA.usbsource == opt.assign) {
+				if (opt.output == '000110' || opt.output == '000010') {
+					// usb output. CHOICES_OUTPUTS' own id for USB is '000110';
+					// '000010' is accepted as a compatibility alias so buttons
+					// saved before this fix keep working. Both read the same
+					// DATA.usbassign field.
+					if (self.DATA.usbassign == opt.assign) {
 						return true
 					}
 				}
@@ -297,7 +300,7 @@ module.exports = {
 					type: 'dropdown',
 					label: 'Aux',
 					id: 'aux',
-					default: '11',
+					default: 'aux1',
 					choices: [
 						{ id: 'aux1', label: 'Aux 1' },
 						{ id: 'aux2', label: 'Aux 2' },
@@ -385,12 +388,10 @@ module.exports = {
 			callback: function (feedback, bank) {
 				let opt = feedback.options
 
-				let obj = self.DATA.find((obj) => obj.id == `data_${opt.key}${opt.bus}`)
+				let val = self.DATA[`data_${opt.pinp}${opt.bus}`]
 
-				if (obj) {
-					if (obj.value == opt.onoff) {
-						return true
-					}
+				if (val !== undefined && val == opt.onoff) {
+					return true
 				}
 
 				return false
@@ -430,7 +431,7 @@ module.exports = {
 					type: 'dropdown',
 					label: 'PnP/Key',
 					id: 'pinp',
-					default: '1B',
+					default: 'pnpkey1',
 					choices: [
 						{ id: 'pnpkey1', label: 'PnP/Key 1' },
 						{ id: 'pnpkey2', label: 'PnP/Key 2' },

@@ -961,7 +961,7 @@ module.exports = {
 
 		if (!self._queue) return
 
-		if (!command.indexOf(';')) {
+		if (command.indexOf(';') === -1) {
 			command = command + ';'
 		}
 

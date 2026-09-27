@@ -48,7 +48,7 @@ class v160Instance extends InstanceBase {
 			data_1E01: '00',
 		}
 
-		this.selectedCamera = '01' //camera 1
+		this.selectedCamera = '41' //camera 1 (Roland protocol address 0x41)
 	}
 
 	async init(config) {
