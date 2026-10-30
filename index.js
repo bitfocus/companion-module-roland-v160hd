@@ -50,6 +50,12 @@ class v160Instance extends InstanceBase {
 			data_1E01: '00',
 		}
 
+		// Local, not-yet-device-confirmed values for Freeze fields, keyed by
+		// DATA field name — e.g. { freeze: { value: '01', timer } }. Only
+		// 'freeze' is populated today. See src/api.js's _freezeValue/
+		// _setFreezePending/_clearFreezePending/_clearAllFreezePending.
+		this._freezePending = {}
+
 		this.selectedCamera = '41' //camera 1 (Roland protocol address 0x41)
 	}
 
@@ -68,6 +74,12 @@ class v160Instance extends InstanceBase {
 			if (this._queue) {
 				this._queue.clear()
 			}
+
+			// Cancel any live Freeze pending-value timers so a destroyed
+			// instance cannot still call checkFeedbacks/checkVariables
+			// afterwards. destroy() itself must not trigger a new
+			// feedback/variable update.
+			this._clearAllFreezePending()
 
 			if (this.socket !== undefined) {
 				this.socket.destroy()

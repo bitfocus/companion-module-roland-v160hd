@@ -1673,7 +1673,25 @@ module.exports = {
 			options: [],
 			callback: function (action, bank) {
 				let address = '020500'
-				self.sendCommand(address, '01')
+				let value = '01'
+
+				// Absolute command — always requests '01', never computed from
+				// current state. Does not write DATA.freeze itself; only the
+				// parser does that (src/api.js). If already disconnected, skip
+				// the pending overlay/readback entirely and preserve the
+				// existing send behavior unchanged.
+				if (self.socket !== undefined && self.socket.isConnected) {
+					self._setFreezePending('freeze', value, function () {
+						self.checkFeedbacks('freeze')
+						self.checkVariables()
+					})
+					self.checkFeedbacks('freeze')
+					self.checkVariables()
+					self.sendCommand(address, value)
+					self.sendRawCommand('RQH:' + address + ',000001;')
+				} else {
+					self.sendCommand(address, value)
+				}
 			},
 		}
 
@@ -1682,7 +1700,20 @@ module.exports = {
 			options: [],
 			callback: function (action, bank) {
 				let address = '020500'
-				self.sendCommand(address, '00')
+				let value = '00'
+
+				if (self.socket !== undefined && self.socket.isConnected) {
+					self._setFreezePending('freeze', value, function () {
+						self.checkFeedbacks('freeze')
+						self.checkVariables()
+					})
+					self.checkFeedbacks('freeze')
+					self.checkVariables()
+					self.sendCommand(address, value)
+					self.sendRawCommand('RQH:' + address + ',000001;')
+				} else {
+					self.sendCommand(address, value)
+				}
 			},
 		}
 

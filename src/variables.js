@@ -206,7 +206,8 @@ module.exports = {
 			variableObj.aux3link = self.DATA.aux3link == '01' ? 'On' : 'Off'
 
 			//Freeze
-			variableObj.freeze = self.DATA.freeze == '01' ? 'On' : 'Off'
+			// Effective value: locally-pending if set, otherwise DATA.freeze.
+			variableObj.freeze = self._freezeValue('freeze') == '01' ? 'On' : 'Off'
 
 			self.setVariableValues(variableObj)
 		} catch (error) {
