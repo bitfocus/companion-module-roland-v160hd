@@ -1003,4 +1003,8 @@ module.exports = {
 		const msb = (scaled >> 7) & 0x7f
 		return [msb, lsb]
 	},
+
+	formatBytes: function (bytes) {
+		return bytes.map((b) => b.toString(16).padStart(2, '0').toUpperCase()).join('')
+	},
 }
