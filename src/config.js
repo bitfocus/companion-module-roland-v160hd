@@ -80,7 +80,7 @@ module.exports = {
 				label: 'Polling Rate (in ms)',
 				default: 1000,
 				width: 3,
-				isVisible: (configValues) => configValues.polling === true,
+				isVisibleExpression: '$(options:polling) == true',
 			},
 			{
 				type: 'static-text',
