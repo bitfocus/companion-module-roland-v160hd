@@ -108,3 +108,14 @@ test('polling and all manual camera fields publish expression visibility', () =>
 		assert.equal(field.isVisibleExpression, '$(options:useSelected) == false')
 	}
 })
+
+test('variable definitions have valid unique IDs, including freeze', () => {
+	const self = instance()
+	self.setVariableDefinitions = (definitions) => {
+		const ids = definitions.map((definition) => definition.variableId)
+		assert.ok(ids.every((id) => typeof id === 'string' && id.length > 0))
+		assert.equal(new Set(ids).size, ids.length)
+		assert.ok(ids.includes('freeze'))
+	}
+	self.initVariables()
+})
