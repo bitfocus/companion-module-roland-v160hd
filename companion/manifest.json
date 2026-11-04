@@ -15,12 +15,17 @@
 	],
 	"legacyIds": [],
 	"runtime": {
-		"type": "node18",
+		"type": "node26",
 		"api": "nodejs-ipc",
 		"apiVersion": "0.0.0",
 		"entrypoint": "../index.js"
 	},
 	"manufacturer": "Roland",
-	"products": ["V-160HD"],
-	"keywords": ["Vision Mixer", "Video Switcher"]
+	"products": [
+		"V-160HD"
+	],
+	"keywords": [
+		"Vision Mixer",
+		"Video Switcher"
+	]
 }
