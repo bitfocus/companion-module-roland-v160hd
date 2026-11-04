@@ -48,7 +48,7 @@ module.exports = {
 		variables.push({ variableId: 'aux2link', name: 'Aux Link' })
 		variables.push({ variableId: 'aux3link', name: 'Aux Link' })
 
-		variables.push({ variableI: 'freeze', name: 'Freeze On/Off' })
+		variables.push({ variableId: 'freeze', name: 'Freeze On/Off' })
 
 		//memory names
 		for (let i = 1; i <= 30; i++) {
